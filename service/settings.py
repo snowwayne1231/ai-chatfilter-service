@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'djoser',
     'corsheaders',
     'chat',
+    'ai',
+    'dataparser',
+    'service',
 ]
 
 REST_FRAMEWORK = {
@@ -92,6 +95,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'service.wsgi.application'
 ASGI_APPLICATION = "service.routing.application"
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 # Database
