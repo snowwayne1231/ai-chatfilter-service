@@ -7,18 +7,21 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-i', dest='input_path', required=True,
+            '-i', dest='input_excel_path', required=False,
             help='the path of excel file.',
         )
 
     def handle(self, *args, **options):
-        path = options['input_path']
-        # self.stdout.write(path)
-        full_file_path = os.getcwd() + '/' + path
-        self.stdout.write('Full input excel path: ' + full_file_path)
+        path = options.get('input_excel_path', None)
+    
         self.stdout.write('Handle AI training... ')
-        # handle_train_pinyin(full_file_path)
-        handle_train_pinyin()
-        # load_data()
+
+        if path:
+            full_file_path = os.getcwd() + '/' + path
+            self.stdout.write('Full input excel path: ' + full_file_path)
+            handle_train_pinyin(full_file_path)
+        else:
+            handle_train_pinyin()
+        
 
         

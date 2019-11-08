@@ -7,64 +7,32 @@ import tensorflow_datasets as tfds
 
 from datetime import datetime
 
-from dataparser.apps import ExcelParser
-from dataparser.classes.store import ListPickle
 from .classes.pinyin import PinYinFilter
 from .helper import print_spend_time
 
 
-
-def train_pinyin(excel_file_path = None):
+def predict_by_pinyin(text = ''):
 
     pinyin_saved_folder = os.path.dirname(os.path.abspath(__file__)) + '/_models/pinyin_model'
-    
-    tmp_saved_list_path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/list.pickle'
 
     _st_time = datetime.now() #
-
-    pk = ListPickle(tmp_saved_list_path)
-    
-    if excel_file_path is not None:
-
-        ep = ExcelParser(file=excel_file_path)
-        basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息'], ['STATUS', '審核結果']]
-        result_list = ep.get_row_list(column=basic_model_columns)
-
-        # if is_save_pickle:
-        
-        pk.save(result_list)
-
-    else:
-        
-        result_list = pk.get_list()
-
-        if len(result_list) == 0:
-            print('Wrong with no file path input.')
-            return
-
-
-    print('The result list length: ', len(result_list))
 
     
     if os.path.isdir(pinyin_saved_folder):
 
         piny = PinYinFilter(load_folder=pinyin_saved_folder)
 
-        history = piny.fit_model(epochs=2, train_data=result_list)
+        result = piny.predictText(text)
 
     else:
 
-        piny = PinYinFilter(data=result_list)
-        # piny.transfrom_column('TEXT')
-        piny.build_model()
-
-        history = piny.fit_model(epochs=2, save_folder=pinyin_saved_folder)
-
+        print('Wrong with no pinyin models exist.')
+        return False
         # piny.save(pinyin_saved_folder)
 
-    print('=== history ===')
-    print(history)
     print_spend_time(_st_time)
+
+    
 
 
 

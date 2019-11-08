@@ -21,11 +21,12 @@ class BasicChineseFilter():
     data_processed = []
     model = None
     tokenizer_vocabulary = set()
+    encoder = None
     saved_folder = None
     message_parser = MessageParser()
 
     full_vocab_size = 32767
-    full_words_length = 96
+    full_words_length = 64
     status_classsets = 8
     appended_columns = ['TEXT', 'LV', 'ANCHOR']
     avoid_lv = 1
@@ -95,7 +96,7 @@ class BasicChineseFilter():
 
             self.transfrom_column('TEXT')
 
-    
+
     def parse_message(self, string):
         return self.message_parser.parse(string)
 
@@ -148,8 +149,8 @@ class BasicChineseFilter():
         
         self.save_model(folder + '/model.h5')
         self.save_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
-        self.save_columns(folder + '/columns.pickle')
-        print('Successful saved.')
+        
+        print('Successful saved. ')
 
 
 
@@ -157,7 +158,8 @@ class BasicChineseFilter():
         self.saved_folder = folder
         self.load_model(folder + '/model.h5')
         self.load_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
-        self.load_columns(folder + '/columns.pickle')
+        
+        print('Successful load model. ', folder)
     
 
     
@@ -170,6 +172,7 @@ class BasicChineseFilter():
     def load_tokenizer_vocabulary(self, path):
         with open(path, 'rb') as handle:
             self.tokenizer_vocabulary = pickle.load(handle)
+            self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
 
 
 
@@ -184,18 +187,6 @@ class BasicChineseFilter():
         return _model
 
 
-
-    def save_columns(self, path):
-        with open(path, 'wb+') as handle:
-            pickle.dump(self.columns, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-
-    def load_columns(self, path):
-        with open(path, 'rb') as handle:
-            self.columns = pickle.load(handle)
-    
-    
 
     def build_model(self):
         full_words_length = self.full_words_length
@@ -214,8 +205,10 @@ class BasicChineseFilter():
 
         model.summary()
         
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.005, amsgrad=True)
+
         model.compile(
-            optimizer='adam',
+            optimizer=optimizer,
             # loss='categorical_crossentropy',
             loss='sparse_categorical_crossentropy',
             metrics=['accuracy'],
@@ -298,16 +291,6 @@ class BasicChineseFilter():
 
 
 
-    def truncate_pad_words(self, words):
-        full_words_length = self.full_words_length
-        words_length = len(words)
-        if words_length >= full_words_length:
-            return words[:full_words_length]
-        else:
-            return words + ((full_words_length - words_length) * [0])
-
-
-
     def get_xy_data(self):
         x_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
         vip_lv_idx = self.columns.index('LV') if 'LV' in self.columns else -1
@@ -318,10 +301,7 @@ class BasicChineseFilter():
         for _d in self.data:
             if _d[x_idx] and _d[vip_lv_idx] < self.avoid_lv:
 
-                # _paded_text = self.truncate_pad_words(_d[x_idx])
                 new_x.append(_d[x_idx])
-
-                # _state_class = self.parse_to_array_num_class(_d[y_idx])
                 new_y.append(_d[y_idx])
         
         return new_x, new_y
@@ -333,6 +313,7 @@ class BasicChineseFilter():
         x, y = self.get_xy_data()
 
         print('======== get_train_batchs =========')
+        print('total x data = ', len(x))
         tokenize_set = self.tokenize_data(x)
 
         labeled_dataset = self.bathchs_labeler(x, y)
@@ -343,7 +324,7 @@ class BasicChineseFilter():
 
     def bathchs_labeler(self, x, y):
         assert len(x) == len(y)
-        encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
+        self.encoder = encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
 
         def encode(text):
             encoded_list = encoder.encode(text)
@@ -387,7 +368,9 @@ class BasicChineseFilter():
         if _lv < self.avoid_lv:
 
             _text = self.transfrom(_text)
-            # _text = self.truncate_pad_words(_text)
+            _text = [self.encoder.encode(_)[0] for _ in _text]
+
+            # print('encoded _text : ', _text)
 
             test_data = np.array([_text])
             
@@ -395,21 +378,15 @@ class BasicChineseFilter():
             passible = np.argmax(predicted)
 
             # print('predicted: ', predicted)
+            # print('passible: ', passible)
         
         else:
 
             passible = 0
-
-        # print('predictText _text: ', _text)
-        # print('Text: ', text)
-        # print('Prosessed text: ', _text)
+        
         # print('The most likely possible status: ', passible)
         return passible
 
-
-
-    def parse_to_array_num_class(self, i):
-        return tf.keras.utils.to_categorical(int(i), num_classes=self.status_classsets)
 
 
 
