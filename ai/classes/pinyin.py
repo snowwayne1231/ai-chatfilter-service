@@ -32,7 +32,8 @@ class PinYinFilter(BasicChineseFilter):
             
             _next = pinyin(data, strict=self.strict, style=Style.NORMAL, heteronym=True)
 
-            _next = list(map(self.to_tokenization, _next))
+            if type(_next) is list:
+                _next = list(map(lambda a: a[-1], _next))
 
             return _next
             

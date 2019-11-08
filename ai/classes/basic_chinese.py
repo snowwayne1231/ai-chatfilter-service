@@ -5,6 +5,7 @@ from dataparser.apps import MessageParser
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_datasets as tfds
 import pickle
 import json
 import os
@@ -19,7 +20,7 @@ class BasicChineseFilter():
     data = []
     data_processed = []
     model = None
-    tokenizer = None
+    tokenizer_vocabulary = set()
     saved_folder = None
     message_parser = MessageParser()
 
@@ -36,7 +37,8 @@ class BasicChineseFilter():
 
             if self.check_data_shape(data):
 
-                self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
+                # self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
+                self.tokenizer = tfds.features.text.Tokenizer()
 
                 self.set_data(data)
             
@@ -98,30 +100,6 @@ class BasicChineseFilter():
         return self.message_parser.parse(string)
 
 
-    def to_tokenization(self, input_str):
-        _loc = 0
-        if input_str:
-        
-            if type(input_str) is list:
-                input_str = input_str[-1]
-            
-            _loc = self.get_token_index(input_str)
-
-            if _loc == -1:
-                self.tokenizer.fit_on_texts([input_str])
-            
-            _loc = self.tokenizer.word_index.get(input_str, 0)
-
-        return _loc
-
-
-
-    def get_token_index(self, text):
-        _text = text.strip().lower()
-        _loc = self.tokenizer.word_index.get(_text, -1)
-        return _loc
-
-
 
     def transfrom(self, data):
         
@@ -152,13 +130,6 @@ class BasicChineseFilter():
             _text = d[column_idx]
             d[column_idx] = self.transfrom(_text)
 
-            # d[column_idx] = _text_transfromed
-            # _texts.append(_text_transfromed)
-            
-        # self.data_processed = _data
-
-        print('====PinYin transfrom data length: ', len(self.data)) #
-
         return self
 
 
@@ -172,11 +143,11 @@ class BasicChineseFilter():
             print('Error Save, because folder is not specify')
             return None
         
-        if not os.path.isdir(folder):
-            os.mkdir(folder)
+        if not os.path.isdir(folder) or not os.path.exists(folder):
+            os.makedirs(folder)
         
         self.save_model(folder + '/model.h5')
-        self.save_tokenizer(folder + '/tokenizer.pickle')
+        self.save_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
         self.save_columns(folder + '/columns.pickle')
         print('Successful saved.')
 
@@ -185,20 +156,20 @@ class BasicChineseFilter():
     def load(self, folder):
         self.saved_folder = folder
         self.load_model(folder + '/model.h5')
-        self.load_tokenizer(folder + '/tokenizer.pickle')
+        self.load_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
         self.load_columns(folder + '/columns.pickle')
     
 
     
-    def save_tokenizer(self, path):
+    def save_tokenizer_vocabulary(self, path):
         with open(path, 'wb+') as handle:
-            pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.tokenizer_vocabulary, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 
-    def load_tokenizer(self, path):
+    def load_tokenizer_vocabulary(self, path):
         with open(path, 'rb') as handle:
-            self.tokenizer = pickle.load(handle)
+            self.tokenizer_vocabulary = pickle.load(handle)
 
 
 
@@ -231,10 +202,12 @@ class BasicChineseFilter():
 
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length))
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length, return_sequences=True)))
+        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
+        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length, return_sequences=True)))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)))
         # model.add(tf.keras.layers.GlobalAveragePooling1D())
         # model.add(tf.keras.layers.Flatten())
+        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.sigmoid))
         model.add(tf.keras.layers.Dense(self.status_classsets, activation=tf.nn.softmax))
@@ -243,7 +216,8 @@ class BasicChineseFilter():
         
         model.compile(
             optimizer='adam',
-            loss='categorical_crossentropy',
+            # loss='categorical_crossentropy',
+            loss='sparse_categorical_crossentropy',
             metrics=['accuracy'],
         )
 
@@ -259,46 +233,68 @@ class BasicChineseFilter():
         
         if train_data is not None:
             self.set_data(train_data)
-        
-        train_x, train_y = self.get_xy_data()
 
-        np_train_x = np.array(train_x)
-        np_train_y = np.array(train_y)
+
+        batch_train_data = self.get_train_batchs()
+
+        # np_train_x = np.array(train_x)
+        # np_train_y = np.array(train_y)
+
+        BUFFER_SIZE = 50000
+        BATCH_SIZE = self.full_words_length
 
         if validation_data is None:
-            total_length = len(train_x)
-            pp = int(total_length / 10)
-            p2 = pp * 2
 
-            validation_x = np.array(np_train_x[pp:p2])
-            validation_y = np.array(np_train_y[pp:p2])
+            batch_test_data = batch_train_data.take(1000)
+            batch_train_data = batch_train_data.skip(1000).shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
+
         else:
-            validation_x = np.array(validation_data.x)
-            validation_y = np.array(validation_data.y)
 
-        print('====fit model train_x length: ', len(train_x))
-        print('=======fit model train_x[0] ', train_x[0])
-        print('====fit model train_y length: ', len(train_y))
-        print('=======fit model train_y[0] ', train_y[0])
-
+            batch_test_data = self.bathchs_labeler(validation_data.x, validation_data.y)
 
         history = None
+        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
+        batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
+
+        print('==== batch_train_data ====')
+
+        for x, y in batch_train_data.take(1):
+            print('= batch_train_data =')
+            print(x)
+            print(y)
+
+        # return False
 
         try:
             while True:
                 history = self.model.fit(
-                    np_train_x,
-                    np_train_y,
+                    batch_train_data,
                     epochs=epochs,
-                    # batch_size=batch_size,
                     verbose=verbose,
-                    validation_data=(validation_x, validation_y),
+                    validation_data=batch_test_data,
                 )
                 self.save()
         except KeyboardInterrupt:
             print('Keyboard pressed. Stop Tranning.')
         
         return history
+
+
+
+    def tokenize_data(self, datalist):
+        tokenizer_vocabulary = self.tokenizer_vocabulary
+        tokenizer = tfds.features.text.Tokenizer()
+        for texts in datalist:
+            for txt in texts:
+                tokens = tokenizer.tokenize(txt)
+                tokenizer_vocabulary.update(tokens)
+        
+        vocab_size = len(tokenizer_vocabulary)
+        print('tokenizer_vocabulary vocab_size = ', vocab_size)
+        # print(vocabulary_set)
+        self.tokenizer_vocabulary = tokenizer_vocabulary
+
+        return tokenizer_vocabulary
 
 
 
@@ -322,11 +318,56 @@ class BasicChineseFilter():
         for _d in self.data:
             if _d[x_idx] and _d[vip_lv_idx] < self.avoid_lv:
 
-                _paded_text = self.truncate_pad_words(_d[x_idx])
-                new_x.append(_paded_text)
-                new_y.append(self.parse_to_array_num_class(_d[y_idx]))
+                # _paded_text = self.truncate_pad_words(_d[x_idx])
+                new_x.append(_d[x_idx])
+
+                # _state_class = self.parse_to_array_num_class(_d[y_idx])
+                new_y.append(_d[y_idx])
         
         return new_x, new_y
+
+
+
+    def get_train_batchs(self):
+
+        x, y = self.get_xy_data()
+
+        print('======== get_train_batchs =========')
+        tokenize_set = self.tokenize_data(x)
+
+        labeled_dataset = self.bathchs_labeler(x, y)
+
+        return labeled_dataset
+
+
+
+    def bathchs_labeler(self, x, y):
+        assert len(x) == len(y)
+        encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
+
+        def encode(text):
+            encoded_list = encoder.encode(text)
+            if len(encoded_list) > 0:
+                return encoded_list[0]
+            else:
+                return 0
+
+        def gen():
+            for idx, texts in enumerate(x):
+                next_texts = []
+                for text in texts:
+                    encoded_text = encode(text)
+                    next_texts.append(encoded_text)
+                
+                yield next_texts, y[idx]
+        
+        dataset = tf.data.Dataset.from_generator(gen, (tf.int64, tf.int64), (tf.TensorShape([None]), tf.TensorShape([])))
+
+        # print(dataset.take(1))
+        # for __ in dataset.take(10):
+        #     print(__)
+
+        return dataset
 
 
 
@@ -346,7 +387,7 @@ class BasicChineseFilter():
         if _lv < self.avoid_lv:
 
             _text = self.transfrom(_text)
-            _text = self.truncate_pad_words(_text)
+            # _text = self.truncate_pad_words(_text)
 
             test_data = np.array([_text])
             
@@ -372,16 +413,3 @@ class BasicChineseFilter():
 
 
 
-
-class onPredictionCallback(tf.keras.callbacks.Callback):
-
-    def on_predict_end(self, logs=None):
-        print('predict end: ')
-        print(logs)
-        pass
-        return super().on_predict_end(logs=logs)
-
-    def on_test_end(self, logs=None):
-        print('on_test_end: ')
-        print(logs)
-        return super().on_test_end(logs=logs)

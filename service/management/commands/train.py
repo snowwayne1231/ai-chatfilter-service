@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from ai.train import train_pinyin as handle_train_pinyin
+from ai.train import train_pinyin as handle_train_pinyin, load_data
 import os
 
 class Command(BaseCommand):
@@ -17,5 +17,8 @@ class Command(BaseCommand):
         full_file_path = os.getcwd() + '/' + path
         self.stdout.write('Full input excel path: ' + full_file_path)
         self.stdout.write('Handle AI training... ')
-        handle_train_pinyin(full_file_path)
+        # handle_train_pinyin(full_file_path)
+        handle_train_pinyin()
+        # load_data()
+
         
