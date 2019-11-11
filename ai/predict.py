@@ -8,12 +8,12 @@ import tensorflow_datasets as tfds
 from datetime import datetime
 
 from .classes.pinyin import PinYinFilter
-from .helper import print_spend_time
+from .helper import print_spend_time, get_pinyin_path
 
 
 def predict_by_pinyin(text = ''):
-
-    pinyin_saved_folder = os.path.dirname(os.path.abspath(__file__)) + '/_models/pinyin_model'
+    
+    pinyin_saved_folder = get_pinyin_path()
 
     _st_time = datetime.now() #
 

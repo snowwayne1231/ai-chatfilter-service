@@ -383,7 +383,7 @@ class BasicChineseFilter():
         else:
 
             passible = 0
-        
+
         # print('The most likely possible status: ', passible)
         return passible
 

@@ -4,11 +4,34 @@
 <head>
     <meta charset="utf-8"/>
     <title>Chat Room</title>
+    <style>
+        .range {
+            float: left;
+            width: 48%;
+            position: relative;
+            margin: 0px 1%;
+        }
+
+        .range textarea, .range input {
+            max-width: 100%;
+        }
+
+        .range textarea {
+            min-height: 600px;
+            line-height: 22px;
+        }
+    </style>
 </head>
 <body>
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br/>
-    <input id="chat-message-input" type="text" size="100"/><br/>
-    <input id="chat-message-submit" type="button" value="Send"/>
+    <div class="left range">
+        <textarea id="chat-log" cols="100" rows="20" readonly></textarea><br/>
+        <input id="chat-message-input" type="text" size="100"/><br/>
+        <input id="chat-message-submit" type="button" value="Send"/>
+    </div>
+    <div class="right range">
+            <textarea id="chat-prediction" cols="100" rows="20" readonly></textarea><br/>
+    </div>
+    
 </body>
 <script>
     var roomName = {{ room_name_json }};
@@ -20,7 +43,9 @@
     chatSocket.onmessage = function(e) {
         var data = JSON.parse(e.data);
         var message = data['message'];
+        var prediction = data['prediction'];
         document.querySelector('#chat-log').value += (message + '\n');
+        document.querySelector('#chat-prediction').value += (prediction + '\n');
     };
 
     chatSocket.onclose = function(e) {

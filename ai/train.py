@@ -10,13 +10,13 @@ from datetime import datetime
 from dataparser.apps import ExcelParser
 from dataparser.classes.store import ListPickle
 from .classes.pinyin import PinYinFilter
-from .helper import print_spend_time
+from .helper import print_spend_time, get_pinyin_path
 
 
 
 def train_pinyin(excel_file_path = None):
 
-    pinyin_saved_folder = os.path.dirname(os.path.abspath(__file__)) + '/_models/pinyin_model'
+    pinyin_saved_folder = get_pinyin_path()
     
     tmp_saved_list_path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/list.pickle'
 

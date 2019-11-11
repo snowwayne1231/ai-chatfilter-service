@@ -158,8 +158,8 @@ class MessageParser():
                 if _string:
                     _result += _string
                 else:
-                    _result += uc
-                    # print('out of char: ', _code, _hex16, uc, ' - ', _string)
+                    # _result += uc
+                    print('out of char: ', _code, _hex16, uc, ' - ', _string)
                 
             else:
                 _result += chr(_code).lower()

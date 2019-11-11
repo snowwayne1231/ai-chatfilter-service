@@ -5,6 +5,7 @@ from asgiref.sync import async_to_sync
 import json
 
 from ai.apps import MainAiApp
+import numpy
 
 ai_app = MainAiApp()
 
@@ -23,7 +24,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         print('== connected ==')
-        print(ai_app)
 
         await self.accept()
 
@@ -36,12 +36,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
+        # print('receive message :', message)
+
+        if message:
+            prediction = ai_app.predict(str(message))
+        else:
+            prediction = -1
+        # print('prediction :', prediction)
 
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
                 'message': message,
+                'prediction': int(prediction),
             }
         )
 
@@ -51,9 +59,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         message = event['message']
+        prediction = event['prediction']
 
         await self.send(text_data=json.dumps({
-            'message': message
+            'message': message,
+            'prediction': prediction
         }))
 
     
