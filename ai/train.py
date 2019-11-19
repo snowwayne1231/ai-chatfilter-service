@@ -7,7 +7,7 @@ import tensorflow_datasets as tfds
 
 from datetime import datetime
 
-from dataparser.apps import ExcelParser
+from dataparser.apps import ExcelParser, MessageParser
 from dataparser.classes.store import ListPickle
 from .classes.pinyin import PinYinFilter
 from .helper import print_spend_time, get_pinyin_path
@@ -30,7 +30,18 @@ def train_pinyin(excel_file_path = None):
         basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息'], ['STATUS', '審核結果']]
         result_list = ep.get_row_list(column=basic_model_columns)
 
+        # print('result_list[0]', result_list[0])
+
         # if is_save_pickle:
+
+        message_parser = MessageParser()
+        for res in result_list:
+            msg = res[2]
+            text, lv, anchor = message_parser.parse(msg)
+
+            res.append(text)
+            res.append(lv)
+            res.append(anchor)
         
         pk.save(result_list)
 

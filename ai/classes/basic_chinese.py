@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from copy import deepcopy
+# from copy import deepcopy
 from dataparser.apps import MessageParser
 
 import numpy as np
@@ -23,13 +23,13 @@ class BasicChineseFilter():
     tokenizer_vocabulary = set()
     encoder = None
     saved_folder = None
-    message_parser = MessageParser()
+    message_parser = None
 
     full_vocab_size = 32767
     full_words_length = 64
     status_classsets = 8
     appended_columns = ['TEXT', 'LV', 'ANCHOR']
-    avoid_lv = 1
+    avoid_lv = 2
 
     
     def __init__(self, data = [], load_folder=None):
@@ -38,6 +38,7 @@ class BasicChineseFilter():
 
             if self.check_data_shape(data):
 
+                self.message_parser = MessageParser()
                 # self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
                 self.tokenizer = tfds.features.text.Tokenizer()
 
@@ -57,7 +58,8 @@ class BasicChineseFilter():
         if len(data) == 0:
             data = self.data
 
-        _len_should = len(self.columns) - len(self.appended_columns)
+        # _len_should = len(self.columns) - len(self.appended_columns)
+        _len_should = len(self.columns)
         _isright = len(data[0]) == _len_should
 
         if _isright == False:
@@ -71,30 +73,32 @@ class BasicChineseFilter():
     def set_data(self, data):
         if self.check_data_shape(data):
 
-            _data = deepcopy(data)
-            _msg_idx = self.columns.index('MESSAGE') if 'MESSAGE' in self.columns else -1
-            _text_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
-            _lv_idx = self.columns.index('LV') if 'LV' in self.columns else -1
-            _anchor_idx = self.columns.index('ANCHOR') if 'ANCHOR' in self.columns else -1
-            _appended_length = len(self.columns)
+            # _data = deepcopy(data)
+            # _msg_idx = self.columns.index('MESSAGE') if 'MESSAGE' in self.columns else -1
+            # _text_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
+            # _lv_idx = self.columns.index('LV') if 'LV' in self.columns else -1
+            # _anchor_idx = self.columns.index('ANCHOR') if 'ANCHOR' in self.columns else -1
+            # _appended_length = len(self.columns)
 
-            for d in _data:
-                _string = d[_msg_idx]
-                text, lv, anchor = self.parse_message(_string)
+            # for d in _data:
+            #     _string = d[_msg_idx]
+            #     text, lv, anchor = self.parse_message(_string)
 
-                # 
-                if len(d) == _appended_length:
-                    d[_text_idx] = text
-                    d[_lv_idx] = lv
-                    d[_anchor_idx] = anchor
-                else:
-                    d.append(text)
-                    d.append(lv)
-                    d.append(anchor)
+            #     # 
+            #     if len(d) == _appended_length:
+            #         d[_text_idx] = text
+            #         d[_lv_idx] = lv
+            #         d[_anchor_idx] = anchor
+            #     else:
+            #         d.append(text)
+            #         d.append(lv)
+            #         d.append(anchor)
 
-            self.data = _data
+            self.data = data
 
             self.transfrom_column('TEXT')
+
+        return self
 
 
     def parse_message(self, string):
@@ -363,16 +367,25 @@ class BasicChineseFilter():
 
 
 
-    def predictText(self, text):
-        _text, _lv, _anchor = self.parse_message(text)
-        if _lv < self.avoid_lv:
+    def predictText(self, text, lv = 0):
+        # _text, _lv, _anchor = self.parse_message(text)
+        
+        if lv < self.avoid_lv:
 
-            _text = self.transfrom(_text)
-            _text = [self.encoder.encode(_)[0] for _ in _text]
+            _text = self.transfrom(text)
+
+            _result_text = []
+            for _ in _text:
+                _loc = self.encoder.encode(_)
+                if len(_loc) > 0:
+                    _result_text.append(_loc[0])
 
             # print('encoded _text : ', _text)
 
-            test_data = np.array([_text])
+            if len(_result_text) == 0:
+                return 0
+
+            test_data = np.array([_result_text])
             
             predicted = self.model.predict(test_data)[0]
             passible = np.argmax(predicted)

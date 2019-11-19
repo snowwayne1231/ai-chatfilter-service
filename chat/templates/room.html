@@ -20,6 +20,18 @@
             min-height: 600px;
             line-height: 22px;
         }
+        table {
+            width: 100%;
+        }
+
+        table td {
+            min-width: 12%;
+            border: 1px solid #666;
+        }
+
+        .prediction {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -29,28 +41,32 @@
         <input id="chat-message-submit" type="button" value="Send"/>
     </div>
     <div class="right range">
-            <textarea id="chat-prediction" cols="100" rows="20" readonly></textarea><br/>
+        
+        <table>
+            <thead>
+                <th style="width: 10%;">房號</th>
+                <th style="width: 20%;">玩家</th>
+                <th style="width: 40%;">聊天內容</th>
+                <th style="width: 10%;">結果</th>
+                <th style="width: 20%;">原因</th>
+            </thead>
+            <tbody id="table-body">
+
+            </tbody>
+        </table>
     </div>
     
 </body>
 <script>
     var roomName = {{ room_name_json }};
+    var randomUsers = new Array(3).fill(0).map(e => {
+        return Math.random().toString(16).substring(2,8);
+    });
+    var randomRooms = new Array(5).fill(0).map(e => {
+        return Math.random().toString(16).substring(2,6);
+    });
 
-    var chatSocket = new WebSocket(
-        'ws://' + window.location.host +
-        '/ws/chat/' + roomName + '/');
-
-    chatSocket.onmessage = function(e) {
-        var data = JSON.parse(e.data);
-        var message = data['message'];
-        var prediction = data['prediction'];
-        document.querySelector('#chat-log').value += (message + '\n');
-        document.querySelector('#chat-prediction').value += (prediction + '\n');
-    };
-
-    chatSocket.onclose = function(e) {
-        console.error('Chat socket closed unexpectedly');
-    };
+    window.conn = ConnWebSocket(roomName);
 
     document.querySelector('#chat-message-input').focus();
     document.querySelector('#chat-message-input').onkeyup = function(e) {
@@ -58,15 +74,67 @@
             document.querySelector('#chat-message-submit').click();
         }
     };
-
     document.querySelector('#chat-message-submit').onclick = function(e) {
         var messageInputDom = document.querySelector('#chat-message-input');
         var message = messageInputDom.value;
-        chatSocket.send(JSON.stringify({
-            'message': message
-        }));
-
-        messageInputDom.value = '';
+        if (window.conn) {
+            window.conn.send(JSON.stringify({
+                'user': randomUsers[Math.floor(Math.random() * randomUsers.length)],
+                // 'room': randomRooms[Math.floor(Math.random() * randomRooms.length)],
+                'room': 'localhot_test',
+                'message': message
+            }));
+            messageInputDom.value = '';
+        }
     };
+
+    
+
+    function ConnWebSocket(name) {
+        var chatSocket = new WebSocket(
+            'ws://' + window.location.host +
+            '/ws/chat/' + name + '/');
+
+        chatSocket.onmessage = function(e) {
+            var data = JSON.parse(e.data);
+            var user = data['user'];
+            var room = data['room'];
+            var message = data['message'];
+            var prediction = data['prediction'];
+            var reason_char = data['reason_char'];
+            document.querySelector('#chat-log').value += (message + '\n');
+            // document.querySelector('#chat-prediction').value += (prediction + '\n');
+            var tbody = document.querySelector('#table-body');
+            var _tr = document.createElement('tr');
+            ['room', 'user', 'message', 'prediction', 'reason_char'].map(e => {
+                var loc = data[e];
+                var _td = document.createElement('td');
+                _td.innerText = loc;
+                _td.className = e;
+                _tr.appendChild(_td);
+            });
+            tbody.appendChild(_tr);
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+
+            window.setTimeout(reConnectWebSocket, 5000);
+        };
+
+        chatSocket.onerror = function(e) {
+            window.setTimeout(reConnectWebSocket, 5000);
+        }
+
+        return chatSocket;
+    }
+
+    function reConnectWebSocket() {
+        window.conn = ConnWebSocket(roomName);
+    }
+
+    
+
+    
 </script>
 </html>

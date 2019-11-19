@@ -150,7 +150,9 @@ class MessageParser():
             # 【3000-303F】 CJK Symbols and Punctuation 中日韓符號和標點  # 12290
             if _code >= 0x3000 and _code <= 0x303f: continue
 
-            if _code < 0x0020 or _code > 0x7e:
+            # if _code < 0x0020 or _code > 0x7e:
+            if _code < 0x002f or _code > 0x7e:
+                continue
                 # out of English or digits
                 _hex16 = hex(_code)
                 _string = mapHexes.get(_code, None)
@@ -159,7 +161,8 @@ class MessageParser():
                     _result += _string
                 else:
                     # _result += uc
-                    print('out of char: ', _code, _hex16, uc, ' - ', _string)
+                    # print('out of char: ', _code, _hex16, uc, ' - ', _string)
+                    pass
                 
             else:
                 _result += chr(_code).lower()

@@ -1,13 +1,12 @@
 from channels.generic.websocket import WebsocketConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import async_to_sync
+from service.main import MainService
+
 # from django.conf import settings
 import json
 
-from ai.apps import MainAiApp
-import numpy
-
-ai_app = MainAiApp()
+main_service = MainService()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -35,21 +34,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        # print('receive message :', message)
+        message = text_data_json.get('message', None)
+        user = text_data_json.get('user', None)
+        room = text_data_json.get('room', None)
 
-        if message:
-            prediction = ai_app.predict(str(message))
-        else:
-            prediction = -1
-        # print('prediction :', prediction)
+        results = main_service.think(message=message, user=user, room=room)
+        print('=== results ===')
+        print(results)
 
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': message,
-                'prediction': int(prediction),
+                'user': user,
+                'room': room,
+                'message': results.get('message', ''),
+                'prediction': int(results.get('prediction', 0)),
+                'reason_char': results.get('reason_char', ''),
             }
         )
 
@@ -60,10 +61,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         message = event['message']
         prediction = event['prediction']
+        reason_char = event['reason_char']
+        user = event['user']
+        room = event['room']
 
         await self.send(text_data=json.dumps({
             'message': message,
-            'prediction': prediction
+            'prediction': prediction,
+            'reason_char': reason_char,
+            'user': user,
+            'room': room,
         }))
 
     

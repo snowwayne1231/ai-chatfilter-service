@@ -15,3 +15,4 @@ def print_spend_time(_st_time):
 
 def get_pinyin_path():
     return os.path.dirname(os.path.abspath(__file__)) + '/_models/pinyin_model'
+
