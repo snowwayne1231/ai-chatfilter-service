@@ -22,11 +22,17 @@ class PreFilter():
 
     
     def find_wechat_char(self, text, lowercase_only = True):
+        number_size = 0
+        eng_size = 0
         next_char = ''
         for u in text:
-            if self.is_number(u) or self.is_english(u):
+            if self.is_number(u):
+                number_size += 1
                 next_char += u
-        return next_char if len(next_char) >= 6 else ''
+            elif self.is_english(u):
+                eng_size += 1
+                next_char += u
+        return next_char if len(next_char) >= 6 and number_size >= 2 and eng_size <= 24 else ''
 
 
     def is_chinese(self, uchar):

@@ -401,5 +401,29 @@ class BasicChineseFilter():
         return passible
 
 
+    def get_reason(self, text, prediction):
+        reason = ''
+        _text = self.transfrom(text)
+        _result_text = []
+        for _ in _text:
+            _loc = self.encoder.encode(_)
+            if len(_loc) > 0:
+                _result_text.append(_loc[0])
+
+        # print('get_reason _result_text: ', _result_text)
+        
+        _res = self.model.predict(_result_text)
+        _i = 0
+        for _ in _res:
+            _max = np.argmax(_)
+            if _max == prediction:
+                reason += text[_i]
+            _i += 1
+
+        # print('get_reason _res: ', _res)
+
+        # print('get_reason: ', reason)
+        
+        return reason
 
 

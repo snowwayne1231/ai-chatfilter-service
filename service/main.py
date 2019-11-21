@@ -2,6 +2,7 @@ from ai.apps import MainAiApp
 from dataparser.apps import MessageParser
 from .classes.prefilter import PreFilter
 from .classes.fuzzycenter import FuzzyCenter
+from .models import GoodSentence, BlockedSentence
 import numpy as np
 
 
@@ -11,10 +12,11 @@ class MainService():
     ai_app = None
     message_parser = None
     fuzzy_center = None
-    STATUS_PREDICTION_NO_MSG = -1
-    STATUS_PREDICTION_SPECIAL_CHAR = -2
-    STATUS_PREDICTION_NONSENSE = -3
-    STATUS_PREDICTION_WEHCAT_SUSPICION = -4
+    STATUS_PREDICTION_NO_MSG = 10
+    STATUS_PREDICTION_SPECIAL_CHAR = 11
+    STATUS_PREDICTION_NONSENSE = 12
+    STATUS_PREDICTION_WEHCAT_SUSPICION = 13
+    STATUS_PREDICTION_BLOCK_WORD = 14
 
     def __init__(self):
         self.ai_app = MainAiApp()
@@ -31,6 +33,7 @@ class MainService():
 
     def think(self, message, user = '', room = ''):
         result = {}
+        text = ''
         reason_char = ''
         # print('receive message :', message)
 
@@ -57,23 +60,36 @@ class MainService():
                         prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
 
                     else:
-                
-                        prediction = self.ai_app.predict(merged_text, lv=lv)
-                    
+                        
+                        reason_char = self.fuzzy_center.find_fuzzy_block_word(merged_text)
 
-                        self.store_temporary_text(
-                            text=text,
-                            user=user,
-                            room=room,
-                            lv=lv,
-                            anchor=anchor,
-                            prediction=prediction,
-                        )
+                        if reason_char:
+
+                            prediction = self.STATUS_PREDICTION_BLOCK_WORD
+
+                        else:
+
+                            prediction, reason_char = self.ai_app.predict(merged_text, lv=lv)
+
+                            self.store_temporary_text(
+                                text=text,
+                                user=user,
+                                room=room,
+                                lv=lv,
+                                anchor=anchor,
+                                prediction=prediction,
+                            )
+                        
         else:
 
             prediction = self.STATUS_PREDICTION_NO_MSG
 
         # print('prediction :', prediction)
+        
+        self.saveRecord(prediction, message=message, text=text, reason=reason_char)
+        
+        
+        
         result['user'] = user
         result['room'] = room
         result['message'] = message
@@ -88,3 +104,21 @@ class MainService():
 
     def get_merged_text(self, text, user, room):
         return self.fuzzy_center.get_merged_text(text, user, room)
+
+    def saveRecord(self, prediction, message, text='', reason=''):
+        if prediction == 0:
+            # save to good sentence
+            record = GoodSentence(
+                message=message[:95],
+                text=text[:63],
+            )
+        else:
+            # save to blocked
+            record = BlockedSentence(
+                message=message[:95],
+                text=text[:63],
+                reason=reason[:63] if reason else '',
+                status=int(prediction),
+            )
+
+        record.save()

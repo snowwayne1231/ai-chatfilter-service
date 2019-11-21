@@ -2,6 +2,7 @@ from channels.generic.websocket import WebsocketConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import async_to_sync
 from service.main import MainService
+from datetime import datetime
 
 # from django.conf import settings
 import json
@@ -37,16 +38,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json.get('message', None)
         user = text_data_json.get('user', None)
         room = text_data_json.get('room', None)
-
+        print('=== think start ===')
+        _now = datetime.now()
         results = main_service.think(message=message, user=user, room=room)
         print('=== results ===')
         print(results)
+        _now_2 = datetime.now()
+        _spend_time = (_now_2 - _now).total_seconds()
+        print('=== Total spend seconds: ', _spend_time)
 
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'user': user,
+                'user': user, 
                 'room': room,
                 'message': results.get('message', ''),
                 'prediction': int(results.get('prediction', 0)),
