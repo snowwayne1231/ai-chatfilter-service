@@ -4,10 +4,13 @@ from django.apps import AppConfig
 
 from datetime import datetime
 from .classes.map_hex import mapHexes
+from .models import CustomDictionaryWord
+from service.models import Blockword
 
 import xlrd
 import os
 import re
+import jieba
 
 
 class DataparserConfig(AppConfig):
@@ -93,7 +96,7 @@ class MessageParser():
     regex_bracket = re.compile("\{[^\}]*\}")
 
     def __init__(self):
-        pass
+        print('=== MessageParser init ===')
 
     
     def parse(self, string):
@@ -123,6 +126,7 @@ class MessageParser():
             text = self.regex_bracket.sub("", text)
 
         text = self.translate_special_char(text)
+        # text = self.split_word(text)
 
         return text, lv, anchor
 
@@ -151,7 +155,7 @@ class MessageParser():
             if _code >= 0x3000 and _code <= 0x303f: continue
 
             # if _code < 0x0020 or _code > 0x7e:
-            if _code < 0x002f or _code > 0x7e:
+            if _code < 0x002f or _code > 0x7e or (_code <= 0x40 and _code >= 0x3a):
                 continue
                 # out of English or digits
                 _hex16 = hex(_code)
@@ -169,3 +173,32 @@ class MessageParser():
         
         return _result
 
+
+
+class JieBaDictionary():
+    """
+
+    """
+    def __init__(self):
+        self.refresh_dictionary()
+
+
+    def split_word(self, text=''):
+        return [word for word in jieba.cut(text)] if text else []
+
+
+    def refresh_dictionary(self):
+        
+        dictionary_list = CustomDictionaryWord.objects.all()
+        for d in dictionary_list:
+            text = d.text
+            jieba.add_word(text)
+
+        blockwords = Blockword.objects.all()
+        for b in blockwords:
+            text = b.text
+            jieba.add_word(text)
+
+        
+        # print(dictionary_list)
+        # print(blockwords)

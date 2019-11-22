@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # from copy import deepcopy
-from dataparser.apps import MessageParser
+from dataparser.apps import JieBaDictionary
 
 import numpy as np
 import tensorflow as tf
@@ -18,27 +18,27 @@ class BasicChineseFilter():
 
     columns = ['ROOM', 'ACCOUNT', 'MESSAGE', 'STATUS', 'TEXT', 'LV', 'ANCHOR']
     data = []
-    data_processed = []
+    splited_data_words = []
     model = None
     tokenizer_vocabulary = set()
     encoder = None
     saved_folder = None
-    message_parser = None
+    jieba_dict = None
 
     full_vocab_size = 32767
     full_words_length = 64
     status_classsets = 8
-    appended_columns = ['TEXT', 'LV', 'ANCHOR']
-    avoid_lv = 2
+    avoid_lv = 3
 
     
     def __init__(self, data = [], load_folder=None):
+
+        self.jieba_dict = JieBaDictionary()
         
         if len(data) > 0:
 
             if self.check_data_shape(data):
 
-                self.message_parser = MessageParser()
                 # self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
                 self.tokenizer = tfds.features.text.Tokenizer()
 
@@ -58,7 +58,6 @@ class BasicChineseFilter():
         if len(data) == 0:
             data = self.data
 
-        # _len_should = len(self.columns) - len(self.appended_columns)
         _len_should = len(self.columns)
         _isright = len(data[0]) == _len_should
 
@@ -93,17 +92,40 @@ class BasicChineseFilter():
             #         d.append(text)
             #         d.append(lv)
             #         d.append(anchor)
+            
+
 
             self.data = data
 
-            self.transfrom_column('TEXT')
+            self.split_word('TEXT')
+
+            # self.transfrom_column('TEXT')
+            self.transfrom_splited_data()
 
         return self
 
 
-    def parse_message(self, string):
-        return self.message_parser.parse(string)
 
+    def split_word(self, column):
+        if type(column) is int:
+            column_idx = column
+        elif type(column) is str:
+            column_idx = self.columns.index(column) if column in self.columns else -1
+
+        assert column_idx >= 0 and column_idx < len(self.columns)
+
+        splited_data = []
+
+        for d in self.data:
+            _text = d[column_idx]
+            _words = self.jieba_dict.split_word(_text)
+            _words = [_w for _w in _words if not _w.isdigit()]
+            
+            splited_data.append(_words)
+
+        self.splited_data_words = splited_data
+
+        return self
 
 
     def transfrom(self, data):
@@ -135,6 +157,18 @@ class BasicChineseFilter():
             _text = d[column_idx]
             d[column_idx] = self.transfrom(_text)
 
+        return self
+
+
+
+    def transfrom_splited_data(self):
+        new_data = []
+        for _words in self.splited_data_words:
+            _new_words = self.transfrom(_words)
+            new_data.append(_new_words)
+
+        self.splited_data_words = new_data
+        
         return self
 
 
@@ -236,6 +270,7 @@ class BasicChineseFilter():
 
         # np_train_x = np.array(train_x)
         # np_train_y = np.array(train_y)
+        return False
 
         BUFFER_SIZE = 50000
         BATCH_SIZE = self.full_words_length
@@ -282,9 +317,16 @@ class BasicChineseFilter():
         tokenizer_vocabulary = self.tokenizer_vocabulary
         tokenizer = tfds.features.text.Tokenizer()
         for texts in datalist:
+            
             for txt in texts:
                 tokens = tokenizer.tokenize(txt)
                 tokenizer_vocabulary.update(tokens)
+
+            print('=== tokenize_data ===')
+            print(texts)
+            break            
+
+            
         
         vocab_size = len(tokenizer_vocabulary)
         print('tokenizer_vocabulary vocab_size = ', vocab_size)
@@ -411,7 +453,7 @@ class BasicChineseFilter():
                 _result_text.append(_loc[0])
 
         # print('get_reason _result_text: ', _result_text)
-        
+
         _res = self.model.predict(_result_text)
         _i = 0
         for _ in _res:
