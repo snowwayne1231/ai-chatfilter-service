@@ -34,7 +34,7 @@ class PinYinFilter(BasicChineseFilter):
 
             # if type(_next) is list:
             #     _next = list(map(lambda a: a[-1], _next))
-            _words = [_w[-1] for _w in _words]
+            _words = [_w[0] for _w in _words]
 
             _next = ''.join(_words)
 
