@@ -17,8 +17,8 @@ class BasicChineseFilter():
     """
 
     columns = ['ROOM', 'ACCOUNT', 'MESSAGE', 'STATUS', 'TEXT', 'LV', 'ANCHOR']
+    appended_columns = ['SPLITED_WORD']
     data = []
-    splited_data_words = []
     model = None
     tokenizer_vocabulary = set()
     encoder = None
@@ -107,23 +107,27 @@ class BasicChineseFilter():
 
 
     def split_word(self, column):
+        _full_columns = self.columns + self.appended_columns
         if type(column) is int:
             column_idx = column
         elif type(column) is str:
-            column_idx = self.columns.index(column) if column in self.columns else -1
+            column_idx = _full_columns.index(column) if column in _full_columns else -1
 
-        assert column_idx >= 0 and column_idx < len(self.columns)
+        assert column_idx >= 0 and column_idx < len(_full_columns)
 
-        splited_data = []
+        _word_idx = _full_columns.index('SPLITED_WORD')
+
+        _length_of_columns = len(_full_columns)
 
         for d in self.data:
             _text = d[column_idx]
             _words = self.jieba_dict.split_word(_text)
             _words = [_w for _w in _words if not _w.isdigit()]
-            
-            splited_data.append(_words)
 
-        self.splited_data_words = splited_data
+            if len(d) == _length_of_columns:
+                d[_word_idx] = _words
+            else:
+                d.append(_words)
 
         return self
 
@@ -162,13 +166,13 @@ class BasicChineseFilter():
 
 
     def transfrom_splited_data(self):
-        new_data = []
-        for _words in self.splited_data_words:
-            _new_words = self.transfrom(_words)
-            new_data.append(_new_words)
+        _full_columns = self.columns + self.appended_columns
+        _word_idx = _full_columns.index('SPLITED_WORD')
 
-        self.splited_data_words = new_data
-        
+        for _d in self.data:
+            _words = _d[_word_idx]
+            _d[_word_idx] = self.transfrom(_words)
+
         return self
 
 
@@ -270,7 +274,7 @@ class BasicChineseFilter():
 
         # np_train_x = np.array(train_x)
         # np_train_y = np.array(train_y)
-        return False
+        # return False
 
         BUFFER_SIZE = 50000
         BATCH_SIZE = self.full_words_length
@@ -316,16 +320,11 @@ class BasicChineseFilter():
     def tokenize_data(self, datalist):
         tokenizer_vocabulary = self.tokenizer_vocabulary
         tokenizer = tfds.features.text.Tokenizer()
-        for texts in datalist:
+        for words in datalist:
             
-            for txt in texts:
-                tokens = tokenizer.tokenize(txt)
+            for word in words:
+                tokens = tokenizer.tokenize(word)
                 tokenizer_vocabulary.update(tokens)
-
-            print('=== tokenize_data ===')
-            print(texts)
-            break            
-
             
         
         vocab_size = len(tokenizer_vocabulary)
@@ -338,9 +337,11 @@ class BasicChineseFilter():
 
 
     def get_xy_data(self):
-        x_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
-        vip_lv_idx = self.columns.index('LV') if 'LV' in self.columns else -1
-        y_idx = self.columns.index('STATUS') if 'STATUS' in self.columns else -1
+        _full_columns = self.columns + self.appended_columns
+        # x_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
+        x_idx = _full_columns.index('SPLITED_WORD') if 'SPLITED_WORD' in _full_columns else -1
+        vip_lv_idx = _full_columns.index('LV') if 'LV' in _full_columns else -1
+        y_idx = _full_columns.index('STATUS') if 'STATUS' in _full_columns else -1
         new_x = []
         new_y = []
 

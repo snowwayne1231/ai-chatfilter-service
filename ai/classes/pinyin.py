@@ -30,10 +30,15 @@ class PinYinFilter(BasicChineseFilter):
         
         if type(data) is str:
             
-            _next = pinyin(data, strict=self.strict, style=Style.NORMAL, heteronym=True)
+            _words = pinyin(data, strict=self.strict, style=Style.NORMAL, heteronym=True)
 
-            if type(_next) is list:
-                _next = list(map(lambda a: a[-1], _next))
+            # if type(_next) is list:
+            #     _next = list(map(lambda a: a[-1], _next))
+            _words = [_w[-1] for _w in _words]
+
+            _next = ''.join(_words)
+
+            # print('pinyin _next: ', _next)
 
             return _next
             

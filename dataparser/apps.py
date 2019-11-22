@@ -181,6 +181,7 @@ class JieBaDictionary():
     """
     def __init__(self):
         self.refresh_dictionary()
+        print('JieBaDictionary init done.')
 
 
     def split_word(self, text=''):
