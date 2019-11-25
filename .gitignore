@@ -1,5 +1,4 @@
 *.sqlite?
-
 auth
-
 *__pycache__*
+*ini

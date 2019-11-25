@@ -9,21 +9,24 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
-
+from configparser import RawConfigParser
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+config = RawConfigParser()
+config.read(BASE_DIR+'/setting.ini')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'rnojxd^^kaofaw696cj5g_ce($e2uq2xhm*&$05kp0*m&7_4na'
+SECRET_KEY = config.get('MAIN', 'SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config.get('MAIN', 'DEBUG')
 
 ALLOWED_HOSTS = []
 
@@ -99,7 +102,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [('127.0.0.1', config.get('CHANNEL', 'CHANNEL_PORT'))],
         },
     },
 }
@@ -110,17 +113,20 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': config.get('DATABASE', 'DATABASE_ENGINE'),
+        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': config.get('DATABASE', 'DATABASE_NAME'),
+        'USER': config.get('DATABASE', 'DATABASE_USER'),
+        'PASSWORD': config.get('DATABASE', 'DATABASE_PASSWORD'),
+        'HOST': config.get('DATABASE', 'DATABASE_HOST'),
+        'PORT': config.get('DATABASE', 'DATABASE_PORT')
     },
-    'postgresql': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'NAME_OF_DB',
-        'USER': 'DB_USER_NAME',
-        'PASSWORD': 'DB_PASSWORD',
-        'HOST': 'localhost',
-        'PORT': 'PORT_NUMBER'
-    }
+    # 'postgresql': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    # },
+    # 'mysql': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    # }
 }
 
 
