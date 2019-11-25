@@ -418,7 +418,7 @@ class BasicChineseFilter():
             _words = self.jieba_dict.split_word(text)
             _words = self.transfrom(_words)
 
-            print('predictText _words: ', _words)
+            # print('predictText _words: ', _words)
 
             _result_text = []
             for _ in _words:
@@ -432,7 +432,7 @@ class BasicChineseFilter():
                 return 0
 
             test_data = np.array([_result_text])
-            print('test_data: ', test_data)
+            # print('test_data: ', test_data)
             
             predicted = self.model.predict(test_data)[0]
             passible = np.argmax(predicted)
@@ -453,7 +453,7 @@ class BasicChineseFilter():
         _words = self.jieba_dict.split_word(text)
         _words = self.transfrom(_words)
 
-        print('get_reason _words: ', _words)
+        # print('get_reason _words: ', _words)
 
         _result_text = []
         for _ in _words:
@@ -471,7 +471,7 @@ class BasicChineseFilter():
                 reason += text[_i]
             _i += 1
 
-        print('get_reason _res: ', _res)
+        # print('get_reason _res: ', _res)
 
         # print('get_reason: ', reason)
         

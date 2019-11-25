@@ -31,7 +31,7 @@ class MainService():
         return self.message_parser.parse(string)
 
 
-    def think(self, message, user = '', room = ''):
+    def think(self, message, user = '', room = '', silence=False):
         result = {}
         text = ''
         reason_char = ''
@@ -61,7 +61,7 @@ class MainService():
 
                     else:
                         
-                        reason_char = self.fuzzy_center.find_fuzzy_block_word(merged_text)
+                        reason_char = self.fuzzy_center.find_fuzzy_block_word(merged_text, silence=silence)
 
                         if reason_char:
 
@@ -69,7 +69,7 @@ class MainService():
 
                         else:
 
-                            prediction, reason_char = self.ai_app.predict(merged_text, lv=lv)
+                            prediction, reason_char = self.ai_app.predict(merged_text, lv=lv, silence=silence)
 
                             self.store_temporary_text(
                                 text=text,

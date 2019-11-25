@@ -11,8 +11,9 @@ main_service = MainService()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = 'chat_%s' % self.room_name
+        # self.room_name = self.scope['url_route']['kwargs']['room_name']
+        # self.room_group_name = 'chat_%s' % self.room_name
+        self.room_group_name = 'chatting_filter'
         # async_to_sync(self.channel_layer.group_add)(
         #     self.room_group_name,
         #     self.channel_name
@@ -23,7 +24,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        print('== connected ==')
+        print('== Consumer connected ==')
 
         await self.accept()
 
@@ -41,11 +42,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         print('=== think start ===')
         _now = datetime.now()
         results = main_service.think(message=message, user=user, room=room)
-        print('=== results ===')
+        print('=== think results ===')
         print(results)
         _now_2 = datetime.now()
         _spend_time = (_now_2 - _now).total_seconds()
-        print('=== Total spend seconds: ', _spend_time)
+        print('=== Total thinking spend seconds: ', _spend_time)
 
         await self.channel_layer.group_send(
             self.room_group_name,

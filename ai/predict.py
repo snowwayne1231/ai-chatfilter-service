@@ -11,21 +11,26 @@ from .classes.pinyin import PinYinFilter
 from dataparser.apps import MessageParser
 from .helper import print_spend_time, get_pinyin_path
 
-pinyin_saved_folder = get_pinyin_path()
-piny = PinYinFilter(load_folder=pinyin_saved_folder)
-message_parser = MessageParser()
+# pinyin_saved_folder = get_pinyin_path()
+# piny = PinYinFilter(load_folder=pinyin_saved_folder)
+# message_parser = MessageParser()
+
+from service.main import MainService
+main_service = MainService()
 
 
-def predict_by_pinyin(text = ''):
+def predict_by_pinyin(text = '', room = '', silence = False):
     
     # _st_time = datetime.now()
 
     
-    _text, _lv, _anchor = message_parser.parse(text)
+    # _text, _lv, _anchor = message_parser.parse(text)
 
-    result = piny.predictText(_text, lv=_lv)
+    # result = piny.predictText(_text, lv=_lv)
+
+    results = main_service.think(message=text, user='', room=room, silence=silence)
 
     # print_spend_time(_st_time)
 
-    return result
+    return results.get('prediction', 0)
 

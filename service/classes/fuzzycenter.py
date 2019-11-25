@@ -87,7 +87,7 @@ class FuzzyCenter():
         return res_text if len(res_text) > 0 else None
 
 
-    def find_fuzzy_block_word(self, text):
+    def find_fuzzy_block_word(self, text, silence=False):
         block_words = self.block_words
         block_sentence = self.block_sentence
         # print('find_fuzzy_block_word')
@@ -95,7 +95,9 @@ class FuzzyCenter():
         
         
         text_length = len(text)
-        if text_length == 1:
+        if text_length == 0:
+            pass
+        elif text_length == 1:
 
             extract_word = process.extractOne(text, block_words, scorer=fuzz.ratio)
             word_possible = extract_word[1]

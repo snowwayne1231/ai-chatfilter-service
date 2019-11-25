@@ -155,7 +155,7 @@ class MessageParser():
             if _code >= 0x3000 and _code <= 0x303f: continue
 
             # if _code < 0x0020 or _code > 0x7e:
-            if _code < 0x002f or _code > 0x7e or (_code <= 0x40 and _code >= 0x3a):
+            if _code < 0x0030 or _code > 0x7a or (_code >= 0x3a and _code <= 0x40 ):
                 continue
                 # out of English or digits
                 _hex16 = hex(_code)

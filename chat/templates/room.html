@@ -58,7 +58,7 @@
     
 </body>
 <script>
-    var roomName = {{ room_name_json }};
+    // var roomName = {{ room_name_json }};
     var randomUsers = new Array(3).fill(0).map(e => {
         return Math.random().toString(16).substring(2,8);
     });
@@ -66,7 +66,9 @@
         return Math.random().toString(16).substring(2,6);
     });
 
-    window.conn = ConnWebSocket(roomName);
+    var maxSocketRetry = 15;
+
+    window.conn = ConnWebSocket();
 
     document.querySelector('#chat-message-input').focus();
     document.querySelector('#chat-message-input').onkeyup = function(e) {
@@ -90,10 +92,18 @@
 
     
 
-    function ConnWebSocket(name) {
+    function ConnWebSocket(name='') {
+        if (window.conn) {
+            delete window.conn.onmessage
+            delete window.conn.onclose
+            delete window.conn.onerror
+            delete window.conn
+        }
+
         var chatSocket = new WebSocket(
-            'ws://' + window.location.host +
-            '/ws/chat/' + name + '/');
+            // 'ws://' + window.location.host + '/ws/chat/' + name + '/'
+            'ws://' + window.location.host + '/ws/chat/'
+        );
 
         chatSocket.onmessage = function(e) {
             var data = JSON.parse(e.data);
@@ -118,19 +128,33 @@
 
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
-
-            window.setTimeout(reConnectWebSocket, 5000);
+            reConnectWebSocket()
         };
 
         chatSocket.onerror = function(e) {
-            window.setTimeout(reConnectWebSocket, 5000);
+            reConnectWebSocket()
         }
 
         return chatSocket;
     }
 
     function reConnectWebSocket() {
-        window.conn = ConnWebSocket(roomName);
+        if (window.connectedTimer) {
+            window.clearTimeout(window.connectedTimer);
+            delete window.connectedTimer;
+        }
+
+        window.connectedTimer = window.setTimeout(connection, 5000);
+    }
+
+    var conn_i = 0;
+    function connection() {
+        if (conn_i++ >= maxSocketRetry) {
+            window.alert('Please Reload This Page, The Socket Connection Can Not Be Connected.');
+        } else {
+            window.conn = ConnWebSocket();
+        }
+        
     }
 
     
