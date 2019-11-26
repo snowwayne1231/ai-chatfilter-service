@@ -308,6 +308,8 @@ class BasicChineseFilter():
                     epochs=epochs,
                     verbose=verbose,
                     validation_data=batch_test_data,
+                    steps_per_epoch=None,
+                    validation_steps=None,
                 )
                 self.save()
         except KeyboardInterrupt:
