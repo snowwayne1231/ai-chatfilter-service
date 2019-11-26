@@ -294,10 +294,10 @@ class BasicChineseFilter():
 
         print('==== batch_train_data ====')
 
-        for x, y in batch_train_data.take(1):
-            print('= batch_train_data =')
-            print(x)
-            print(y)
+        # for x, y in batch_train_data.take(1):
+        #     print('= batch_train_data =')
+        #     print(x)
+        #     print(y)
 
         # return False
 
