@@ -29,6 +29,7 @@ class BasicChineseFilter():
     full_words_length = 64
     status_classsets = 8
     avoid_lv = 3
+    length_x = 0
 
     
     def __init__(self, data = [], load_folder=None):
@@ -301,7 +302,7 @@ class BasicChineseFilter():
 
         # return False
 
-        steps = int(len(self.data) / BATCH_SIZE) - 1
+        steps = int(len(self.length_x) / BATCH_SIZE) - 1
 
         try:
             while True:
@@ -362,9 +363,11 @@ class BasicChineseFilter():
     def get_train_batchs(self):
 
         x, y = self.get_xy_data()
+        length_x = len(x)
+        self.length_x = length_x
 
         print('======== get_train_batchs =========')
-        print('total x data = ', len(x))
+        print('total x data = ', length_x)
         tokenize_set = self.tokenize_data(x)
 
         labeled_dataset = self.bathchs_labeler(x, y)
