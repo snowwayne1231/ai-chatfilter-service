@@ -39,8 +39,10 @@ sudo systemctl status redis
 > 5. wsgi
 
 > 6. virtualenv
+```shell
 sudo apt install python-virtualenv
 sudo apt-get install python3.7-venv
+```
 
 ## Install Steps
 
