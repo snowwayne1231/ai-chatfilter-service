@@ -18,12 +18,15 @@ sudo apt-get install libpq-dev python-dev
 > 2. postgresql 10.11.x
 ```shell
 sudo apt-get install postgresql-10
+sudo apt-get install postgresql-contrib
 sudo su - postgres
 psql
 \conninfo
 \password postgres
 CREATE DATABASE ai-db-name;
 \q
+
+sudo pip3 install psycopg2-binary
 ```
 
 > 3. redis
@@ -35,8 +38,15 @@ sudo systemctl status redis
 ```
 
 > 4. tensorflow 2.0+
+```shell
+sudo pip3 install tf-nightly
+
+```
 
 > 5. wsgi
+```shell
+
+```
 
 > 6. virtualenv
 ```shell
