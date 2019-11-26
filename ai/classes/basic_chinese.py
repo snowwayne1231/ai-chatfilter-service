@@ -302,7 +302,7 @@ class BasicChineseFilter():
 
         # return False
 
-        steps = int(len(self.length_x) / BATCH_SIZE) - 1
+        steps = int(self.length_x / BATCH_SIZE) - 1
 
         try:
             while True:
