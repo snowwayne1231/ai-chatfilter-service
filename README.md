@@ -26,7 +26,7 @@ psql
 CREATE DATABASE ai-db-name;
 \q
 
-sudo pip3 install psycopg2-binary
+pip install psycopg2-binary
 ```
 
 > 3. redis
@@ -39,7 +39,8 @@ sudo systemctl status redis
 
 > 4. tensorflow 2.0+
 ```shell
-sudo pip3 install tf-nightly
+pip install tf-nightly
+pip install tensorflow_datasets
 
 ```
 
@@ -63,15 +64,19 @@ cd project
 
 sudo python3 -m venv venv
 
+sudo chmod -R 777 venv
+
 source venv/bin/activate
 
 sudo cp setting.ini.example setting.ini
 
 sudo nano setting.ini
 
-sudo pip3 install -r requirement.txt
+pip install -r requirement.txt
 
-sudo python manager migrate
+python manage.py migrate
 
-sudo python manager loaddata service/seed/initial.json
+python manage.py loaddata service/seed/initial.json
+
+python manage.py createsuperuser
 ```
