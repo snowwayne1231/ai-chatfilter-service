@@ -3,6 +3,8 @@ from django.core.management.base import BaseCommand
 from ai.predict import predict_by_pinyin
 from dataparser.apps import ExcelParser
 import os
+# import gc
+
 
 class Command(BaseCommand):
     help = 'predict text status possible'
@@ -49,8 +51,8 @@ class Command(BaseCommand):
             total_wrong_predictions = {}
             total_wrong_answers = {}
 
-            mistake_delete = []
-            miss_delete = []
+            # mistake_delete = []
+            # miss_delete = []
 
             try:
 
@@ -77,10 +79,10 @@ class Command(BaseCommand):
                         total_wrong_predictions[predicted] += 1
                         total_wrong_answers[ans] += 1
 
-                        if should_be_deleted:
-                            miss_delete.append(txt)
-                        elif ai_delete:
-                            mistake_delete.append(txt)
+                        # if should_be_deleted:
+                        #     miss_delete.append(txt)
+                        # elif ai_delete:
+                        #     mistake_delete.append(txt)
 
 
                     _i += 1
@@ -90,6 +92,7 @@ class Command(BaseCommand):
                         # self.stdout.write('%.2f\r' % percent)
                         # self.stdout.flush()
                         print("Progress of Prediction: {:2.1%}".format(percent), end="\r")
+                        # gc.collect()
 
             except KeyboardInterrupt:
                 print('KeyboardInterrupt Stop.')
@@ -99,9 +102,9 @@ class Command(BaseCommand):
             print('total_legnth: ', _i)
             print('total_rights: ', total_rights)
             print(total_right_map)
-            print('total_wrongs: ', total_legnth - total_rights)
+            print('total_wrongs: ', _i - total_rights)
             print(total_wrong_predictions)
-            print(total_wrong_answers)
+            # print(total_wrong_answers)
 
             right_ratio = "{:2.1%}".format(total_rights /_i)
             print('right ratio: ', right_ratio, end="%")

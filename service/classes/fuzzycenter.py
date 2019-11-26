@@ -42,7 +42,7 @@ class FuzzyCenter():
         _now = datetime.now()
         _timestamp = datetime.timestamp(_now)
 
-        self.temporary_text_list = [_ for _ in self.temporary_text_list if (_[0] + self.temporary_timereserve) > _timestamp]
+        self.temporary_text_list = [_ for _ in self.temporary_text_list if (_[0] + self.temporary_timereserve) > _timestamp][:500]
 
         _loc = [_timestamp, text, user, room, lv, anchor, prediction]
 

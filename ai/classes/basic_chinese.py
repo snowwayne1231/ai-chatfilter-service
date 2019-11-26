@@ -432,11 +432,11 @@ class BasicChineseFilter():
                 return 0
 
             test_data = np.array([_result_text])
-            # print('test_data: ', test_data)
             
             predicted = self.model.predict(test_data)[0]
             passible = np.argmax(predicted)
 
+            # print('test_data: ', test_data)
             # print('predicted: ', predicted)
             # print('passible: ', passible)
         
@@ -445,6 +445,7 @@ class BasicChineseFilter():
             passible = 0
 
         # print('The most likely possible status: ', passible)
+        return 0
         return passible
 
 
