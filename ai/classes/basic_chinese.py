@@ -301,6 +301,8 @@ class BasicChineseFilter():
 
         # return False
 
+        steps = int(len(self.data) / BATCH_SIZE) - 1
+
         try:
             while True:
                 history = self.model.fit(
@@ -308,8 +310,8 @@ class BasicChineseFilter():
                     epochs=epochs,
                     verbose=verbose,
                     validation_data=batch_test_data,
-                    steps_per_epoch=BUFFER_SIZE,
-                    validation_steps=BUFFER_SIZE,
+                    steps_per_epoch=steps,
+                    validation_steps=steps,
                 )
                 self.save()
         except KeyboardInterrupt:
