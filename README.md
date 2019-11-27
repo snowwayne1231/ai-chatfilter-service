@@ -61,6 +61,14 @@ sudo pip3 install uwsgi
 
 ```
 
+> 7. nginx
+```shell
+sudo apt-get install nginx
+sudo /etc/init.d/nginx start
+
+```
+
+depending [article]:https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html do the section of "Configure nginx for your site"
 
 
 ## Install Steps

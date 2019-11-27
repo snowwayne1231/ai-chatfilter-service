@@ -30,7 +30,6 @@ DEBUG = config.get('MAIN', 'DEBUG')
 
 ALLOWED_HOSTS = [_.strip() for _ in config.get('MAIN', 'ALLOWED_HOSTS').split(',')]
 
-print(ALLOWED_HOSTS)
 # Application definition
 
 INSTALLED_APPS = [
