@@ -67,8 +67,16 @@ sudo apt-get install nginx
 sudo /etc/init.d/nginx start
 
 ```
-
 depending <https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html> do the section of "Configure nginx for your site"
+
+```shell
+sudo cp nginx.conf.example nginx.conf
+```
+then chang all the path in nginx.conf file
+
+```shell
+sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/sites-enabled/
+```
 
 
 ## Install Steps
@@ -97,5 +105,7 @@ python manage.py migrate
 python manage.py loaddata service/seed/initial.json
 
 python manage.py createsuperuser
+
+python manage.py collectstatic
 
 ```
