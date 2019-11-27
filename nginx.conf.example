@@ -8,7 +8,7 @@ server {
     # the port site will be served on
     listen 8000;
     # the domain name it will serve for
-    server_nme 172.16.20.120;
+    server_name 172.16.20.120;
     charset utf-8;
 
     #max upload size
