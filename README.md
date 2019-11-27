@@ -6,13 +6,16 @@
 ```shell
 sudo apt update
 sudo apt-get install python3.7
+
 sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2
 sudo update-alternatives --config python3
 python3 -V
-sudo apt-get install python-apt
-sudo apt-get install python3-pip
-sudo apt-get install libpq-dev python-dev
+
+sudo apt-get install -y python-apt
+sudo apt-get install -y python3-pip
+sudo apt-get install -y libpq-dev python-dev
+sudo apt-get install -y python-levenshtein
 ```
 
 > 2. postgresql 10.11.x
@@ -26,7 +29,6 @@ psql
 CREATE DATABASE ai-db-name;
 \q
 
-pip install psycopg2-binary
 ```
 
 > 3. redis
@@ -37,23 +39,28 @@ sudo systemctl restart redis.service
 sudo systemctl status redis
 ```
 
-> 4. tensorflow 2.0+
+> 4. virtualenv
+```shell
+sudo apt-get install python-virtualenv
+sudo apt-get install python3.7-venv
+```
+
+> 5. tensorflow 2.0+
+
+Should be install after
+
 ```shell
 pip install tf-nightly
 pip install tensorflow_datasets
 
 ```
 
-> 5. wsgi
+> 6. wsgi
 ```shell
 
 ```
 
-> 6. virtualenv
-```shell
-sudo apt install python-virtualenv
-sudo apt-get install python3.7-venv
-```
+
 
 ## Install Steps
 
@@ -74,9 +81,12 @@ sudo nano setting.ini
 
 pip install -r requirement.txt
 
+pip install psycopg2-binary
+
 python manage.py migrate
 
 python manage.py loaddata service/seed/initial.json
 
 python manage.py createsuperuser
+
 ```
