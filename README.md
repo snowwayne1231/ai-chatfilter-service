@@ -68,7 +68,7 @@ sudo /etc/init.d/nginx start
 
 ```
 
-depending [article]:https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html do the section of "Configure nginx for your site"
+depending <https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html> do the section of "Configure nginx for your site"
 
 
 ## Install Steps
