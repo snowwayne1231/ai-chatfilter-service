@@ -108,4 +108,6 @@ python manage.py createsuperuser
 
 python manage.py collectstatic
 
+sudo apt install nginx supervisor
+
 ```

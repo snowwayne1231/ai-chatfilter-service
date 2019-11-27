@@ -103,6 +103,7 @@ CHANNEL_LAYERS = {
         'CONFIG': {
             "hosts": [('127.0.0.1', config.get('CHANNEL', 'CHANNEL_PORT'))],
         },
+        # "ROUTING": "service.routing",
     },
 }
 
