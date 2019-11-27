@@ -28,7 +28,7 @@ SECRET_KEY = config.get('MAIN', 'SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config.get('MAIN', 'DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = list(config.get('MAIN', 'ALLOWED_HOSTS'))
 
 
 # Application definition

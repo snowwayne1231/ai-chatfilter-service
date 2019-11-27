@@ -14,7 +14,7 @@ python3 -V
 
 sudo apt-get install -y python-apt
 sudo apt-get install -y python3-pip
-sudo apt-get install -y libpq-dev python-dev
+sudo apt-get install -y libpq-dev python-dev python3.7-dev
 sudo apt-get install -y python-levenshtein
 ```
 
@@ -57,6 +57,7 @@ pip install tensorflow_datasets
 
 > 6. wsgi
 ```shell
+sudo pip3 install uwsgi
 
 ```
 
