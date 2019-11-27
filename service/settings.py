@@ -28,9 +28,9 @@ SECRET_KEY = config.get('MAIN', 'SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config.get('MAIN', 'DEBUG')
 
-ALLOWED_HOSTS = config.get('MAIN', 'ALLOWED_HOSTS')
+ALLOWED_HOSTS = [_.strip() for _ in config.get('MAIN', 'ALLOWED_HOSTS').split(',')]
 
-
+print(ALLOWED_HOSTS)
 # Application definition
 
 INSTALLED_APPS = [
