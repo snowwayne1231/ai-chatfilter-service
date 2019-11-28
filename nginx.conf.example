@@ -4,6 +4,10 @@ upstream django {
     server 127.0.0.1:8001;
 }
 
+upstream channels-backend {
+    server localhost:8000;
+}
+
 server {
     # the port site will be served on
     listen 8000;
@@ -27,5 +31,24 @@ server {
     location / {
         uwsgi_pass django;
         include /path/to/mysite/uwsgi_params;
+    }
+
+    # 
+    location /ws {
+        try_files $uri @proxy_to_app;
+    }
+
+    location @proxy_to_app {
+        proxy_pass http://127.0.0.1;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $server_name;
     }
 }

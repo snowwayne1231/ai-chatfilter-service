@@ -108,6 +108,44 @@ python manage.py createsuperuser
 
 python manage.py collectstatic
 
-sudo apt install nginx supervisor
+```
 
+# for linux setting
+```shell
+sudo apt install supervisor
+```
+setting supervisor <https://channels.readthedocs.io/en/latest/deploying.html>
+create the supervisor configuration file (often located in /etc/supervisor/conf.d/)
+
+```file
+[fcgi-program:asgi]
+# TCP socket used by Nginx backend upstream
+socket=tcp://localhost:8000
+
+# Directory where your site's project files are located
+directory=/my/app/path
+
+# Each process needs to have a separate socket file, so we use process_num
+# Make sure to update "mysite.asgi" to match your project name
+command=daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers mysite.asgi:application
+
+# Number of processes to startup, roughly the number of CPUs you have
+numprocs=4
+
+# Give each process a unique name so they can be told apart
+process_name=asgi%(process_num)d
+
+# Automatically start and recover processes
+autostart=true
+autorestart=true
+
+# Choose where you want your log to go
+stdout_logfile=/your/log/asgi.log
+redirect_stderr=true
+```
+
+```shell
+sudo supervisord -c /etc/supervisor/supervisord.conf
+sudo supervisorctl reread
+sudo supervisorctl update
 ```
