@@ -1,16 +1,16 @@
 [fcgi-program:asgi]
 # TCP socket used by Nginx backend upstream
-socket=tcp://localhost:8000
+socket=tcp://localhost:8021
 
 # Diretory where your site's project files are located
 directory=/ai/ai-chatfilter-service
 
 # Each process need to have separate socket file, so we use process_num
 # Make soure to update "mysite.asgi" to match your project name
-command=daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers service.asgi:application
+command=source /ai/venv/bin/activate && daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers service.asgi:application
 
 # Number of processes to startup roughly the number of CPUs you have
-numprocs=4
+numprocs=1
 
 # Give each process a unique name so they can be told apart
 process_name=asgi%(process_num)d
@@ -27,7 +27,7 @@ redirect_stderr=true
 
 directory=/ai/ai-chatfilter-service
 
-command=uwsgi --socket :8000 --wsgi-file service/wsgi.py
+command=source /ai/venv/bin/activate && uwsgi --socket :8000 --wsgi-file service/wsgi.py
 
 autostart=true
 autorestart=true
