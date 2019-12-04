@@ -2,7 +2,8 @@ import socket
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-host = '127.0.0.1'
+# host = '127.0.0.1'
+host = '172.16.20.120'
 port = 8025
 bufsize = 4096
 addr = (host, port)

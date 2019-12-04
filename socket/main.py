@@ -7,14 +7,14 @@ addr = (host, port)
 
 class socketTcp(Tcp):
     def handle(self):
-        print('clinet has connected, address: ', self.client_address)
+        print('clinet has connected, address: ', self.client_address, flush=True)
         while True:
             recived = self.request.recv(4096)
             if not recived:
                 break
 
             unicode_string = recived.decode('utf-8')
-            print('unicode string recived: ', unicode_string)
+            print('unicode string recived: ', unicode_string, flush=True)
             self.request.sendall(recived)
 
 if __name__ == '__main__':
