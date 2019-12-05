@@ -34,3 +34,9 @@ autorestart=true
 
 stdout_logfile=/ai/logs/wsgi.log
 
+
+[program:socket]
+
+directory=/ai/ai-chatfilter-service
+
+command=/ai/venv/bin/python socket/main.py -p 8025
