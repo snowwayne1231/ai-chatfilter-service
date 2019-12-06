@@ -2,7 +2,8 @@
 
 ## Requirements
 
-> 1. python3.7 / pip3
+> 1. python3.7 / pip3 and some dependencies
+>> for Debian Linux (ubuntu)
 ```shell
 sudo apt update
 sudo apt-get install python3.7
@@ -14,24 +15,50 @@ python3 -V
 
 sudo apt-get install -y python-apt
 sudo apt-get install -y python3-pip
-sudo apt-get install -y libpq-dev python-dev python3.7-dev
-sudo apt-get install -y python-levenshtein
+sudo apt-get install -y python-dev python3.7-dev python-levenshtein
+```
+
+>> for Redhat Linux (centos)
+```shell
+sudo yum update
+sudo yum -y install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gcc make libffi-devel
+
+sudo yum -y install epel-release
+sudo yum -y install python-pip
+sudo pip install wget
+
+wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+tar -zxvf Python-3.7.5.tgz
+cd Python-3.7.5
+./configure prefix=/usr/local/python3
+sudo make install
+
+sudo ln -s /usr/local/python3/bin/python3.7 /usr/bin/python3
+sudo ln -s /usr/local/python3/bin/pip3.7 /usr/bin/pip3
+python3 -V
+
+sudo yum -y install python-devel python3-devel python-Levenshtein
 ```
 
 > 2. postgresql 10.11.x
+>> for Debian Linux (ubuntu)
 ```shell
 sudo apt-get install postgresql-10
-sudo apt-get install postgresql-contrib
+sudo apt-get install postgresql-contrib libpq-dev
 sudo su - postgres
 psql
 \conninfo
 \password postgres
 CREATE DATABASE ai-db-name;
 \q
-
 ```
 
-> 3. redis
+>> for Redhat Linux (centos)
+```shell
+sudo yum -y install postgresql-libs
+```
+
+> 3. redis server
 ```shell
 sudo apt install redis-server
 sudo nano /etc/redis/redis.conf  // change supervised no > supervised systemd
