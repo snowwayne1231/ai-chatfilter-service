@@ -195,7 +195,10 @@ pip install tensorflow_datasets
 pip install -r requirement.txt
 
 pip install psycopg2-binary
+```
 
+### 4. do django framework initialize
+```shell
 python manage.py migrate
 
 python manage.py loaddata service/seed/initial.json
@@ -203,10 +206,16 @@ python manage.py loaddata service/seed/initial.json
 python manage.py createsuperuser
 
 python manage.py collectstatic
-
 ```
 
-# for linux setting
+### 5. trainning ai
+looking helper and see how to use train
+```shell
+python manage.py train -h
+```
+
+
+# for linux product setting
 ```shell
 sudo apt install supervisor
 ```
