@@ -2,8 +2,8 @@
 
 ## Requirements
 
-> 1. python3.7 / pip3 and some dependencies
->> for Debian Linux (ubuntu)
+### 1. python3.7 / pip3 and some dependencies
+> for Debian Linux (ubuntu)
 ```shell
 sudo apt update
 sudo apt-get install python3.7
@@ -18,7 +18,7 @@ sudo apt-get install -y python3-pip
 sudo apt-get install -y python-dev python3.7-dev python-levenshtein
 ```
 
->> for Redhat Linux (centos)
+> for Redhat Linux (centos)
 ```shell
 sudo yum update
 sudo yum -y install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gcc make libffi-devel
@@ -40,8 +40,9 @@ python3 -V
 sudo yum -y install python-devel python3-devel python-Levenshtein
 ```
 
-> 2. postgresql 10.11.x
->> for Debian Linux (ubuntu)
+
+### 2. postgresql 10.11.x
+> for Debian Linux (ubuntu)
 ```shell
 sudo apt-get install postgresql-10
 sudo apt-get install postgresql-contrib libpq-dev
@@ -53,12 +54,26 @@ CREATE DATABASE ai-db-name;
 \q
 ```
 
->> for Redhat Linux (centos)
+> for Redhat Linux (centos)
 ```shell
-sudo yum -y install postgresql-libs
+sudo rpm -Uvh https://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
+sudo yum -y install postgresql10-server postgresql10
+sudo yum -y install postgresql-contrib postgresql-libs
+sudo /usr/pgsql-10/bin/postgresql-10-setup initdb
+
+systemctl start postgresql-10.service
+systemctl enable postgresql-10.service
+
+sudo passwd postgres
+sudo su - postgres -c "psql"
+\conninfo
+\password postgres
+CREATE DATABASE ai-db-name;
+\q
 ```
 
-> 3. redis server
+
+### 3. redis server
 ```shell
 sudo apt install redis-server
 sudo nano /etc/redis/redis.conf  // change supervised no > supervised systemd
