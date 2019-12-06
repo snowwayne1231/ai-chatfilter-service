@@ -190,11 +190,8 @@ pip install tf-nightly
 pip install tensorflow_datasets
 ```
 
-
-
-
+### 3. install python librarys
 ```shell
-
 pip install -r requirement.txt
 
 pip install psycopg2-binary
