@@ -74,6 +74,7 @@ CREATE DATABASE ai-db-name;
 
 
 ### 3. redis server
+> for Debian Linux (ubuntu)
 ```shell
 sudo apt install redis-server
 sudo nano /etc/redis/redis.conf  // change supervised no > supervised systemd
@@ -81,62 +82,118 @@ sudo systemctl restart redis.service
 sudo systemctl status redis
 ```
 
-> 4. virtualenv
+> for Redhat Linux (centos)
+```shell
+sudo yum -y install epel-release yum-utils
+sudo yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+sudo yum-config-manager --enable remi
+sudo yum -y install redis
+sudo systemctl start redis
+sudo systemctl enable redis
+sudo systemctl status redis
+```
+
+
+### 4. nginx
+depending <https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html> do the section of "Configure nginx for your site"
+
+> for Debian Linux (ubuntu)
+```shell
+sudo apt-get install nginx
+sudo /etc/init.d/nginx start
+```
+
+> for Redhat Linux (centos)
+```shell
+sudo yum -y install nginx
+sudo systemctl start nginx
+
+sudo firewall-cmd --permanent --zone=public --add-service=http 
+sudo firewall-cmd --permanent --zone=public --add-service=https
+sudo firewall-cmd --reload
+```
+
+
+### 5. virtualenv
+> for Debian Linux (ubuntu)
 ```shell
 sudo apt-get install python-virtualenv
 sudo apt-get install python3.7-venv
 ```
 
-> 5. tensorflow 2.0+
+> for Redhat Linux (centos)
+```shell
+sudo yum -y install python-virtualenv
+```
 
-Should be install after
 
+### 6. tensorflow 2.0+
+> make sure the system is matched one of below
+Ubuntu 16.04 or later
+Windows 7 or later
+macOS 10.12.6 (Sierra) or later (no GPU support)
+Raspbian 9.0 or later
+
+> make sure pip version > 19.0.
+
+
+### 7. wsgi
+> for Debian Linux (ubuntu)
+```shell
+sudo pip install uwsgi
+```
+
+> for Redhat Linux (centos)
+```shell
+sudo pip install uwsgi
+```
+
+
+## Installation Steps
+
+### 0. prepare the configs
+> first thing is make project folder and clone the project of ai chat filter
+```shell
+mkdir /[mysite]
+cd /[mysite]
+git clone ...
+```
+
+> copy and chang all the path in nginx.conf file then make symbolic link
+```shell
+cp nginx.conf.example nginx.conf
+nano nginx.conf
+sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/sites-enabled/
+or
+sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/conf.d/
+```
+
+> copy setting.ini and chagne config you need
+```shell
+cp setting.ini.example setting.ini
+nano setting.ini
+```
+
+### 1. build up virtual environment
+```shell
+cd /[mysite]
+python3 -m venv venv
+chmod -R 777 venv
+source venv/bin/activate
+python -V
+pip -V
+```
+
+### 2. install tensorflow 2.0 - lastest
 ```shell
 pip install tf-nightly
 pip install tensorflow_datasets
-
-```
-
-> 6. wsgi
-```shell
-sudo pip3 install uwsgi
-
-```
-
-> 7. nginx
-```shell
-sudo apt-get install nginx
-sudo /etc/init.d/nginx start
-
-```
-depending <https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html> do the section of "Configure nginx for your site"
-
-```shell
-sudo cp nginx.conf.example nginx.conf
-```
-then chang all the path in nginx.conf file
-
-```shell
-sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/sites-enabled/
 ```
 
 
-## Install Steps
+
 
 ```shell
-sudo git clone ...
-
-cd project
-
-sudo python3 -m venv venv
-
-sudo chmod -R 777 venv
-
-source venv/bin/activate
-
-sudo cp setting.ini.example setting.ini
-
-sudo nano setting.ini
 
 pip install -r requirement.txt
 
