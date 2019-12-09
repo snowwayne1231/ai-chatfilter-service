@@ -1,6 +1,6 @@
 [fcgi-program:asgi]
 # TCP socket used by Nginx backend upstream
-socket=tcp://localhost:8021
+socket=tcp://127.0.0.1:8021
 
 # Diretory where your site's project files are located
 directory=/ai/ai-chatfilter-service

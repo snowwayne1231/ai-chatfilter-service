@@ -158,16 +158,39 @@ sudo pip install uwsgi
 
 ### 0. prepare the configs
 > first thing is make project folder and clone the project of ai chat filter
+> for example the project name is "ai":
 ```shell
-mkdir /[mysite]
-cd /[mysite]
+mkdir /ai
+cd /ai
 git clone ...
 ```
 
-> copy and chang all the path in nginx.conf file then make symbolic link
+> copy and chang all the path in nginx.conf file
 ```shell
 cp nginx.conf.example nginx.conf
 nano nginx.conf
+```
+file example project name is "ai":
+```file
+# Django media
+location /media {
+    alias /path/to/mysite/media;
+}
+```
+change all "/path/to/mysite/" to "/ai/ai-chatfilter-service/"
+```file
+# Django media
+location /media {
+    alias /ai/ai-chatfilter-service/media;
+}
+```
+change server name you own
+```file
+server_name 172.16.20.120;
+```
+
+>  make symbolic link
+```shell
 sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/sites-enabled/
 or
 sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/conf.d/
@@ -178,10 +201,21 @@ sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/conf.d/
 cp setting.ini.example setting.ini
 nano setting.ini
 ```
+change "ALLOWED_HOSTS" and "DATABASE"
+```file
+ALLOWED_HOSTS = 127.0.0.1, 172.16.20.120
+
+[DATABASE]
+DATABASE_NAME = DB_NAME
+DATABASE_USER = DB_USER_NAME
+DATABASE_PASSWORD = DB_PASSWORD
+```
+
 
 ### 1. build up virtual environment
+> for example the project name is "ai":
 ```shell
-cd /[mysite]
+cd /ai
 python3 -m venv venv
 chmod -R 777 venv
 source venv/bin/activate
@@ -190,6 +224,8 @@ pip -V
 ```
 
 ### 2. install tensorflow 2.0 - lastest
+> before doing this you've make sure you already got "venv" environment
+> install what python's need in "venv"
 ```shell
 pip install tf-nightly
 pip install tensorflow_datasets
@@ -203,6 +239,7 @@ pip install psycopg2-binary
 ```
 
 ### 4. do django framework initialize
+> build up the data and static files
 ```shell
 python manage.py migrate
 
@@ -214,48 +251,49 @@ python manage.py collectstatic
 ```
 
 ### 5. trainning ai
-looking helper and see how to use train
+> if you need some help then type -h have a look on helper and see how to use train
 ```shell
 python manage.py train -h
+
+python manage.py train -i ai/assets/..
 ```
 
 
-# for linux product setting
+# for linux product deploy using supervisor
+setting supervisor <http://supervisord.org/configuration.html>
+> for Debian Linux (ubuntu)
 ```shell
 sudo apt install supervisor
-```
-setting supervisor <https://channels.readthedocs.io/en/latest/deploying.html>
-create the supervisor configuration file (often located in /etc/supervisor/conf.d/)
 
-```file
-[fcgi-program:asgi]
-# TCP socket used by Nginx backend upstream
-socket=tcp://localhost:8000
-
-# Directory where your site's project files are located
-directory=/my/app/path
-
-# Each process needs to have a separate socket file, so we use process_num
-# Make sure to update "mysite.asgi" to match your project name
-command=daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers mysite.asgi:application
-
-# Number of processes to startup, roughly the number of CPUs you have
-numprocs=4
-
-# Give each process a unique name so they can be told apart
-process_name=asgi%(process_num)d
-
-# Automatically start and recover processes
-autostart=true
-autorestart=true
-
-# Choose where you want your log to go
-stdout_logfile=/your/log/asgi.log
-redirect_stderr=true
-```
-
-```shell
-sudo supervisord -c /etc/supervisor/supervisord.conf
 sudo supervisorctl reread
 sudo supervisorctl update
+sudo supervisorctl start all
+
+```
+
+> for Redhat Linux (centos)
+```shell
+sudo yum -y install supervisor
+
+sudo systemctl start supervisord
+sudo systemctl enable supervisord
+sudo systemctl status supervisord
+```
+
+> copy and change config
+```shell
+cp supervisor.conf.example supervisor.conf
+nano superviosr.conf
+```
+
+```file
+
+```
+
+
+> make logs dir in project
+> for example the project name is "ai":
+```shell
+mkdir /ai/logs
+chmod -R 777 /ai/logs
 ```
