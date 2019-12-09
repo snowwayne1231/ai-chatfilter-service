@@ -202,7 +202,7 @@ cp setting.ini.example setting.ini
 nano setting.ini
 ```
 change "ALLOWED_HOSTS" and "DATABASE"
-```file
+```EditorConfig
 ALLOWED_HOSTS = 127.0.0.1, 172.16.20.120
 
 [DATABASE]
