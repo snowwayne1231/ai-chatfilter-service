@@ -211,6 +211,13 @@ DATABASE_USER = DB_USER_NAME
 DATABASE_PASSWORD = DB_PASSWORD
 ```
 
+> make logs dir in project
+> for example the project name is "ai":
+```Shell
+mkdir /ai/logs
+chmod -R 777 /ai/logs
+```
+
 
 ### 1. build up virtual environment
 > for example the project name is "ai":
@@ -259,7 +266,7 @@ python manage.py train -i ai/assets/..
 ```
 
 
-# for linux product deploy using supervisor
+## For linux product deploy using supervisor
 setting supervisor <http://supervisord.org/configuration.html>
 > for Debian Linux (ubuntu)
 ```Shell
@@ -278,22 +285,37 @@ sudo yum -y install supervisor
 sudo systemctl start supervisord
 sudo systemctl enable supervisord
 sudo systemctl status supervisord
+sudo firewall-cmd --permanent --zone=public --add-port=8025/tcp
 ```
 
 > copy and change config
 ```Shell
 cp supervisor.conf.example supervisor.conf
 nano superviosr.conf
+sudo ln -s /path/to/mysite/supervisor.conf /etc/supervisord.d/ai-chatfilter-service.ini
 ```
 
 ```EditorConfig
+...
+```
 
+> reload supervisor
+```Shell
+sudo supervisorctl reload
+sudo supervisorctl reread
+sudo supervisorctl update
+```
+
+> reload nginx
+```Shell
+sudo systemctl reload nginx
+sudo systemctl restart nginx
 ```
 
 
-> make logs dir in project
-> for example the project name is "ai":
+## Others
+
+> Check the SELinux and add policy to nginx or just disable it
 ```Shell
-mkdir /ai/logs
-chmod -R 777 /ai/logs
+sestatus
 ```

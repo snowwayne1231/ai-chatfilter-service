@@ -4,15 +4,15 @@ from chat_package import pack, unpack
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-host = '127.0.0.1'
-# host = '172.16.20.120'
+# host = '127.0.0.1'
+host = '172.16.20.120'
 port = 8025
 bufsize = 1024
 
 argvs = sys.argv[1:]
 
 try:
-    opts, args = getopt.getopt(argvs, "hp:")
+    opts, args = getopt.getopt(argvs, "h:p:")
 except getopt.GetoptError as err:
     print(err)
     sys.exit(2)
@@ -20,6 +20,9 @@ except getopt.GetoptError as err:
 for o, a in opts:
     if o == "-p":
         port = int(a)
+
+    if o == "-h":
+        host = str(a)
 
 addr = (host, port)
 
