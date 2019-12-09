@@ -72,6 +72,11 @@ CREATE DATABASE ai-db-name;
 \q
 ```
 
+> finally make sure pg_hba.conf is trust all localhost
+```shell
+postgres=# show_hba_file;
+```
+
 
 ### 3. redis server
 > for Debian Linux (ubuntu)
