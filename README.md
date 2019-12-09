@@ -171,21 +171,21 @@ cp nginx.conf.example nginx.conf
 nano nginx.conf
 ```
 file example project name is "ai":
-```file
+```EditorConfig
 # Django media
 location /media {
     alias /path/to/mysite/media;
 }
 ```
 change all "/path/to/mysite/" to "/ai/ai-chatfilter-service/"
-```file
+```EditorConfig
 # Django media
 location /media {
     alias /ai/ai-chatfilter-service/media;
 }
 ```
 change server name you own
-```file
+```EditorConfig
 server_name 172.16.20.120;
 ```
 
@@ -286,7 +286,7 @@ cp supervisor.conf.example supervisor.conf
 nano superviosr.conf
 ```
 
-```file
+```EditorConfig
 
 ```
 
