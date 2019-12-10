@@ -20,9 +20,9 @@ server {
     client_max_body_size 80M;
 
     # Django media
-    location /media {
-        alias /path/to/mysite/media;
-    }
+    # location /media {
+        # alias /path/to/mysite/media;
+    # }
 
     # Django static file
     location /static {
@@ -31,8 +31,8 @@ server {
 
     # Finally send all non-media requests to the Django server.
     location / {
-        uwsgi_pass django;
-        include /path/to/mysite/uwsgi_params;
+        proxy_pass http://django;
+        # include /path/to/mysite/uwsgi_params;
     }
 
     # 
@@ -41,7 +41,7 @@ server {
     }
 
     location @proxy_to_app {
-        proxy_pass http://channels-backend;
+        proxy_pass http://django;
 
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;

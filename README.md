@@ -46,12 +46,6 @@ sudo yum -y install python-devel python3-devel python-Levenshtein
 ```Shell
 sudo apt-get install postgresql-10
 sudo apt-get install postgresql-contrib libpq-dev
-sudo su - postgres
-psql
-\conninfo
-\password postgres
-CREATE DATABASE ai-db-name;
-\q
 ```
 
 > for Redhat Linux (centos)
@@ -63,17 +57,19 @@ sudo /usr/pgsql-10/bin/postgresql-10-setup initdb
 
 systemctl start postgresql-10.service
 systemctl enable postgresql-10.service
+```
 
-sudo passwd postgres
+> create a new database and setting db users
+```Shell
 sudo su - postgres -c "psql"
 \conninfo
 \password postgres
-CREATE DATABASE ai-db-name;
+CREATE DATABASE [name of database];
 \q
 ```
 
 > finally make sure pg_hba.conf is trust all localhost
-```Shell
+```SQL
 postgres=# show_hba_file;
 ```
 
@@ -112,7 +108,10 @@ sudo /etc/init.d/nginx start
 ```Shell
 sudo yum -y install nginx
 sudo systemctl start nginx
+```
 
+> allow 80 and 443 port in firewall
+```Shell
 sudo firewall-cmd --permanent --zone=public --add-service=http 
 sudo firewall-cmd --permanent --zone=public --add-service=https
 sudo firewall-cmd --reload
@@ -139,16 +138,11 @@ Windows 7 or later
 macOS 10.12.6 (Sierra) or later (no GPU support)
 Raspbian 9.0 or later
 
-> make sure pip version > 19.0.
+> make sure pip version > 19.0.x
 
 
 ### 7. wsgi
-> for Debian Linux (ubuntu)
-```Shell
-sudo pip install uwsgi
-```
-
-> for Redhat Linux (centos)
+> for both Linux system
 ```Shell
 sudo pip install uwsgi
 ```

@@ -34,8 +34,6 @@ def pack(cmd, **options):
 
         msgsize = len(msgtxt)
         
-        # msgtxt = '紅燒翅膀我喜歡吃'
-        
         size = struct.calcsize(ChatFilterPackage.fmt) + msgsize
 
         package = struct.pack(ChatFilterPackage.fmt, cmd, size, msgid, msgsize) + bytes(msgtxt, 'utf-8')
