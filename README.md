@@ -96,8 +96,6 @@ sudo systemctl status redis
 
 
 ### 4. nginx
-depending <https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html> do the section of "Configure nginx for your site"
-
 > for Debian Linux (ubuntu)
 ```Shell
 sudo apt-get install nginx
@@ -110,7 +108,7 @@ sudo yum -y install nginx
 sudo systemctl start nginx
 ```
 
-> allow 80 and 443 port in firewall
+> for both linux sysyem, allow 80 and 443 port in firewall
 ```Shell
 sudo firewall-cmd --permanent --zone=public --add-service=http 
 sudo firewall-cmd --permanent --zone=public --add-service=https
@@ -132,11 +130,11 @@ sudo yum -y install python-virtualenv
 
 
 ### 6. tensorflow 2.0+
-> make sure the system is matched one of below
-Ubuntu 16.04 or later
-Windows 7 or later
-macOS 10.12.6 (Sierra) or later (no GPU support)
-Raspbian 9.0 or later
+> make sure the system is matched one of below:
++ Ubuntu 16.04 or later
++ Windows 7 or later
++ macOS 10.12.6 (Sierra) or later (no GPU support)
++ Raspbian 9.0 or later
 
 > make sure pip version > 19.0.x
 
@@ -150,63 +148,62 @@ sudo pip install uwsgi
 
 ## Installation Steps
 
-### 0. prepare the configs
-> first thing is make project folder and clone the project of ai chat filter
-> for example the project name is "ai":
+
+### 0. prepare the project
+> first thing is make project folder and clone the project of ai-chat-filter.
+**for example the project name is "ai"**:
+
++ 0.1. Clone the project
 ```Shell
 mkdir /ai
 cd /ai
 git clone ...
+cd /ai/ai-chatfilter-service
 ```
-
++ 0.2. Setting nginx config
 > copy and chang all the path in nginx.conf file
 ```Shell
 cp nginx.conf.example nginx.conf
 nano nginx.conf
 ```
-file example project name is "ai":
-```EditorConfig
-# Django media
-location /media {
-    alias /path/to/mysite/media;
+```nginx
+location /static {
+    alias /path/to/mysite/static;
 }
 ```
-change all "/path/to/mysite/" to "/ai/ai-chatfilter-service/"
-```EditorConfig
-# Django media
-location /media {
-    alias /ai/ai-chatfilter-service/media;
+> change all `/path/to/mysite/` to `/ai/ai-chatfilter-service/`
+```nginx
+location /static {
+    alias /ai/ai-chatfilter-service/static;
 }
 ```
-change server name you own
+> change server name you own or if you want pass any request change to `_`
 ```EditorConfig
-server_name 172.16.20.120;
+server_name 0.0.0.0;
 ```
-
->  make symbolic link
+>  make symbolic link to niginx configs
 ```Shell
 sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/sites-enabled/
 or
 sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/conf.d/
 ```
 
++ 0.3. Setting Project config
 > copy setting.ini and chagne config you need
 ```Shell
 cp setting.ini.example setting.ini
 nano setting.ini
 ```
-change "ALLOWED_HOSTS" and "DATABASE"
+> change "ALLOWED_HOSTS" and "DATABASE"
 ```EditorConfig
 ALLOWED_HOSTS = 127.0.0.1, 172.16.20.120
-
 [DATABASE]
 DATABASE_NAME = DB_NAME
 DATABASE_USER = DB_USER_NAME
 DATABASE_PASSWORD = DB_PASSWORD
 ```
 
-> make logs dir in project
-> for example the project name is "ai":
++ 0.4. Create logs directory in project
 ```Shell
 mkdir /ai/logs
 chmod -R 777 /ai/logs
@@ -223,6 +220,8 @@ source venv/bin/activate
 python -V
 pip -V
 ```
+> should be seen the python version at least with 3.7.5 and pip is 19+
+
 
 ### 2. install tensorflow 2.0 - lastest
 > before doing this you've make sure you already got "venv" environment
@@ -232,31 +231,42 @@ pip install tf-nightly
 pip install tensorflow_datasets
 ```
 
+
 ### 3. install python librarys
 ```Shell
 pip install -r requirement.txt
-
 pip install psycopg2-binary
 ```
 
+
 ### 4. do django framework initialize
-> build up the data and static files
+> build up the database instruction
 ```Shell
 python manage.py migrate
-
 python manage.py loaddata service/seed/initial.json
-
+```
+> create django admin superuser with following the guiding steps to finish
+```Shell
 python manage.py createsuperuser
-
+```
+> collect and copy the static file in project to improve performance
+```Shell
 python manage.py collectstatic
 ```
 
-### 5. trainning ai
-> if you need some help then type -h have a look on helper and see how to use train
-```Shell
-python manage.py train -h
 
+### 5. training ai
+> if you need some help then type `python manage.py train -h` have a look on helper and see how to use train
+```Shell
 python manage.py train -i ai/assets/..
+```
+> after upon that command, you should start an AI training now, Stop anytime when you want by key in Ctrl+C
+
+
+### 6. firewall setting
+> open tcp port for chatting socket
+```Shell
+sudo firewall-cmd --permanent --zone=public --add-port=8025/tcp
 ```
 
 
@@ -265,11 +275,6 @@ setting supervisor <http://supervisord.org/configuration.html>
 > for Debian Linux (ubuntu)
 ```Shell
 sudo apt install supervisor
-
-sudo supervisorctl reread
-sudo supervisorctl update
-sudo supervisorctl start all
-
 ```
 
 > for Redhat Linux (centos)
@@ -279,18 +284,29 @@ sudo yum -y install supervisor
 sudo systemctl start supervisord
 sudo systemctl enable supervisord
 sudo systemctl status supervisord
-sudo firewall-cmd --permanent --zone=public --add-port=8025/tcp
 ```
 
-> copy and change config
+> copy and edit config
 ```Shell
 cp supervisor.conf.example supervisor.conf
 nano superviosr.conf
-sudo ln -s /path/to/mysite/supervisor.conf /etc/supervisord.d/ai-chatfilter-service.ini
+```
++ > change all `/ai/ai-chatfilter-service` to your project's service folder
+```EditorConfig
+directory=/ai/ai-chatfilter-service
+```
++ > change all `/ai/venv/bin/python` to your virtual environment python
+```EditorConfig
+command=/ai/venv/bin/python tcpsocket/main.py -p 8025
+```
++ > change all `/ai/logs/` to your logs folder
+```EditorConfig
+stdout_logfile=/ai/logs/tcpsocket.log
 ```
 
-```EditorConfig
-...
+> symbolic link to supervisor config
+```Shell
+sudo ln -s /path/to/mysite/supervisor.conf /etc/supervisord.d/ai-chatfilter-service.ini
 ```
 
 > reload supervisor
@@ -313,3 +329,23 @@ sudo systemctl restart nginx
 ```Shell
 sestatus
 ```
+
+*SELinux might block the socket connection between nginx and supervisord*
+
+
+
+## Testing
+
+> Test the django web site is working, type domain:port on browser for example: `http://172.16.20.120:81/` you should see the screen with 404 not found page but has content like below
+```
+Using the URLconf defined in service.urls, Django tried these URL patterns, in this order:
+
+chat/
+admin/
+auth/
+auth/
+The empty path didn't match any of these.
+```
+
+> that means the website is working fine and next we change url to `http://172.16.20.120:81/chat/`, try typeing something to test websockets
+
