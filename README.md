@@ -336,6 +336,7 @@ sestatus
 
 ## Testing
 
+### 1. website
 > Test the django web site is working, type domain:port on browser for example: `http://172.16.20.120:81/` you should see the screen with 404 not found page but has content like below
 ```
 Using the URLconf defined in service.urls, Django tried these URL patterns, in this order:
@@ -349,3 +350,20 @@ The empty path didn't match any of these.
 
 > that means the website is working fine and next we change url to `http://172.16.20.120:81/chat/`, try typeing something to test websockets
 
+### 2. tcp socket
+> use tcpsocket client to test chatting binary packages.
+```Shell
+cd /ai/ai-chatfilter-service
+python tcpsocket/client.py -h 127.0.0.1 -p 8025
+```
+> you will see
+```
+Please choose package type:
+1.hearting
+2.login
+3.login response
+4.chatting
+5.chat response
+Enter number:
+```
+*everything was fine!!*
