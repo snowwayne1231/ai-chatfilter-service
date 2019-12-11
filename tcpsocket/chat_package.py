@@ -117,8 +117,8 @@ class LoginPackage(BasicStructPackage):
         cmd, size, serverid, sig = struct.unpack(self.fmt, buffer)
         self.cmd = cmd
         self.size = size
-        self.serverid = serverid.decode('utf-8')
-        self.sig = sig.decode('utf-8')
+        self.serverid = serverid.decode('utf-8').rstrip('\x00')
+        self.sig = sig.decode('utf-8').rstrip('\x00')
         # print('LoginPackage serverid: ', serverid)
 
 
@@ -154,7 +154,7 @@ class ChatFilterPackage(BasicStructPackage):
 
         print('_left_buffer: ', _left_buffer)
 
-        self.msgtxt = _left_buffer.decode('utf-8')
+        self.msgtxt = _left_buffer.decode('utf-8').rstrip('\x00')
 
 
 class ChatFilterResponsePackage(BasicStructPackage):

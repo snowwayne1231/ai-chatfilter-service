@@ -21,7 +21,7 @@ sig = config_keys.get('SERVER', 'PWD')
 
 class socketTcp(Tcp):
     def handle(self):
-        print('**Clinet version[{}] has connected, address: '.format(version), self.client_address, flush=True)
+        print('**TCPSocket Version[{}] clinet has connected, address: '.format(version), self.client_address, flush=True)
         while True:
             recived = self.request.recv(1024)
             if not recived:
@@ -40,12 +40,14 @@ class socketTcp(Tcp):
 
             elif unpacked_data.cmd == 0x040001:
                 print('Package is [ Login ]', flush=True)
-                print('serverid: ', unpacked_data.serverid, flush=True)
-                print('sig: ', unpacked_data.sig, flush=True)
+                
+                is_matched = serverid == unpacked_data.serverid and sig == unpacked_data.sig
 
-                if serverid == unpacked_data.serverid and sig == unpacked_data.sig:
+                if is_matched:
+                    print('Login Successful serverid: ', serverid, flush=True)
                     server_code = 0
                 else:
+                    print('Login Failed. unpacked_data.sig: ', unpacked_data.sig , flush=True)
                     server_code = 1
 
                 packed_res = pack(0x040002, code=server_code)
