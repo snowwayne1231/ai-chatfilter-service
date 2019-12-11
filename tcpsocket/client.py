@@ -1,6 +1,13 @@
 import socket
-import sys, getopt
+import os, sys, getopt
 from chat_package import pack, unpack
+from configparser import RawConfigParser
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+DIR = os.path.dirname(os.path.abspath(__file__))
+
+config_key = RawConfigParser()
+config_key.read(DIR+'/keys.cfg')
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 

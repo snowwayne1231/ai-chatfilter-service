@@ -1,39 +1,61 @@
 from socketserver import StreamRequestHandler as Tcp
 import socketserver
-import sys, getopt
+import os, sys, getopt, datetime
 from chat_package import pack, unpack
+from configparser import RawConfigParser
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(SOCKET_DIR)
+
+config_version = RawConfigParser()
+config_version.read(BASE_DIR+'/version.cfg')
+config_keys = RawConfigParser()
+config_keys.read(SOCKET_DIR+'/keys.cfg')
 
 host = '0.0.0.0'
 port = 8025
+version = '{}.{}'.format(config_version.get('MAIN', 'V'), config_version.get('MAIN', 'SUR'))
+serverid = config_keys.get('SERVER', 'ID')
+sig = config_keys.get('SERVER', 'PWD')
 
 class socketTcp(Tcp):
     def handle(self):
-        print('Clinet has connected, address: ', self.client_address, flush=True)
+        print('**Clinet version[{}] has connected, address: '.format(version), self.client_address, flush=True)
         while True:
             recived = self.request.recv(1024)
             if not recived:
                 break
             
             unpacked_data = unpack(recived)
-            packed_res = None
-            
-            print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, flush=True)
+
+            packed_res = pack(0x000001)
+
+            now = datetime.datetime.now()
+            print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, ' | ', now, flush=True)
 
             if unpacked_data.cmd == 0x000001:
-                print('==Hearting', flush=True)
+                print('Package is [ Hearting ]', flush=True)
+                
 
             elif unpacked_data.cmd == 0x040001:
-                print('==Login', flush=True)
+                print('Package is [ Login ]', flush=True)
                 print('serverid: ', unpacked_data.serverid, flush=True)
+                print('sig: ', unpacked_data.sig, flush=True)
 
-                packed_res = pack(0x040002, code=0)
+                if serverid == unpacked_data.serverid and sig == unpacked_data.sig:
+                    server_code = 0
+                else:
+                    server_code = 1
+
+                packed_res = pack(0x040002, code=server_code)
 
             elif unpacked_data.cmd == 0x040002:
-                print('==Login Res', flush=True)
+                print('Package is [ Login Response ]', flush=True)
                 print('code: ', unpacked_data.code, flush=True)
 
             elif unpacked_data.cmd == 0x040003:
-                print('==Chatting', flush=True)
+                print('Package is [ Chat ]', flush=True)
                 print('msgid: ', unpacked_data.msgid, flush=True)
                 print('msgtxt: ', unpacked_data.msgtxt, flush=True)
                 print('msgsize: ', unpacked_data.msgsize, flush=True)
@@ -41,13 +63,13 @@ class socketTcp(Tcp):
                 packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=0)
 
             elif unpacked_data.cmd == 0x040004:
-                print('==Chatting Res', flush=True)
+                print('Package is [ Chat Response ]', flush=True)
                 print('msgid: ', unpacked_data.msgid, flush=True)
                 print('code: ', unpacked_data.code, flush=True)
 
             else:
                 pass
-                print('==Unknow: ', flush=True)
+                print('Package Unknow.', flush=True)
             
             self.request.sendall(packed_res)
             # self.request.sendall(recived)
