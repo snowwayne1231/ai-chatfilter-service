@@ -28,8 +28,6 @@ class socketTcp(Tcp):
 
                 packed_res = pack(0x040002, code=0)
 
-                
-
             elif unpacked_data.cmd == 0x040002:
                 print('==Login Res', flush=True)
                 print('code: ', unpacked_data.code, flush=True)
