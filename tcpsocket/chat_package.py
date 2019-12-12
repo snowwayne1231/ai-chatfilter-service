@@ -31,12 +31,13 @@ def pack(cmd, **options):
 
         msgid = options.get('msgid', 0x000000)
         msgtxt = options.get('msgtxt', '')
+        msg_bytes = bytes(msgtxt, 'utf-8')
 
-        msgsize = len(msgtxt)
+        msgsize = len(msg_bytes)
         
         size = struct.calcsize(ChatFilterPackage.fmt) + msgsize
 
-        package = struct.pack(ChatFilterPackage.fmt, cmd, size, msgid, msgsize) + bytes(msgtxt, 'utf-8')
+        package = struct.pack(ChatFilterPackage.fmt, cmd, size, msgid, msgsize) + msg_bytes
         # package = struct.pack('!4i100s', cmd, size, msgid, msgsize, msgtxt.encode('utf-8'))
 
     elif cmd == ChatFilterResponsePackage.m_cmd:
@@ -140,6 +141,7 @@ class ChatFilterPackage(BasicStructPackage):
     msgid = 0x040000
     msgsize = 0x000000
     msgtxt = '' # max 100 char
+    msgbuffer = b''
 
     def parse(self, buffer):
         buffer_size = struct.calcsize(self.fmt)
@@ -151,10 +153,17 @@ class ChatFilterPackage(BasicStructPackage):
         self.size = size
         self.msgid = msgid
         self.msgsize = msgsize
+        self.msgbuffer = _left_buffer
+        
 
-        print('_left_buffer: ', _left_buffer)
+        try:
+            self.msgtxt = _left_buffer.decode('utf-8').rstrip('\x00')
+        except:
+            print('>>>>> Unpack Error msgid: ', msgid, ' | left_buffer: ', _left_buffer)
+            _left_buffer = _left_buffer[:msgsize]
+            self.msgbuffer = _left_buffer
+            self.msgtxt = _left_buffer.decode('utf-8', "ignore").rstrip('\x00')
 
-        self.msgtxt = _left_buffer.decode('utf-8').rstrip('\x00')
 
 
 class ChatFilterResponsePackage(BasicStructPackage):

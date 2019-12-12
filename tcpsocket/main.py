@@ -32,13 +32,14 @@ class socketTcp(Tcp):
             packed_res = pack(0x000001)
 
             now = datetime.datetime.now()
-            print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, ' | ', now, flush=True)
+            # print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, ' | ', now, flush=True)
 
             if unpacked_data.cmd == 0x000001:
-                print('Package is [ Hearting ]', flush=True)
-                
+                # print('Package is [ Hearting ]', flush=True)
+                pass
 
             elif unpacked_data.cmd == 0x040001:
+                print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, ' | ', now, flush=True)
                 print('Package is [ Login ]', flush=True)
                 
                 is_matched = serverid == unpacked_data.serverid and sig == unpacked_data.sig
@@ -57,12 +58,16 @@ class socketTcp(Tcp):
                 print('code: ', unpacked_data.code, flush=True)
 
             elif unpacked_data.cmd == 0x040003:
+                print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, ' | ', now, flush=True)
                 print('Package is [ Chat ]', flush=True)
                 print('msgid: ', unpacked_data.msgid, flush=True)
                 print('msgtxt: ', unpacked_data.msgtxt, flush=True)
+                print('msgbuffer: ', unpacked_data.msgbuffer, flush=True)
                 print('msgsize: ', unpacked_data.msgsize, flush=True)
 
-                packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=0)
+                status_code = 0
+
+                packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
 
             elif unpacked_data.cmd == 0x040004:
                 print('Package is [ Chat Response ]', flush=True)
