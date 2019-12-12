@@ -236,6 +236,7 @@ pip install tensorflow_datasets
 ```Shell
 pip install -r requirement.txt
 pip install psycopg2-binary
+pip install websockets
 ```
 
 

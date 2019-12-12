@@ -1,8 +1,10 @@
 from socketserver import StreamRequestHandler as Tcp
 import socketserver
-import os, sys, getopt, datetime
+import os, sys, getopt, datetime, json
 from chat_package import pack, unpack
 from configparser import RawConfigParser
+# import asyncio
+# import websockets
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +20,26 @@ port = 8025
 version = '{}.{}'.format(config_version.get('MAIN', 'V'), config_version.get('MAIN', 'SUR'))
 serverid = config_keys.get('SERVER', 'ID')
 sig = config_keys.get('SERVER', 'PWD')
+
+
+
+
+# local_websocket = None
+
+# def connect_websocket(port):
+#     uri = "ws://127.0.0.1:{}/ws/chat/".format(port)
+
+#     local_websocket = websockets.connect(uri)
+
+
+# def web_socket_send(txt):
+#     if local_websocket:
+#         print('web_socket_send txt: ', txt)
+#     else:
+#         print('local_websocket is none.')
+    
+#     return 0
+
 
 class socketTcp(Tcp):
     def handle(self):
@@ -65,6 +87,8 @@ class socketTcp(Tcp):
                 print('msgbuffer: ', unpacked_data.msgbuffer, flush=True)
                 print('msgsize: ', unpacked_data.msgsize, flush=True)
 
+                result = web_socket_send(unpacked_data.msgtxt)
+
                 status_code = 0
 
                 packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
@@ -101,5 +125,8 @@ if __name__ == '__main__':
     # server = socketserver.TCPServer(addr, socketTcp)
     server = socketserver.ThreadingTCPServer(addr, socketTcp)
     print('TCP Socket Server launched on port :: ', port)
+    connect_websocket(80)
     server.serve_forever()
+
+    
     
