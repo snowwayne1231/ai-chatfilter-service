@@ -125,7 +125,7 @@ if __name__ == '__main__':
     # server = socketserver.TCPServer(addr, socketTcp)
     server = socketserver.ThreadingTCPServer(addr, socketTcp)
     print('TCP Socket Server launched on port :: ', port)
-    connect_websocket(80)
+    
     server.serve_forever()
 
     
