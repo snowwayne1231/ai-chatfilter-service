@@ -87,8 +87,6 @@ class socketTcp(Tcp):
                 print('msgbuffer: ', unpacked_data.msgbuffer, flush=True)
                 print('msgsize: ', unpacked_data.msgsize, flush=True)
 
-                result = web_socket_send(unpacked_data.msgtxt)
-
                 status_code = 0
 
                 packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
@@ -125,7 +123,7 @@ if __name__ == '__main__':
     # server = socketserver.TCPServer(addr, socketTcp)
     server = socketserver.ThreadingTCPServer(addr, socketTcp)
     print('TCP Socket Server launched on port :: ', port)
-    
+
     server.serve_forever()
 
     
