@@ -153,16 +153,17 @@ class ChatFilterPackage(BasicStructPackage):
         self.size = size
         self.msgid = msgid
         self.msgsize = msgsize
-        self.msgbuffer = _left_buffer
         
-
-        try:
-            self.msgtxt = _left_buffer.decode('utf-8').rstrip('\x00')
-        except:
-            print('>>>>> Unpack Error msgid: ', msgid, ' | left_buffer: ', _left_buffer)
-            _left_buffer = _left_buffer[:msgsize]
+        if msgsize:
+            self.msgbuffer = _left_buffer[:msgsize]
+        else:
             self.msgbuffer = _left_buffer
-            self.msgtxt = _left_buffer.decode('utf-8', "ignore").rstrip('\x00')
+        
+        try:
+            self.msgtxt = self.msgbuffer.decode('utf-8')
+        except:
+            print('>>>>> Unpack Error msgid: ', msgid, ' | msgbuffer: ', self.msgbuffer)
+            self.msgtxt = self.msgbuffer.decode('utf-8', "ignore")
 
 
 
