@@ -41,7 +41,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user = text_data_json.get('user', None)
         room = text_data_json.get('room', None)
 
-        if msgid:
+        if message:
             print('=== think start ===', flush=True)
             _now = datetime.now()
             results = main_service.think(message=message, user=user, room=room)
