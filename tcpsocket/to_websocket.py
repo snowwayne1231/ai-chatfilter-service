@@ -21,7 +21,7 @@ class WebsocketThread (threading.Thread):
 
     stop_event = None
     ws = None
-    loop = None
+    pool = None
 
 
     def __init__(self, name = 'default', port = 80):
@@ -44,7 +44,12 @@ class WebsocketThread (threading.Thread):
                                     on_error=self.on_error,
                                     on_close=self.on_close)
         self.ws.on_open = self.on_open
-        self.ws.run_forever()
+        
+        
+        while True:
+            if self.stopped():
+                break
+            self.ws.run_forever()
 
     
     def on_open(self):
@@ -53,20 +58,22 @@ class WebsocketThread (threading.Thread):
     
     def send_thread(self, data):
         _msg_id = data.get('msgid')
-        self._waitting_ids.append(_msg_id)
-        
         _str = json.dumps(data)
         print('Web Socket send_thread _str: ', _str)
-        self.ws.send(_str)
-
+        
         #
         if _msg_id:
+
+            self._waitting_ids.append(_msg_id)
+            self.ws.send(_str)
+
             while _msg_id in self._waitting_ids:
                 pass
                 # print('whileing _msg_id: ', _msg_id)
                 # time.sleep(0.1)
             
             _res = self._message_result.pop(_msg_id)
+
         else:
             _res = None
 
@@ -86,6 +93,8 @@ class WebsocketThread (threading.Thread):
 
     def on_error(self, error):
         print('Web Socket Error: ', error, flush=True)
+        self._waitting_ids = []
+        self._message_result = dict()
 
     def on_close(self):
         print("### Web Socket Closed ###", flush=True)
