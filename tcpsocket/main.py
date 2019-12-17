@@ -3,8 +3,9 @@ import socketserver
 import os, sys, getopt, datetime, json
 from chat_package import pack, unpack
 from configparser import RawConfigParser
-# import asyncio
-# import websockets
+from to_websocket import WebsocketThread
+
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,28 +18,13 @@ config_keys.read(SOCKET_DIR+'/keys.cfg')
 
 host = '0.0.0.0'
 port = 8025
+web_socket_port = 8000
 version = '{}.{}'.format(config_version.get('MAIN', 'V'), config_version.get('MAIN', 'SUR'))
 serverid = config_keys.get('SERVER', 'ID')
 sig = config_keys.get('SERVER', 'PWD')
 
+websocket_thread = None
 
-
-
-# local_websocket = None
-
-# def connect_websocket(port):
-#     uri = "ws://127.0.0.1:{}/ws/chat/".format(port)
-
-#     local_websocket = websockets.connect(uri)
-
-
-# def web_socket_send(txt):
-#     if local_websocket:
-#         print('web_socket_send txt: ', txt)
-#     else:
-#         print('local_websocket is none.')
-    
-#     return 0
 
 
 class socketTcp(Tcp):
@@ -89,6 +75,17 @@ class socketTcp(Tcp):
 
                 status_code = 0
 
+                if websocket_thread:
+
+                    ai_results = websocket_thread.thinking(msg=unpacked_data.msgtxt, msgid=unpacked_data.msgid)
+                    prediction = ai_results.get('prediction', None)
+                    if prediction:
+                        status_code = prediction
+                    
+                else:
+
+                    print('Websocket is Not Working.', flush=True)
+
                 packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
 
             elif unpacked_data.cmd == 0x040004:
@@ -104,12 +101,13 @@ class socketTcp(Tcp):
             # self.request.sendall(recived)
 
 
+
 if __name__ == '__main__':
 
     argvs = sys.argv[1:]
 
     try:
-        opts, args = getopt.getopt(argvs, "hp:")
+        opts, args = getopt.getopt(argvs, "hp:w:")
     except getopt.GetoptError as err:
         print(err)
         sys.exit(2)
@@ -117,14 +115,31 @@ if __name__ == '__main__':
     for o, a in opts:
         if o == "-p":
             port = int(a)
+        if o == '-w':
+            web_socket_port = int(a)
 
-
+    
     addr = (host, port)
     # server = socketserver.TCPServer(addr, socketTcp)
     server = socketserver.ThreadingTCPServer(addr, socketTcp)
+    
     print('TCP Socket Server launched on port :: ', port)
 
-    server.serve_forever()
+    websocket_thread = WebsocketThread("Websocket Thread-1", web_socket_port)
+    
+    try:
+
+        websocket_thread.start()
+        server.serve_forever()
+
+    except KeyboardInterrupt:
+
+        # websocket_thread.join()
+        print('Keypress-Stop')
+        websocket_thread.stop()
+        print('TCP Socket Server Stoped.', flush=True)
+        sys.exit(2)
+    
 
     
     

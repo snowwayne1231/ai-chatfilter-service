@@ -85,7 +85,7 @@ class MainService():
             prediction = self.STATUS_PREDICTION_NO_MSG
 
         # print('prediction :', prediction)
-        if not silence:
+        if not silence and message:
             self.saveRecord(prediction, message=message, text=text, reason=reason_char)
         
         

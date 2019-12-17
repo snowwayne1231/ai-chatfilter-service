@@ -36,17 +36,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
+        msgid = text_data_json.get('msgid', None)
         message = text_data_json.get('message', None)
         user = text_data_json.get('user', None)
         room = text_data_json.get('room', None)
-        print('=== think start ===')
-        _now = datetime.now()
-        results = main_service.think(message=message, user=user, room=room)
-        print('=== think results ===')
-        print(results)
-        _now_2 = datetime.now()
-        _spend_time = (_now_2 - _now).total_seconds()
-        print('=== Total thinking spend seconds: ', _spend_time)
+
+        if msgid:
+            print('=== think start ===', flush=True)
+            _now = datetime.now()
+            results = main_service.think(message=message, user=user, room=room)
+            print('=== think results ===', flush=True)
+            print(results)
+            _now_2 = datetime.now()
+            _spend_time = (_now_2 - _now).total_seconds()
+            print('=== Total thinking spend seconds: ', _spend_time, flush=True)
+        else:
+            results = {
+                'message': message,
+                'prediction': 0,
+            }
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -54,6 +62,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'chat_message',
                 'user': user, 
                 'room': room,
+                'msgid': msgid,
                 'message': results.get('message', ''),
                 'prediction': int(results.get('prediction', 0)),
                 'reason_char': results.get('reason_char', ''),
@@ -65,6 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # }))
 
     async def chat_message(self, event):
+        msgid = event['msgid']
         message = event['message']
         prediction = event['prediction']
         reason_char = event['reason_char']
@@ -72,6 +82,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         room = event['room']
 
         await self.send(text_data=json.dumps({
+            'msgid': msgid,
             'message': message,
             'prediction': prediction,
             'reason_char': reason_char,
