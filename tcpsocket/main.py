@@ -80,7 +80,7 @@ class socketTcp(Tcp):
                     ai_results = websocket_thread.thinking(msg=unpacked_data.msgtxt, msgid=unpacked_data.msgid)
                     prediction = ai_results.get('prediction', None)
                     if prediction:
-                        status_code = prediction
+                        status_code = 5
                     
                 else:
 
