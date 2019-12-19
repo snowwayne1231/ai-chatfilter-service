@@ -53,11 +53,17 @@ def let_user_pick(options):
 cmd_options = ['hearting', 'login', 'login response', 'chatting', 'chat response']
 cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x040004]
 
+is_keep_chatting = False
+msgid = 0
+
 while True:
 
-    num = let_user_pick(cmd_options)
-    if num is None:
-        break
+    if is_keep_chatting:
+        num = 3
+    else:
+        num = let_user_pick(cmd_options)
+        if num is None:
+            break
 
     command_hex = cmd_ints[num]
     packed = None
@@ -82,11 +88,21 @@ while True:
 
     elif command_hex == 0x040003:
 
-        print("Please enter msgid: ")
-        msgid = input()
+        if msgid > 0:
+            msgid += 1
+        else:
+            print("Please enter msgid: ")
+            msgid = input()
+            msgid = int(msgid)
+        
         print("Please enter msgtxt: ")
         msgtxt = input()
-        packed = pack(command_hex, msgid=int(msgid), msgtxt=msgtxt)
+        if msgtxt:
+            packed = pack(command_hex, msgid=msgid, msgtxt=msgtxt)
+            is_keep_chatting = True
+        else:
+            is_keep_chatting = False
+            continue
 
     elif command_hex == 0x040004:
 

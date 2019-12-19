@@ -4,6 +4,8 @@ import os, sys, getopt, datetime, json
 from chat_package import pack, unpack
 from configparser import RawConfigParser
 from to_websocket import WebsocketThread
+import logging
+logging.basicConfig(format='[%(levelname)s]%(asctime)s %(message)s', datefmt='(%m/%d) %I:%M:%S %p :: ', level=logging.DEBUG)
 
 
 
@@ -29,7 +31,7 @@ websocket_thread = None
 
 class socketTcp(Tcp):
     def handle(self):
-        print('**TCPSocket Version[{}] clinet has connected, address: '.format(version), self.client_address, flush=True)
+        logging.info('**TCPSocket Version[{}] clinet has connected, address: {}'.format(version, self.client_address))
         while True:
             recived = self.request.recv(1024)
             if not recived:
@@ -40,38 +42,33 @@ class socketTcp(Tcp):
             packed_res = pack(0x000001)
 
             now = datetime.datetime.now()
-            # print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, ' | ', now, flush=True)
 
             if unpacked_data.cmd == 0x000001:
-                # print('Package is [ Hearting ]', flush=True)
                 pass
 
             elif unpacked_data.cmd == 0x040001:
-                print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, ' | ', now, flush=True)
-                print('Package is [ Login ]', flush=True)
+                logging.debug('Recived Package is [ Login ]')
                 
                 is_matched = serverid == unpacked_data.serverid and sig == unpacked_data.sig
 
                 if is_matched:
-                    print('Login Successful serverid: ', serverid, flush=True)
+                    logging.debug('Login Successful serverid: {}'.format(serverid))
                     server_code = 0
                 else:
-                    print('Login Failed. unpacked_data.sig: ', unpacked_data.sig , flush=True)
+                    logging.debug('Login Failed. unpacked.sig: {}'.format(unpacked_data.sig))
                     server_code = 1
 
                 packed_res = pack(0x040002, code=server_code)
 
             elif unpacked_data.cmd == 0x040002:
-                print('Package is [ Login Response ]', flush=True)
-                print('code: ', unpacked_data.code, flush=True)
+                logging.debug('Recived Package is [ Login Response ]')
 
             elif unpacked_data.cmd == 0x040003:
-                print('====<Recived cmd/size>: ', unpacked_data.cmd, '/', unpacked_data.size, ' | ', now, flush=True)
-                print('Package is [ Chat ]', flush=True)
-                print('msgid: ', unpacked_data.msgid, flush=True)
-                print('msgtxt: ', unpacked_data.msgtxt, flush=True)
-                print('msgbuffer: ', unpacked_data.msgbuffer, flush=True)
-                print('msgsize: ', unpacked_data.msgsize, flush=True)
+                logging.debug('Recived Package is [ Chat ]')
+                logging.debug('msgid: {}'.format(unpacked_data.msgid))
+                logging.debug('msgtxt: {}'.format(unpacked_data.msgtxt))
+                logging.debug('msgbuffer: {}'.format(unpacked_data.msgbuffer))
+                logging.debug('msgsize: {}'.format(unpacked_data.msgsize))
 
                 status_code = 0
 
@@ -79,26 +76,31 @@ class socketTcp(Tcp):
 
                     ai_results = websocket_thread.thinking(msg=unpacked_data.msgtxt, msgid=unpacked_data.msgid)
                     prediction = ai_results.get('prediction', None)
-                    if prediction:
+                    if prediction and prediction != 0:
                         status_code = 5
                     
                 else:
 
-                    print('Websocket is Not Working.', flush=True)
+                    logging.error('Websocket is Not Working.')
 
                 packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
 
             elif unpacked_data.cmd == 0x040004:
-                print('Package is [ Chat Response ]', flush=True)
-                print('msgid: ', unpacked_data.msgid, flush=True)
-                print('code: ', unpacked_data.code, flush=True)
+                logging.debug('Recived Package is [ Chat Response ]')
+                logging.debug('msgid: {}'.format(unpacked_data.msgid))
+                logging.debug('code: {}'.format(unpacked_data.code))
 
             else:
                 pass
-                print('Package Unknow.', flush=True)
+                logging.debug('Recived Package Unknow.')
             
             self.request.sendall(packed_res)
             # self.request.sendall(recived)
+        
+        logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
+
+    def handle_error(self):
+        logging.error('TCPSocket handle_error!!')
 
 
 
@@ -123,7 +125,7 @@ if __name__ == '__main__':
     # server = socketserver.TCPServer(addr, socketTcp)
     server = socketserver.ThreadingTCPServer(addr, socketTcp)
     
-    print('TCP Socket Server launched on port :: ', port)
+    logging.info('TCP Socket Server launched on port :: {}'.format(port))
 
     websocket_thread = WebsocketThread("Websocket Thread-1", web_socket_port)
     
@@ -135,9 +137,9 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
 
         # websocket_thread.join()
-        print('Keypress-Stop')
+        # print('Keypress-Stop')
         websocket_thread.stop()
-        print('TCP Socket Server Stoped.', flush=True)
+        logging.info('TCP Socket Server Stoped.')
         sys.exit(2)
     
 
