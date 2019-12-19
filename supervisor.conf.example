@@ -1,3 +1,8 @@
+[supervisord]
+logfile = /ai/logs/supervisord.log
+
+
+
 [program:tcpsocket]
 
 directory=/ai/ai-chatfilter-service
@@ -11,7 +16,10 @@ stdout_logfile=/ai/logs/tcpsocket.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=8
 
-stderr_logfile=/ai/logs/tcpsocket.error.log
+stderr_logfile=/ai/logs/tcpsocket-error.log
+
+redirect_stderr=true
+
 
 
 [program:django]
@@ -23,50 +31,11 @@ command=/ai/venv/bin/python manage.py runserver 0.0.0.0:8000
 autostart=true
 autorestart=true
 
-stdout_logfile=/ai/logs/django.server.log
+stdout_logfile=/ai/logs/django.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=5
 
-stderr_logfile=/ai/logs/django.server.error.log
+stderr_logfile=/ai/logs/django-error.log
 
-
-
-
-
-# [fcgi-program:asgi]
-# TCP socket used by Nginx backend upstream
-# socket=tcp://127.0.0.1:8021
-
-# Diretory where your site's project files are located
-# directory=/ai/ai-chatfilter-service
-
-# Each process need to have separate socket file, so we use process_num
-# Make soure to update "mysite.asgi" to match your project name
-# command=/ai/venv/bin/daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers service.asgi:application
-
-# Number of processes to startup roughly the number of CPUs you have
-# numprocs=1
-
-# Give each process a unique name so they can be told apart
-# process_name=asgi%(process_num)d
-
-# Automatically start and recover processes
-# autostart=true
-# autorestart=true
-
-# Choose where you want your Log to go
-# stdout_logfile=/ai/logs/asgi.log
-# redirect_stderr=true
-
-
-# [program:wsgi]
-
-# directory=/ai/ai-chatfilter-service
-
-# command=uwsgi --socket :8000 --wsgi-file service/wsgi.py
-
-# autostart=true
-# autorestart=true
-
-# stdout_logfile=/ai/logs/wsgi.log
+redirect_stderr=true
 
