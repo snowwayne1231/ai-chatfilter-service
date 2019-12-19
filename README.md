@@ -238,6 +238,7 @@ pip install -r requirement.txt
 pip install psycopg2-binary
 pip install websocket
 pip install websocket-client
+pip install zhconv
 ```
 
 

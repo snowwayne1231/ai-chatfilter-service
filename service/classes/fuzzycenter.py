@@ -2,6 +2,7 @@ from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 from datetime import datetime
 from service.models import Blockword
+from zhconv import convert
 
 class FuzzyCenter():
     """
@@ -27,15 +28,34 @@ class FuzzyCenter():
         block_words = []
         block_sentence = []
         for blockword in blockword_objects:
+            
             _text = blockword.text
+            _cn, _zh = self.parse_cnzh(_text)
+
             if len(_text) == 1:
-                block_words.append(_text)
+                if not _text in block_words:
+                    block_words.append(_text)
+                    if _cn != _text:
+                        block_words.append(_cn)
+                    elif _zh != _text:
+                        block_words.append(_zh)
             else:
-                block_sentence.append(_text)
+                if not _text in block_sentence:
+                    block_sentence.append(_text)
+                    if _cn != _text:
+                        block_sentence.append(_cn)
+                    elif _zh != _text:
+                        block_sentence.append(_zh)
 
         self.block_words = block_words
         self.block_sentence = block_sentence
         return self
+
+    
+    def parse_cnzh(self, txt):
+        _cn = convert(txt, 'zh-cn')
+        _zh = convert(txt, 'zh-tw')
+        return _cn, _zh
 
 
     def upsert_temp_text(self, text, user, room, lv, anchor, prediction):
@@ -98,7 +118,7 @@ class FuzzyCenter():
         if text_length == 0:
             pass
         elif text_length == 1:
-
+            # one word ratio
             extract_word = process.extractOne(text, block_words, scorer=fuzz.ratio)
             word_possible = extract_word[1]
             word_txt = extract_word[0]
@@ -108,6 +128,7 @@ class FuzzyCenter():
 
         else:
 
+            # have up two word as sentence
             extract_sentence = process.extractOne(text, block_sentence, scorer=fuzz.token_set_ratio)
             sentence_possible = extract_sentence[1]
             sentence_txt = extract_sentence[0]
@@ -119,6 +140,7 @@ class FuzzyCenter():
             
             else:
 
+                # same single dirty word
                 for b_word in block_words:
                     if text.find(b_word) >= 0:
                         same_word_num = 0
