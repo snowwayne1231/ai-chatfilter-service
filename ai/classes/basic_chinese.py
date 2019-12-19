@@ -279,11 +279,15 @@ class BasicChineseFilter():
 
         BUFFER_SIZE = 50000
         BATCH_SIZE = self.full_words_length
+        VALIDATION_SIZE = 1000
+
+        _length_of_data = self.length_x
 
         if validation_data is None:
 
-            batch_test_data = batch_train_data.take(1000)
-            batch_train_data = batch_train_data.skip(1000).shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
+            batch_test_data = batch_train_data.take(VALIDATION_SIZE)
+            batch_train_data = batch_train_data.skip(VALIDATION_SIZE).shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
+            _length_of_data -= VALIDATION_SIZE
 
         else:
 
@@ -302,7 +306,7 @@ class BasicChineseFilter():
 
         # return False
 
-        steps = int(self.length_x / BATCH_SIZE) - 1
+        steps = int(_length_of_data / BATCH_SIZE) - 1
 
         try:
             while True:
