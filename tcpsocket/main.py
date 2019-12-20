@@ -6,6 +6,9 @@ from configparser import RawConfigParser
 from to_websocket import WebsocketThread
 import logging
 
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SOCKET_DIR)
 
@@ -17,7 +20,6 @@ config_keys = RawConfigParser()
 config_keys.read(SOCKET_DIR+'/keys.cfg')
 
 logging_level = logging.DEBUG if bool('True' in config_setting.get('MAIN', 'DEBUG')) else logging.INFO
-print('logging_level: ', logging_level)
 logging.basicConfig(format='[%(levelname)s]%(asctime)s %(message)s', datefmt='(%m/%d) %I:%M:%S %p :: ', level=logging_level)
 
 host = '0.0.0.0'
@@ -105,6 +107,9 @@ class socketTcp(Tcp):
     def handle_error(self):
         logging.error('TCPSocket handle_error!!')
 
+    def server_close(self):
+        logging.error('server_close!!!!')
+
 
 
 if __name__ == '__main__':
@@ -151,7 +156,8 @@ if __name__ == '__main__':
 
         logging.error(err)
 
-    
+    server.shutdown()
+
     sys.exit(2)
     
 
