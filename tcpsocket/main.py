@@ -5,18 +5,20 @@ from chat_package import pack, unpack
 from configparser import RawConfigParser
 from to_websocket import WebsocketThread
 import logging
-logging.basicConfig(format='[%(levelname)s]%(asctime)s %(message)s', datefmt='(%m/%d) %I:%M:%S %p :: ', level=logging.DEBUG)
 
-
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SOCKET_DIR)
 
+config_setting = RawConfigParser()
+config_setting.read(BASE_DIR+'/setting.ini')
 config_version = RawConfigParser()
 config_version.read(BASE_DIR+'/version.cfg')
 config_keys = RawConfigParser()
 config_keys.read(SOCKET_DIR+'/keys.cfg')
+
+logging_level = logging.DEBUG if bool('True' in config_setting.get('MAIN', 'DEBUG')) else logging.INFO
+print('logging_level: ', logging_level)
+logging.basicConfig(format='[%(levelname)s]%(asctime)s %(message)s', datefmt='(%m/%d) %I:%M:%S %p :: ', level=logging_level)
 
 host = '0.0.0.0'
 port = 8025
@@ -78,6 +80,7 @@ class socketTcp(Tcp):
                     prediction = ai_results.get('prediction', None)
                     if prediction and prediction != 0:
                         status_code = 5
+                        logging.info('Message be blocked = id: {} txt: {}'.format(unpacked_data.msgid, unpacked_data.msgtxt))
                     
                 else:
 
@@ -139,8 +142,17 @@ if __name__ == '__main__':
         # websocket_thread.join()
         # print('Keypress-Stop')
         websocket_thread.stop()
+        
         logging.info('TCP Socket Server Stoped.')
-        sys.exit(2)
+
+    except Exception as err:
+        
+        websocket_thread.stop()
+
+        logging.error(err)
+
+    
+    sys.exit(2)
     
 
     

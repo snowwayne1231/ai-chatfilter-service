@@ -50,7 +50,7 @@ class WebsocketThread (threading.Thread):
         while True:
             if self.stopped():
                 break
-            self.ws.run_forever()
+            self.ws.run_forever(ping_interval=10, ping_timeout=5)
 
     
     def on_open(self):
@@ -113,6 +113,8 @@ class WebsocketThread (threading.Thread):
         logging.error('### Web Socket Error: {}'.format(error))
         self._waitting_ids = []
         self._message_result = dict()
+        # raise Exception(error)
+
 
     def on_close(self):
         logging.warning("# Web Socket Closed ###")
