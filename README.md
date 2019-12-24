@@ -370,3 +370,15 @@ Please choose package type:
 Enter number:
 ```
 *everything was fine!!*
+
+
+## Maintaining
+> dump and restore blockword data
+```Shell
+python manage.py clear blockedsentence
+python manage.py clear goodsentence
+python manage.py dumpdata service > service/seed/initial.json
+
+python manage.py loaddata service/seed/initial.json
+```
+

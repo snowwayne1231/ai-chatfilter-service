@@ -25,7 +25,8 @@ class PinYinFilter(BasicChineseFilter):
         
         super().__init__(data=data, load_folder=load_folder)
 
-
+    
+    #override
     def transfrom(self, data):
         
         if type(data) is str:
@@ -48,6 +49,7 @@ class PinYinFilter(BasicChineseFilter):
         return None
     
 
+    #override
     def build_model(self):
         full_words_length = self.full_words_length
 
@@ -74,8 +76,8 @@ class PinYinFilter(BasicChineseFilter):
         return self
 
 
-
-    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None):
+    #override
+    def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None):
         if save_folder is not None:
             self.saved_folder = save_folder
         
@@ -109,6 +111,9 @@ class PinYinFilter(BasicChineseFilter):
 
         print('==== batch_train_data ====')
         print('Length of Data :: ', _length_of_data)
+        print('BUFFER_SIZE :: ', BUFFER_SIZE)
+        print('BATCH_SIZE :: ', BATCH_SIZE)
+        print('VALIDATION_SIZE :: ', VALIDATION_SIZE)
         
 
         # for x, y in batch_train_data.take(1):
@@ -119,6 +124,7 @@ class PinYinFilter(BasicChineseFilter):
         # return False
 
         steps = int(_length_of_data / BATCH_SIZE)
+        vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE)
 
         try:
             while True:
@@ -128,7 +134,7 @@ class PinYinFilter(BasicChineseFilter):
                     verbose=verbose,
                     validation_data=batch_test_data,
                     steps_per_epoch=steps,
-                    validation_steps=steps,
+                    validation_steps=vaildation_steps,
                 )
                 self.save()
         except KeyboardInterrupt:

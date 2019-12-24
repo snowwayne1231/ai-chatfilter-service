@@ -150,8 +150,8 @@ class BasicChineseFilter():
         for _d in self.data:
             _words = _d[_word_idx]
             _d[_word_idx] = self.transfrom(_words)
-            print('_words: ', _words)
-            print('_d[_word_idx]: ', _d[_word_idx])
+            # print('_words: ', _words)
+            # print('_d[_word_idx]: ', _d[_word_idx])
 
         return self
 
@@ -220,8 +220,8 @@ class BasicChineseFilter():
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)))
         # model.add(tf.keras.layers.GlobalAveragePooling1D())
         # model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
+        # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
+        # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.sigmoid))
         model.add(tf.keras.layers.Dense(self.status_classsets, activation=tf.nn.softmax))
 
