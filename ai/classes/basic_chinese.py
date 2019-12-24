@@ -73,29 +73,6 @@ class BasicChineseFilter():
     def set_data(self, data):
         if self.check_data_shape(data):
 
-            # _data = deepcopy(data)
-            # _msg_idx = self.columns.index('MESSAGE') if 'MESSAGE' in self.columns else -1
-            # _text_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
-            # _lv_idx = self.columns.index('LV') if 'LV' in self.columns else -1
-            # _anchor_idx = self.columns.index('ANCHOR') if 'ANCHOR' in self.columns else -1
-            # _appended_length = len(self.columns)
-
-            # for d in _data:
-            #     _string = d[_msg_idx]
-            #     text, lv, anchor = self.parse_message(_string)
-
-            #     # 
-            #     if len(d) == _appended_length:
-            #         d[_text_idx] = text
-            #         d[_lv_idx] = lv
-            #         d[_anchor_idx] = anchor
-            #     else:
-            #         d.append(text)
-            #         d.append(lv)
-            #         d.append(anchor)
-            
-
-
             self.data = data
 
             self.split_word('TEXT')
@@ -173,6 +150,8 @@ class BasicChineseFilter():
         for _d in self.data:
             _words = _d[_word_idx]
             _d[_word_idx] = self.transfrom(_words)
+            print('_words: ', _words)
+            print('_d[_word_idx]: ', _d[_word_idx])
 
         return self
 
@@ -263,25 +242,21 @@ class BasicChineseFilter():
 
 
 
-    def fit_model(self, epochs=5, batch_size=512, verbose=1, train_data=None, save_folder=None, validation_data=None):
+    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None):
         if save_folder is not None:
             self.saved_folder = save_folder
         
         if train_data is not None:
             self.set_data(train_data)
 
-
         batch_train_data = self.get_train_batchs()
 
-        # np_train_x = np.array(train_x)
-        # np_train_y = np.array(train_y)
-        # return False
+        _length_of_data = self.length_x
 
         BUFFER_SIZE = 50000
         BATCH_SIZE = self.full_words_length
-        VALIDATION_SIZE = 1000
+        VALIDATION_SIZE = 1000 if _length_of_data > 2000 else int(_length_of_data / 2)
 
-        _length_of_data = self.length_x
 
         if validation_data is None:
 
@@ -296,8 +271,6 @@ class BasicChineseFilter():
         history = None
         batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
         batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
-
-        print('==== batch_train_data ====')
 
         # for x, y in batch_train_data.take(1):
         #     print('= batch_train_data =')
@@ -456,7 +429,6 @@ class BasicChineseFilter():
             passible = 0
 
         # print('The most likely possible status: ', passible)
-        return 0
         return passible
 
 

@@ -53,34 +53,30 @@ class ExcelParser():
     def get_row_list(self, column=[], limit=0):
         sh = self.book.sheet_by_index(0)
         print("==Sheet name: {0}, rows: {1}, cols:{2}".format(sh.name, sh.nrows, sh.ncols))
-        
+        assert len(column) > 0
         ary = []
         _columns = []
         for rx in range(limit if limit > 0 else sh.nrows):
             
             child = [x.value for x in sh.row(rx)]
             if rx == 0:
-                if len(column) > 0:
-                    for col in column:
-                        if type(col) == list:
-                            __idx = -1
-                            for __c in col:
-                                __loc_idx = child.index(__c) if __c in child else -1
-                                if __loc_idx >= 0:
-                                    __idx = __loc_idx
-                                    break
-                        else:
-                            __idx = child.index(col) if col in child else -1
+                for col in column:
+                    if type(col) == list:
+                        __idx = -1
+                        for __c in col:
+                            __loc_idx = child.index(__c) if __c in child else -1
+                            if __loc_idx >= 0:
+                                __idx = __loc_idx
+                                break
+                    else:
+                        __idx = child.index(col) if col in child else -1
 
-                        assert __idx >= 0
-                        _columns.append(__idx)
+                    _columns.append(__idx)
 
             else:
                 
-                if len(_columns) > 0:
-                    child = [child[i] for i in _columns]
-            
-                ary.append(child)
+                _next_child = [child[i] if i >= 0 else '' for i in _columns]
+                ary.append(_next_child)
         
         return ary
 

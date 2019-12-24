@@ -6,8 +6,8 @@ from configparser import RawConfigParser
 from to_websocket import WebsocketThread
 import logging
 
-import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+# import signal
+# signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SOCKET_DIR)
