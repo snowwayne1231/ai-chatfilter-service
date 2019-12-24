@@ -14,7 +14,7 @@ from .helper import print_spend_time, get_pinyin_path
 
 
 
-def train_pinyin(excel_file_path = None, is_append = False):
+def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = None):
 
     pinyin_saved_folder = get_pinyin_path()
     
@@ -48,7 +48,7 @@ def train_pinyin(excel_file_path = None, is_append = False):
     
         
     pk_result_list = pk.get_list()
-    
+
 
     if is_append or len(result_list) == 0:
         result_list = result_list + pk_result_list
@@ -66,7 +66,7 @@ def train_pinyin(excel_file_path = None, is_append = False):
 
         piny = PinYinFilter(load_folder=pinyin_saved_folder)
 
-        history = piny.fit_model(train_data=result_list)
+        history = piny.fit_model(train_data=result_list, stop_accuracy=final_accuracy)
 
     else:
 
@@ -74,7 +74,7 @@ def train_pinyin(excel_file_path = None, is_append = False):
         # piny.transfrom_column('TEXT')
         piny.build_model()
 
-        history = piny.fit_model(save_folder=pinyin_saved_folder)
+        history = piny.fit_model(save_folder=pinyin_saved_folder, stop_accuracy=final_accuracy)
 
         # piny.save(pinyin_saved_folder)
 

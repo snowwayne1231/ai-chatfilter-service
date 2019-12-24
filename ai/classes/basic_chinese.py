@@ -242,7 +242,7 @@ class BasicChineseFilter():
 
 
 
-    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None):
+    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
         if save_folder is not None:
             self.saved_folder = save_folder
         

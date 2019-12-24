@@ -9,7 +9,7 @@ import tensorflow as tf
 
 # from _classes.parsers import ExcelParser
 from .basic_chinese import BasicChineseFilter
-from dataparser.classes.store import ListPickle
+# from dataparser.classes.store import ListPickle
 
 
 
@@ -77,7 +77,7 @@ class PinYinFilter(BasicChineseFilter):
 
 
     #override
-    def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None):
+    def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
         if save_folder is not None:
             self.saved_folder = save_folder
         
@@ -137,6 +137,13 @@ class PinYinFilter(BasicChineseFilter):
                     validation_steps=vaildation_steps,
                 )
                 self.save()
+
+                acc = history.history.get('accuracy')[-1]
+                print('Now Accuracy: ', acc)
+                print('Target Accuracy: ', stop_accuracy)
+                if stop_accuracy and acc >= stop_accuracy:
+                    break
+                
         except KeyboardInterrupt:
             print('Keyboard pressed. Stop Tranning.')
         
