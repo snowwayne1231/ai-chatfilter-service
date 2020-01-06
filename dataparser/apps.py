@@ -21,7 +21,8 @@ class DataparserConfig(AppConfig):
 
 class ExcelParser():
     """
-
+        get_row_list (column=[], limit=0)
+        return List
     """
     file = None
     book = None
