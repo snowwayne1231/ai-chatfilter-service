@@ -21,15 +21,26 @@ class PartOfSpeechAdmin(admin.ModelAdmin):
 
 
 class VocabularyAdmin(admin.ModelAdmin):
-    fields = ['context', 'language', 'status', 'part', 'abstract', 'similarity']
-    list_display = ['context', 'status', 'date']
+    fields = ['context', 'language', 'status', 'meaning', 'part', 'abstract']
+    list_display = ['context', 'status', 'meaning', 'date']
+    readonly_fields = ('context',)
+    sortable_by = ('date',)
     empty_value_display = '---'
+
+    search_fields = ('context',)
 
 
 class SoundVocabularyAdmin(admin.ModelAdmin):
+    # fields = ['pinyin', 'type', 'status']
     fields = ['pinyin', 'type', 'status', 'vocabulary']
     list_display = ['pinyin', 'type', 'status']
+    # list_editable = ['type', 'status']
     empty_value_display = '---'
+
+    readonly_fields = ('vocabulary',)
+    search_fields = ('pinyin',)
+
+    
 
 
 admin.site.register(AbstractMeaning, AbstractMeaningAdmin)

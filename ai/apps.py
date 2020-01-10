@@ -1,8 +1,7 @@
 from django.apps import AppConfig
 from tensorflow import keras
 from .helper import get_pinyin_path
-from .classes.pinyin import PinYinFilter
-from .classes.ckip_tagger import CkipTagger
+from .classes.chinese_filter_pinyin import PinYinFilter
 
 import tensorflow as tf
 
@@ -15,13 +14,11 @@ class AiConfig(AppConfig):
 
 class MainAiApp():
     pinyin_model = None
-    # ckip_tagger = None
 
     def __init__(self):
         print('============= AI MainAiApp =============')
         print('using tensorflow version: ', tf.__version__)
         self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path)
-        # self.ckip_tagger = CkipTagger()
     
 
     def predict(self, txt, lv=0, silence=False):

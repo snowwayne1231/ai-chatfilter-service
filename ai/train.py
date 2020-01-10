@@ -9,7 +9,7 @@ from datetime import datetime
 
 from dataparser.apps import ExcelParser, MessageParser
 from dataparser.classes.store import ListPickle
-from .classes.pinyin import PinYinFilter
+from .classes.chinese_filter_pinyin import PinYinFilter
 from .helper import print_spend_time, get_pinyin_path
 
 
@@ -27,7 +27,7 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
     if excel_file_path is not None:
 
         ep = ExcelParser(file=excel_file_path)
-        basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息', '禁言内容'], ['STATUS', '審核結果']]
+        basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息', '禁言内容', '发言内容'], ['STATUS', '審核結果', '状态']]
         result_list = ep.get_row_list(column=basic_model_columns)
 
         # print('result_list[0]', result_list[0])
@@ -60,6 +60,10 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
     pk.save(result_list)
 
     print('The result list length: ', len(result_list))
+
+    #for test..
+    # result_list = result_list[27800:28000]
+    # print('result_list[:5] = ', result_list[:5])
 
     
     if os.path.isdir(pinyin_saved_folder):

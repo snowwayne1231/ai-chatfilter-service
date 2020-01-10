@@ -17,7 +17,7 @@ class BasicChineseFilter():
     """
 
     columns = ['ROOM', 'ACCOUNT', 'MESSAGE', 'STATUS', 'TEXT', 'LV', 'ANCHOR']
-    appended_columns = ['SPLITED_WORD']
+    appended_columns = ['TRANSFORMED_WORD']
     data = []
     model = None
     tokenizer_vocabulary = set()
@@ -75,86 +75,14 @@ class BasicChineseFilter():
 
             self.data = data
 
-            self.split_word('TEXT')
+            # self.split_word('TEXT')
+            self.transform_column('TEXT')
 
-            # self.transfrom_column('TEXT')
-            self.transfrom_splited_data()
-
-        return self
-
-
-
-    def split_word(self, column):
-        _full_columns = self.columns + self.appended_columns
-        if type(column) is int:
-            column_idx = column
-        elif type(column) is str:
-            column_idx = _full_columns.index(column) if column in _full_columns else -1
-
-        assert column_idx >= 0 and column_idx < len(_full_columns)
-
-        _word_idx = _full_columns.index('SPLITED_WORD')
-
-        _length_of_columns = len(_full_columns)
-
-        for d in self.data:
-            _text = d[column_idx]
-            _words = self.jieba_dict.split_word(_text)
-            _words = [_w for _w in _words if not _w.isdigit()]
-
-            if len(d) == _length_of_columns:
-                d[_word_idx] = _words
-            else:
-                d.append(_words)
+        else:
+            
+            print('Set data failed.')
 
         return self
-
-
-    def transfrom(self, data):
-        
-        if type(data) is str:
-
-            return data
-        elif type(data) is list:
-            return [self.transfrom(_) for _ in data]
-        
-        return None
-
-
-
-    def transfrom_column(self, column = 'TEXT'):
-        assert len(self.data) > 0
-
-        # _texts = []
-        # _data = deepcopy(self.data)
-
-        if type(column) is int:
-            column_idx = column
-        elif type(column) is str:
-            column_idx = self.columns.index(column) if column in self.columns else -1
-
-        assert column_idx >= 0 and column_idx < len(self.columns)
-
-        for d in self.data:
-            _text = d[column_idx]
-            d[column_idx] = self.transfrom(_text)
-
-        return self
-
-
-
-    def transfrom_splited_data(self):
-        _full_columns = self.columns + self.appended_columns
-        _word_idx = _full_columns.index('SPLITED_WORD')
-
-        for _d in self.data:
-            _words = _d[_word_idx]
-            _d[_word_idx] = self.transfrom(_words)
-            # print('_words: ', _words)
-            # print('_d[_word_idx]: ', _d[_word_idx])
-
-        return self
-
 
 
     def save(self, folder = None):
@@ -210,12 +138,58 @@ class BasicChineseFilter():
 
 
 
+    def transform(self, data):
+        
+        if type(data) is str:
+            return self.transform_str(data)
+        elif type(data) is list:
+            return [self.transform(_) for _ in data]
+        
+        return None
+
+
+
+    def transform_column(self, column = 'TEXT'):
+        assert len(self.data) > 0
+
+        _full_columns = self.columns + self.appended_columns
+
+        if type(column) is int:
+            column_idx = column
+        elif type(column) is str:
+            column_idx = _full_columns.index(column) if column in _full_columns else -1
+
+        assert column_idx >= 0
+
+        _transformed_idx = _full_columns.index('TRANSFORMED_WORD')
+        _length_of_columns = len(_full_columns)
+
+        for d in self.data:
+            _text = d[column_idx]
+            _transformed_words = self.transform(_text)
+
+            if len(d) == _length_of_columns:
+                d[_transformed_idx] = _transformed_words
+            else:
+                d.append(_transformed_words)
+
+        return self
+
+
+    # should be override
+    def transform_str(self, _string):
+        return _string
+
+
+
     def build_model(self):
         full_words_length = self.full_words_length
 
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length))
         model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
+        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
+        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length, return_sequences=True)))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)))
         # model.add(tf.keras.layers.GlobalAveragePooling1D())
@@ -242,12 +216,13 @@ class BasicChineseFilter():
 
 
 
-    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
+    def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
         if save_folder is not None:
             self.saved_folder = save_folder
         
         if train_data is not None:
             self.set_data(train_data)
+
 
         batch_train_data = self.get_train_batchs()
 
@@ -257,11 +232,13 @@ class BasicChineseFilter():
         BATCH_SIZE = self.full_words_length
         VALIDATION_SIZE = 1000 if _length_of_data > 2000 else int(_length_of_data / 2)
 
+        # exit(2)
 
         if validation_data is None:
 
+            batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
             batch_test_data = batch_train_data.take(VALIDATION_SIZE)
-            batch_train_data = batch_train_data.skip(VALIDATION_SIZE).shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
+            batch_train_data = batch_train_data.skip(VALIDATION_SIZE)
             _length_of_data -= VALIDATION_SIZE
 
         else:
@@ -269,8 +246,15 @@ class BasicChineseFilter():
             batch_test_data = self.bathchs_labeler(validation_data.x, validation_data.y)
 
         history = None
-        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
+        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[])).repeat(epochs)
         batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
+
+        print('==== batch_train_data ====')
+        print('Length of Data :: ', _length_of_data)
+        print('BUFFER_SIZE :: ', BUFFER_SIZE)
+        print('BATCH_SIZE :: ', BATCH_SIZE)
+        print('VALIDATION_SIZE :: ', VALIDATION_SIZE)
+        
 
         # for x, y in batch_train_data.take(1):
         #     print('= batch_train_data =')
@@ -279,7 +263,8 @@ class BasicChineseFilter():
 
         # return False
 
-        steps = int(_length_of_data / BATCH_SIZE) - 1
+        steps = int(_length_of_data / BATCH_SIZE)
+        vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE)
 
         try:
             while True:
@@ -289,9 +274,16 @@ class BasicChineseFilter():
                     verbose=verbose,
                     validation_data=batch_test_data,
                     steps_per_epoch=steps,
-                    validation_steps=steps,
+                    validation_steps=vaildation_steps,
                 )
                 self.save()
+
+                acc = history.history.get('accuracy')[-1]
+                print('Now Accuracy: ', acc)
+                print('Target Accuracy: ', stop_accuracy)
+                if stop_accuracy and acc >= stop_accuracy:
+                    break
+                
         except KeyboardInterrupt:
             print('Keyboard pressed. Stop Tranning.')
         
@@ -308,7 +300,6 @@ class BasicChineseFilter():
                 tokens = tokenizer.tokenize(word)
                 tokenizer_vocabulary.update(tokens)
             
-        
         vocab_size = len(tokenizer_vocabulary)
         print('tokenizer_vocabulary vocab_size = ', vocab_size)
         # print(vocabulary_set)
@@ -321,7 +312,7 @@ class BasicChineseFilter():
     def get_xy_data(self):
         _full_columns = self.columns + self.appended_columns
         # x_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
-        x_idx = _full_columns.index('SPLITED_WORD') if 'SPLITED_WORD' in _full_columns else -1
+        x_idx = _full_columns.index('TRANSFORMED_WORD') if 'TRANSFORMED_WORD' in _full_columns else -1
         vip_lv_idx = _full_columns.index('LV') if 'LV' in _full_columns else -1
         y_idx = _full_columns.index('STATUS') if 'STATUS' in _full_columns else -1
         new_x = []
@@ -341,10 +332,12 @@ class BasicChineseFilter():
 
         x, y = self.get_xy_data()
         length_x = len(x)
+        assert length_x > 0
         self.length_x = length_x
 
         print('======== get_train_batchs =========')
         print('total x data = ', length_x)
+
         tokenize_set = self.tokenize_data(x)
 
         labeled_dataset = self.bathchs_labeler(x, y)
@@ -373,7 +366,11 @@ class BasicChineseFilter():
                 
                 yield next_texts, y[idx]
         
-        dataset = tf.data.Dataset.from_generator(gen, (tf.int64, tf.int64), (tf.TensorShape([None]), tf.TensorShape([])))
+        dataset = tf.data.Dataset.from_generator(
+            gen,
+            ( tf.int64, tf.int64 ),
+            ( tf.TensorShape([None]), tf.TensorShape([]) ),
+        )
 
         # print(dataset.take(1))
         # for __ in dataset.take(10):
@@ -399,16 +396,11 @@ class BasicChineseFilter():
         
         if lv < self.avoid_lv:
 
-            _words = self.jieba_dict.split_word(text)
-            _words = self.transfrom(_words)
+            _words = self.transform(text)
 
             # print('predictText _words: ', _words)
 
-            _result_text = []
-            for _ in _words:
-                _loc = self.encoder.encode(_)
-                if len(_loc) > 0:
-                    _result_text.append(_loc[0])
+            _result_text = self.get_encode_word(_words)
 
             # print('encoded _text : ', _text)
 
@@ -434,16 +426,11 @@ class BasicChineseFilter():
 
     def get_reason(self, text, prediction):
         reason = ''
-        _words = self.jieba_dict.split_word(text)
-        _words = self.transfrom(_words)
+        _words = self.transform(text)
 
         # print('get_reason _words: ', _words)
 
-        _result_text = []
-        for _ in _words:
-            _loc = self.encoder.encode(_)
-            if len(_loc) > 0:
-                _result_text.append(_loc[0])
+        _result_text = self.get_encode_word(_words)
 
         # print('get_reason _result_text: ', _result_text)
 
@@ -461,4 +448,13 @@ class BasicChineseFilter():
         
         return reason
 
+
+    def get_encode_word(self, _words):
+        _result_text = []
+        for _ in _words:
+            _loc = self.encoder.encode(_)
+            if len(_loc) > 0:
+                _result_text.append(_loc[0])
+
+        return _result_text
 

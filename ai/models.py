@@ -28,6 +28,8 @@ class Vocabulary(models.Model):
     context = models.CharField(max_length=255)
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
     status = models.IntegerField(default=1)
+    is_common = models.BooleanField(default=True)
+    meaning = models.CharField(max_length=512, blank=True, default="") 
     part = models.ManyToManyField(PartOfSpeech)
     abstract = models.ManyToManyField(AbstractMeaning)
     similarity = models.ManyToManyField("self")

@@ -247,6 +247,7 @@ pip install zhconv
 ```Shell
 python manage.py migrate
 python manage.py loaddata service/seed/initial.json
+python manage.py loaddata ai/json/knowledge.json
 ```
 > create django admin superuser with following the guiding steps to finish
 ```Shell
@@ -259,9 +260,16 @@ python manage.py collectstatic
 
 
 ### 5. training ai
+> before you train you may need to check your vocabulary dictionary
+```Shell
+python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_1.xls
+python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_2.xls
+python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_3.xls
+python manage.py knowledge
+```
 > if you need some help then type `python manage.py train -h` have a look on helper and see how to use train
 ```Shell
-python manage.py train -i ai/assets/..
+python manage.py train -i ai/assets/.. -f 0.90
 ```
 > after upon that command, you should start an AI training now, Stop anytime when you want by key in Ctrl+C
 

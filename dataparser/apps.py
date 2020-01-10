@@ -6,6 +6,8 @@ from datetime import datetime
 from .classes.map_hex import mapHexes
 from .models import CustomDictionaryWord
 from service.models import Blockword
+from ai.models import SoundVocabulary
+from ai.classes.translator_pinyin import translate_by_string
 
 import xlrd
 import os
@@ -178,11 +180,19 @@ class JieBaDictionary():
     """
     def __init__(self):
         self.refresh_dictionary()
+        jieba.re_eng = re.compile('[a-zA-Z0-9_]', re.U)
         print('JieBaDictionary init done.')
 
 
     def split_word(self, text=''):
-        return [word for word in jieba.cut(text)] if text else []
+        _list = jieba.cut(text, HMM=False) if text else []
+        results = []
+        for _ in _list:
+            _next = _.strip('_')
+            if not _next:
+                continue
+            results.append(_next)
+        return results
 
 
     def refresh_dictionary(self):
@@ -191,12 +201,25 @@ class JieBaDictionary():
         for d in dictionary_list:
             text = d.text
             jieba.add_word(text)
+            jieba.add_word(translate_by_string(text))
 
         blockwords = Blockword.objects.all()
         for b in blockwords:
             text = b.text
             jieba.add_word(text)
+            jieba.add_word(translate_by_string(text))
+
+        sound_vocabularies = SoundVocabulary.objects.values_list('pinyin', flat=True)
+        for sv in sound_vocabularies:
+            jieba.add_word(sv)
+        
+
+        return self
 
         
-        # print(dictionary_list)
-        # print(blockwords)
+    def add_words_by_list(self, list = []):
+        for _ in list:
+            if _:
+                jieba.add_word(_)
+
+        return self
