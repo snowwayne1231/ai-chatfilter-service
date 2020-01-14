@@ -449,7 +449,7 @@ class BasicChineseFilter():
             _max = np.argmax(_)
             if _max == prediction:
                 vocabulary = _words[_i]
-                print('vocabulary: ', vocabulary)
+                # print('vocabulary: ', vocabulary)
                 reason = self.transform_back_str(vocabulary)
                 break
             _i += 1

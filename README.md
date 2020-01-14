@@ -380,6 +380,13 @@ Enter number:
 *everything was fine!!*
 
 
+### 3. command line
+```shell
+python manage.py predict -t speaksome.. -s
+python manage.py predict -i ai/assets/.. -s
+```
+
+
 ## Maintaining
 > dump and restore blockword data
 ```Shell
