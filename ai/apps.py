@@ -27,7 +27,7 @@ class MainAiApp():
         pinyin_prediction = self.pinyin_model.predictText(txt, lv)
         if pinyin_prediction > 0:
             # print('pinyin_prediction: ', pinyin_prediction)
-            # reason = self.pinyin_model.get_reason(txt, pinyin_prediction)
+            reason = self.pinyin_model.get_reason(txt, pinyin_prediction)
             pass
         if silence:
             pass

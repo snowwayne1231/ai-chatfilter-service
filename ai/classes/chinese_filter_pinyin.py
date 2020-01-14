@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 # from datetime import datetime
-from .translator_pinyin import translate_by_string
+from .translator_pinyin import translate_by_string, traceback_by_stringcode
 import tensorflow as tf
 
 
@@ -32,5 +32,14 @@ class PinYinFilter(BasicChineseFilter):
         _words = [_w for _w in _words if not _w.isdigit()]
         # print(_words)
         return _words
-    
+
+
+    def transform_back_str(self, _encoded):
+        _type = type(_encoded)
+        if _type is str:
+            return traceback_by_stringcode(_encoded)
+        elif _type is list:
+            return [self.transform_back_str(_) for _ in _encoded]
+        else:
+            return _encoded
     

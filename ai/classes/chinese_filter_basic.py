@@ -9,6 +9,7 @@ import tensorflow_datasets as tfds
 import pickle
 import json
 import os
+import sys
 
 
 
@@ -28,7 +29,7 @@ class BasicChineseFilter():
     full_vocab_size = 32767
     full_words_length = 64
     status_classsets = 8
-    avoid_lv = 3
+    avoid_lv = 6
     length_x = 0
 
     
@@ -180,6 +181,10 @@ class BasicChineseFilter():
     def transform_str(self, _string):
         return _string
 
+    # should be override
+    def transform_back_str(self, _encoded):
+        return _encoded
+
 
 
     def build_model(self):
@@ -230,7 +235,7 @@ class BasicChineseFilter():
 
         BUFFER_SIZE = 50000
         BATCH_SIZE = self.full_words_length
-        VALIDATION_SIZE = 1000 if _length_of_data > 2000 else int(_length_of_data / 2)
+        VALIDATION_SIZE = int(_length_of_data / 8) if _length_of_data > 5000 else int(_length_of_data / 2)
 
         # exit(2)
 
@@ -279,10 +284,11 @@ class BasicChineseFilter():
                 self.save()
 
                 acc = history.history.get('accuracy')[-1]
-                print('Now Accuracy: ', acc)
-                print('Target Accuracy: ', stop_accuracy)
-                if stop_accuracy and acc >= stop_accuracy:
-                    break
+                
+                if stop_accuracy:
+                    print('Now Accuracy: {:.4f} / Target Accuracy: {:.4f}'.format(acc, stop_accuracy))
+                    if acc >= stop_accuracy:
+                        break
                 
         except KeyboardInterrupt:
             print('Keyboard pressed. Stop Tranning.')
@@ -360,11 +366,16 @@ class BasicChineseFilter():
         def gen():
             for idx, texts in enumerate(x):
                 next_texts = []
+                st = y[idx] if y[idx] else 0
+
                 for text in texts:
                     encoded_text = encode(text)
-                    next_texts.append(encoded_text)
-                
-                yield next_texts, y[idx]
+                    if encoded_text:
+                        next_texts.append(encoded_text)
+                    # else:
+                    #     print('text: ', text)
+                    
+                yield next_texts, st
         
         dataset = tf.data.Dataset.from_generator(
             gen,
@@ -407,12 +418,10 @@ class BasicChineseFilter():
             if len(_result_text) == 0:
                 return 0
 
-            test_data = np.array([_result_text])
             
-            predicted = self.model.predict(test_data)[0]
+            predicted = self.model.predict([_result_text])[0]
             passible = np.argmax(predicted)
 
-            # print('test_data: ', test_data)
             # print('predicted: ', predicted)
             # print('passible: ', passible)
         
@@ -439,7 +448,10 @@ class BasicChineseFilter():
         for _ in _res:
             _max = np.argmax(_)
             if _max == prediction:
-                reason += text[_i]
+                vocabulary = _words[_i]
+                print('vocabulary: ', vocabulary)
+                reason = self.transform_back_str(vocabulary)
+                break
             _i += 1
 
         # print('get_reason _res: ', _res)

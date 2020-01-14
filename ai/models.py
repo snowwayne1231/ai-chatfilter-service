@@ -53,7 +53,7 @@ class SoundVocabulary(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['status',]),
+            models.Index(fields=['pinyin', 'status',]),
         ]
 
     def __str__(self):
