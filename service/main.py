@@ -35,9 +35,10 @@ class MainService():
         return self.message_parser.parse(string)
 
 
-    def think(self, message, user = '', room = '', silence=False):
+    def think(self, message, user = '', room = '', silence=False, detail=False):
         result = {}
         text = ''
+        merged_text = ''
         reason_char = ''
         # print('receive message :', message)
 
@@ -92,6 +93,11 @@ class MainService():
         if not silence and message:
             self.saveRecord(prediction, message=message, text=text, reason=reason_char)
         
+        if detail:
+            print('message: ', message)
+            print('text: ', text)
+            print('merged_text: ', merged_text)
+            print('reason_char: ', reason_char)
         
         
         result['user'] = user

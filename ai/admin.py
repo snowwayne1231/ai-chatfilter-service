@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ai.models import AbstractMeaning, Language, PartOfSpeech, Vocabulary, SoundVocabulary
+from ai.models import AbstractMeaning, Language, PartOfSpeech, Vocabulary, SoundVocabulary, DigitalVocabulary
 
 
 class AbstractMeaningAdmin(admin.ModelAdmin):
@@ -40,6 +40,15 @@ class SoundVocabularyAdmin(admin.ModelAdmin):
     readonly_fields = ('vocabulary',)
     search_fields = ('pinyin',)
 
+
+class DigitalVocabularyAdmin(admin.ModelAdmin):
+    fields = ['digits', 'pinyin', 'type', 'status', 'vocabulary']
+    list_display = ['digits', 'pinyin', 'type', 'status']
+    empty_value_display = '---'
+
+    readonly_fields = ('vocabulary',)
+    search_fields = ('digits', 'pinyin')
+
     
 
 
@@ -48,3 +57,4 @@ admin.site.register(Language, LanguageAdmin)
 admin.site.register(PartOfSpeech, PartOfSpeechAdmin)
 admin.site.register(Vocabulary, VocabularyAdmin)
 admin.site.register(SoundVocabulary, SoundVocabularyAdmin)
+admin.site.register(DigitalVocabulary, DigitalVocabularyAdmin)

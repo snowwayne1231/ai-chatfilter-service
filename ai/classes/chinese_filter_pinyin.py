@@ -3,20 +3,32 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 # from datetime import datetime
 from .translator_pinyin import translate_by_string, traceback_by_stringcode
-import tensorflow as tf
-
-
 from .chinese_filter_basic import BasicChineseFilter
+
+import tensorflow as tf
+from ai.models import DigitalVocabulary
 
 
 
 class PinYinFilter(BasicChineseFilter):
     """
     """
+
+    digital_vocabulary_map = {}
+
     def __init__(self, data = [], load_folder=None):
         
         super().__init__(data=data, load_folder=load_folder)
+        vocabularies = DigitalVocabulary.objects.all()
+        next_dv_map = {}
+        for _ in vocabularies:
+            next_dv_map[_.digits] = _.pinyin
 
+        self.digital_vocabulary_map = next_dv_map
+
+
+    def parse_digit(self, _string):
+        return self.digital_vocabulary_map.get(_string, _string)
     
 
     #override return list
@@ -28,8 +40,7 @@ class PinYinFilter(BasicChineseFilter):
         # print(_words)
         # exit(2)
         
-        # _words = _pinyin.split('|')
-        _words = [_w for _w in _words if not _w.isdigit()]
+        _words = [self.parse_digit(_w) if _w.isdigit() else _w  for _w in _words]
         # print(_words)
         return _words
 

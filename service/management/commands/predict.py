@@ -37,7 +37,7 @@ class Command(BaseCommand):
         if text:
 
             self.stdout.write('Word of Prediction: ' + text)
-            res = predict_by_pinyin(text, silence=silence)
+            res = predict_by_pinyin(text, silence=silence, detail=True)
             self.stdout.write('Prediction is: ' + str(res))
 
         elif input_file:
@@ -95,16 +95,23 @@ class Command(BaseCommand):
                         total_wrong_map[predicted] += 1
 
                         if should_be_deleted:
-                            total_missing_delete += 1
+                            if ans == 5:
+                                total_missing_delete += 1
                         else:
                             total_mistake_delete += 1
 
-                        # if should_be_deleted:
-                        #     mistake_remain.append(txt)
-                        # elif ai_delete:
-                        #     mistake_delete.append(txt)
+                        if ans != 5 and predicted == 0:
+                            # is not deleted by other ai
+                            pass
 
-                        mistake_texts_map[predicted].append(txt)
+                        else:
+
+                            # if should_be_deleted:
+                            #     mistake_remain.append(txt)
+                            # elif ai_delete:
+                            #     mistake_delete.append(txt)
+                                
+                            mistake_texts_map[predicted].append(txt)
 
 
                     _i += 1

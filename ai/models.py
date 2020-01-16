@@ -53,9 +53,25 @@ class SoundVocabulary(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['pinyin', 'status',]),
+            models.Index(fields=['status', 'pinyin',]),
         ]
 
     def __str__(self):
         return self.pinyin
+
+
+class DigitalVocabulary(models.Model):
+    digits = models.CharField(max_length=65)
+    pinyin = models.CharField(max_length=65, default='')
+    type = models.IntegerField(default=1)
+    status = models.IntegerField(default=1)
+    vocabulary = models.ManyToManyField(Vocabulary)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['status', 'digits',]),
+        ]
+
+    def __str__(self):
+        return self.digits
 

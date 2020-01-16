@@ -1,4 +1,4 @@
-from ai.models import Vocabulary, Language, SoundVocabulary, PartOfSpeech
+from ai.models import Vocabulary, Language, SoundVocabulary, PartOfSpeech, DigitalVocabulary
 from ai.classes.translator_pinyin import translate_by_string
 from dataparser.apps import ExcelParser
 import re
@@ -128,5 +128,46 @@ class KnowledgeCenter():
         return self
     
 
+    def absorb_digital_dictionary(self, file_path):
+        if file_path:
+
+            ep = ExcelParser(file=file_path)
+            rows = ep.get_row_list(column=['數字', '翻譯'])
+
+            self.upsert_into_digital_dictionary(rows)
+
+
+    def upsert_into_digital_dictionary(self, row_data):
+
+        digital_vocabularies = list(DigitalVocabulary.objects.values_list('pinyin', flat=True))
+
+        # vocabulary_set = set()
+        # for _ in digital_vocabularies:
+        #     vocabulary_set.update({_})
+
+        length_rows = len(row_data)
+        i = 0
+        for _ in row_data:
+            i += 1
+            _digit = str(int(_[0])).strip()
+            _word = _[1]
+            _word_pinyin = translate_by_string(_word)
+
+            if i % 100 == 0:
+                print('Upsert Digital Vocabularies.. process: {:.2f} % '.format( i / length_rows * 100 ), end='\r')
+
+            if _word_pinyin in digital_vocabularies:
+                continue
+
+            _v = DigitalVocabulary(
+                digits=_digit,
+                pinyin=_word_pinyin,
+            )
+            _v.save()
+            digital_vocabularies.append(_word_pinyin)
+            
+        print('Upsert Digital Vocabularies Successful. process: 100.00 %  ')
+
+        return self
         
         

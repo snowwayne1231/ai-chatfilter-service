@@ -19,7 +19,7 @@ from service.main import MainService
 main_service = MainService()
 
 
-def predict_by_pinyin(text = '', room = '', silence = False):
+def predict_by_pinyin(text = '', room = '', silence = False, detail=False):
     
     # _st_time = datetime.now()
 
@@ -28,7 +28,7 @@ def predict_by_pinyin(text = '', room = '', silence = False):
 
     # result = piny.predictText(_text, lv=_lv)
 
-    results = main_service.think(message=text, user='', room=room, silence=silence)
+    results = main_service.think(message=text, user='', room=room, silence=silence, detail=detail)
     prediction = results.get('prediction', 0)
     # del results
 

@@ -265,6 +265,8 @@ python manage.py collectstatic
 python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_1.xls
 python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_2.xls
 python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_3.xls
+python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN
+python manage.py knowledge -di ai/assets/chinese_digits/dict.xls
 python manage.py knowledge
 ```
 > if you need some help then type `python manage.py train -h` have a look on helper and see how to use train
