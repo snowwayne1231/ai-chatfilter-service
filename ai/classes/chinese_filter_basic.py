@@ -243,8 +243,9 @@ class BasicChineseFilter():
 
             batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
             batch_test_data = batch_train_data.take(VALIDATION_SIZE)
-            batch_train_data = batch_train_data.skip(VALIDATION_SIZE)
-            _length_of_data -= VALIDATION_SIZE
+            
+            # batch_train_data = batch_train_data.skip(VALIDATION_SIZE)
+            # _length_of_data -= VALIDATION_SIZE
 
         else:
 
@@ -469,4 +470,17 @@ class BasicChineseFilter():
                 _result_text.append(_loc[0])
 
         return _result_text
+
+
+    
+    def get_details(self, text):
+        words = self.transform(text)
+        result_text = self.get_encode_word(words)
+
+        predicted = self.model.predict([result_text])[0]
+        return {
+            'transformed_words': words,
+            'encoded_words': result_text,
+            'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
+        }
 

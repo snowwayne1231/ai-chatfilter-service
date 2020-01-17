@@ -149,7 +149,7 @@ class KnowledgeCenter():
         i = 0
         for _ in row_data:
             i += 1
-            _digit = str(int(_[0])).strip()
+            _digit = str(_[0]).strip()
             _word = _[1]
             _word_pinyin = translate_by_string(_word)
 

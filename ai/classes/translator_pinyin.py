@@ -4,13 +4,14 @@ from ai.models import Vocabulary, SoundVocabulary
 g_strict = False
 g_heteronym = True
 g_tmp_dictionary = {}
+g_split_character = '_'
 
 def translate_by_string(_string):
     _words = pinyin(_string, strict=g_strict, style=Style.NORMAL, heteronym=g_heteronym)
 
     _words = [_w[0] for _w in _words]
 
-    _next = '_'.join(_words)
+    _next = g_split_character.join(_words) + g_split_character
 
     return _next
 

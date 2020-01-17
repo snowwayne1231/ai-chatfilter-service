@@ -37,6 +37,7 @@ class MainService():
 
     def think(self, message, user = '', room = '', silence=False, detail=False):
         result = {}
+        detail_data = {}
         text = ''
         merged_text = ''
         reason_char = ''
@@ -94,10 +95,14 @@ class MainService():
             self.saveRecord(prediction, message=message, text=text, reason=reason_char)
         
         if detail:
+
+            detail_data = self.ai_app.get_details(merged_text)
+            print('prediction: ', prediction)
             print('message: ', message)
             print('text: ', text)
             print('merged_text: ', merged_text)
             print('reason_char: ', reason_char)
+            print('detail_data: ', detail_data)
         
         
         result['user'] = user
@@ -105,6 +110,7 @@ class MainService():
         result['message'] = message
         result['prediction'] = prediction
         result['reason_char'] = reason_char
+        result['detail'] = detail_data
 
         return result
 

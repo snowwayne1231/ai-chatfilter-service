@@ -53,7 +53,7 @@ class SoundVocabulary(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['status', 'pinyin',]),
+            models.Index(fields=['pinyin',]),
         ]
 
     def __str__(self):
@@ -69,7 +69,7 @@ class DigitalVocabulary(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['status', 'digits',]),
+            models.Index(fields=['digits',]),
         ]
 
     def __str__(self):

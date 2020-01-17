@@ -176,22 +176,26 @@ class MessageParser():
 
 class JieBaDictionary():
     """
-
+        
     """
     def __init__(self):
-        self.refresh_dictionary()
         jieba.re_eng = re.compile('[a-zA-Z0-9_]', re.U)
+        self.refresh_dictionary()
         print('JieBaDictionary init done.')
 
 
     def split_word(self, text=''):
         _list = jieba.cut(text, HMM=False) if text else []
         results = []
+        _idx = 0
+        
         for _ in _list:
-            _next = _.strip('_')
-            if not _next:
+            # print('_: ', _)
+            # print('get_FREQL: ', jieba.get_FREQ(_))
+            if not _:
                 continue
-            results.append(_next)
+            results.append(_)
+            _idx += 1
         return results
 
 

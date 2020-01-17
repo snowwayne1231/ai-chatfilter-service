@@ -37,3 +37,7 @@ class MainAiApp():
 
         return pinyin_prediction, reason
 
+    
+    def get_details(self, txt):
+        return self.pinyin_model.get_details(txt) if txt else {}
+

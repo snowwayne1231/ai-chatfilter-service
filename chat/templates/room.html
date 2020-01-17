@@ -10,6 +10,8 @@
             width: 48%;
             position: relative;
             margin: 0px 1%;
+            max-height: 96vh;
+            overflow: auto;
         }
 
         .range textarea, .range input {
@@ -25,12 +27,16 @@
         }
 
         table td {
-            min-width: 12%;
+            min-width: 5%;
             border: 1px solid #666;
         }
 
         .prediction {
             text-align: center;
+        }
+
+        table dl {
+            margin: 0px;
         }
     </style>
 </head>
@@ -45,10 +51,11 @@
         <table>
             <thead>
                 <th style="width: 10%;">房號</th>
-                <th style="width: 20%;">玩家</th>
-                <th style="width: 40%;">聊天內容</th>
-                <th style="width: 10%;">結果</th>
-                <th style="width: 20%;">原因</th>
+                <th style="width: 10%;">玩家</th>
+                <th style="width: 30%;">聊天內容</th>
+                <th style="width: 5%;">結果</th>
+                <th style="width: 15%;">原因</th>
+                <th style="width: 30%;">詳細</th>
             </thead>
             <tbody id="table-body">
 
@@ -84,7 +91,8 @@
                 'user': randomUsers[Math.floor(Math.random() * randomUsers.length)],
                 // 'room': randomRooms[Math.floor(Math.random() * randomRooms.length)],
                 'room': 'localhot_test',
-                'message': message
+                'message': message,
+                'detail': 1,
             }));
             messageInputDom.value = '';
         }
@@ -112,18 +120,41 @@
             var message = data['message'];
             var prediction = data['prediction'];
             var reason_char = data['reason_char'];
+            var detail = data['detail'];
             document.querySelector('#chat-log').value += (message + '\n');
             // document.querySelector('#chat-prediction').value += (prediction + '\n');
             var tbody = document.querySelector('#table-body');
             var _tr = document.createElement('tr');
-            ['room', 'user', 'message', 'prediction', 'reason_char'].map(e => {
+            ['room', 'user', 'message', 'prediction', 'reason_char', 'detail'].map(e => {
                 var loc = data[e];
                 var _td = document.createElement('td');
-                _td.innerText = loc;
+                    
+                if (typeof loc == 'object') {
+                    // console.log(loc);
+                    // loc = JSON.stringify(loc);
+                    for (key in loc) {
+                        __val = loc[key];
+                        var __div = document.createElement('div');
+                        if (key == 'predicted_ratios') {
+                            var __next_val = '';
+                            __val.map((v,i) => {
+                                if (parseInt(v) > 0) {
+                                    __next_val += '<i>[ ' + i + ' ] = ' + v + '</i><br/>';
+                                }
+                            });
+                            
+                            __val = __next_val
+                        }
+                        __div.innerHTML = '<dl>'+key+' : </dl><dl>' + __val + '</dl>';
+                        _td.appendChild(__div);
+                    }
+                } else {
+                    _td.innerText = loc;
+                }
                 _td.className = e;
                 _tr.appendChild(_td);
             });
-            tbody.appendChild(_tr);
+            tbody.prepend(_tr);
         };
 
         chatSocket.onclose = function(e) {
