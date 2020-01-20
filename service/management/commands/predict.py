@@ -81,7 +81,7 @@ class Command(BaseCommand):
                     txt = row[2]
                     should_be_deleted = ans > 0
                     # print(txt)
-                    predicted = predict_by_pinyin(txt, room=room, silence=silence)
+                    predicted, processed_text = predict_by_pinyin(txt, room=room, silence=silence)
                     ai_delete = predicted > 0
                     # print(predicted)
 
@@ -111,7 +111,7 @@ class Command(BaseCommand):
                             # elif ai_delete:
                             #     mistake_delete.append(txt)
                                 
-                            mistake_texts_map[predicted].append(txt)
+                            mistake_texts_map[predicted].append([txt, processed_text])
 
 
                     _i += 1

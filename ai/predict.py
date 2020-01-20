@@ -30,9 +30,10 @@ def predict_by_pinyin(text = '', room = '', silence = False, detail=False):
 
     results = main_service.think(message=text, user='', room=room, silence=silence, detail=detail)
     prediction = results.get('prediction', 0)
+    text = results.get('text', 0)
     # del results
 
     # print_spend_time(_st_time)
 
-    return prediction
+    return prediction, text
 

@@ -52,10 +52,13 @@ class MainService():
             else:
                 text, lv, anchor = self.parse_message(message)
                 
-                merged_text = self.get_merged_text(text, user, room)
-                if merged_text is None:
+                # merged_text = self.get_merged_text(text, user, room)
+                merged_text = text
 
-                    prediction = self.STATUS_PREDICTION_NONSENSE
+                if not merged_text:
+
+                    # prediction = self.STATUS_PREDICTION_NONSENSE
+                    prediction = 0
 
                 else:
 
@@ -108,6 +111,7 @@ class MainService():
         result['user'] = user
         result['room'] = room
         result['message'] = message
+        result['text'] = text
         result['prediction'] = prediction
         result['reason_char'] = reason_char
         result['detail'] = detail_data

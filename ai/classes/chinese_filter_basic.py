@@ -233,7 +233,7 @@ class BasicChineseFilter():
 
         _length_of_data = self.length_x
 
-        BUFFER_SIZE = 50000
+        BUFFER_SIZE = _length_of_data + 1000
         BATCH_SIZE = self.full_words_length
         VALIDATION_SIZE = int(_length_of_data / 8) if _length_of_data > 5000 else int(_length_of_data / 2)
 
@@ -243,7 +243,7 @@ class BasicChineseFilter():
 
             batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
             batch_test_data = batch_train_data.take(VALIDATION_SIZE)
-            
+
             # batch_train_data = batch_train_data.skip(VALIDATION_SIZE)
             # _length_of_data -= VALIDATION_SIZE
 
