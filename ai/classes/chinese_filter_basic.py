@@ -21,7 +21,7 @@ class BasicChineseFilter():
     appended_columns = ['TRANSFORMED_WORD']
     data = []
     model = None
-    tokenizer_vocabulary = set()
+    # tokenizer_vocabulary = set()
     encoder = None
     saved_folder = None
     jieba_dict = None
@@ -38,12 +38,13 @@ class BasicChineseFilter():
         self.jieba_dict = JieBaDictionary()
         
         if len(data) > 0:
-
+            
             if self.check_data_shape(data):
 
                 # self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
+                
                 self.tokenizer = tfds.features.text.Tokenizer()
-
+                
                 self.set_data(data)
             
             else:
@@ -51,7 +52,7 @@ class BasicChineseFilter():
                 print('Error init with worng length of dataset.')
 
         elif load_folder:
-
+            
             self.load(load_folder)
 
 
@@ -86,7 +87,7 @@ class BasicChineseFilter():
         return self
 
 
-    def save(self, folder = None):
+    def save(self, folder = None, is_check = False):
         if folder is not None:
             self.saved_folder = folder
         elif self.saved_folder:
@@ -98,17 +99,21 @@ class BasicChineseFilter():
         if not os.path.isdir(folder) or not os.path.exists(folder):
             os.makedirs(folder)
         
-        self.save_model(folder + '/model.h5')
-        self.save_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
+        if not is_check:
+            self.save_model(folder + '/model.h5')
+            # self.save_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
         
-        print('Successful saved. ')
+            print('Successful saved. ')
+
+        return self
 
 
 
     def load(self, folder):
         self.saved_folder = folder
         self.load_model(folder + '/model.h5')
-        self.load_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
+        # self.load_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
+        self.load_tokenizer_vocabularies()
         
         print('Successful load model. ', folder)
     
@@ -118,6 +123,8 @@ class BasicChineseFilter():
         with open(path, 'wb+') as handle:
             pickle.dump(self.tokenizer_vocabulary, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+        self.encoder.save_to_file(filename_prefix=path + '.encoder')
+
 
 
     def load_tokenizer_vocabulary(self, path):
@@ -125,7 +132,21 @@ class BasicChineseFilter():
             self.tokenizer_vocabulary = pickle.load(handle)
             self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
 
+        print('load from file filename_prefix: ', path + '.encoder')
+        self.encoder = tfds.features.text.TokenTextEncoder.load_from_file(filename_prefix=path + '.encoder')
 
+
+    def save_tokenizer_vocabularies(self):
+        self.save(is_check=True)
+        with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
+            pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def load_tokenizer_vocabularies(self):
+        with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'rb') as handle:
+            self.tokenizer_vocabularies = pickle.load(handle)
+            self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
+
+        
 
     def save_model(self, path):
         return self.model.save(path)
@@ -299,20 +320,29 @@ class BasicChineseFilter():
 
 
     def tokenize_data(self, datalist):
-        tokenizer_vocabulary = self.tokenizer_vocabulary
+        # tokenizer_vocabulary = self.tokenizer_vocabulary
+        tokenizer_vocabularies = []
         tokenizer = tfds.features.text.Tokenizer()
         for words in datalist:
             
             for word in words:
                 tokens = tokenizer.tokenize(word)
-                tokenizer_vocabulary.update(tokens)
+                # tokenizer_vocabulary.update(tokens)
+                if tokens:
+                    # print('tokens: ', tokens)
+                    _ = tokens[0]
+                    if not _ in tokenizer_vocabularies:
+                        tokenizer_vocabularies.append(_)
             
-        vocab_size = len(tokenizer_vocabulary)
-        print('tokenizer_vocabulary vocab_size = ', vocab_size)
+        vocab_size = len(tokenizer_vocabularies)
+        print('tokenizer_vocabularies length: ', len(tokenizer_vocabularies))
         # print(vocabulary_set)
-        self.tokenizer_vocabulary = tokenizer_vocabulary
+        # self.tokenizer_vocabulary = tokenizer_vocabulary
+        self.tokenizer_vocabularies = tokenizer_vocabularies
 
-        return tokenizer_vocabulary
+        self.save_tokenizer_vocabularies()
+
+        return self
 
 
 
@@ -345,7 +375,7 @@ class BasicChineseFilter():
         print('======== get_train_batchs =========')
         print('total x data = ', length_x)
 
-        tokenize_set = self.tokenize_data(x)
+        self.tokenize_data(x)
 
         labeled_dataset = self.bathchs_labeler(x, y)
 
@@ -355,7 +385,8 @@ class BasicChineseFilter():
 
     def bathchs_labeler(self, x, y):
         assert len(x) == len(y)
-        self.encoder = encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
+        # self.encoder = encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
+        self.encoder = encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
 
         def encode(text):
             encoded_list = encoder.encode(text)
@@ -373,8 +404,12 @@ class BasicChineseFilter():
                     encoded_text = encode(text)
                     if encoded_text:
                         next_texts.append(encoded_text)
-                    # else:
-                    #     print('text: ', text)
+                    else:
+                        pass
+                        # print('[bathchs_labeler] gen batches fail with text: ', text)
+
+                if len(next_texts) == 0:
+                    continue
                     
                 yield next_texts, st
         
@@ -467,7 +502,9 @@ class BasicChineseFilter():
         for _ in _words:
             _loc = self.encoder.encode(_)
             if len(_loc) > 0:
-                _result_text.append(_loc[0])
+                __code = _loc[0]
+                if __code > 0:
+                    _result_text.append(__code)
 
         return _result_text
 

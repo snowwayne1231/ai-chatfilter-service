@@ -111,7 +111,8 @@ class Command(BaseCommand):
                             # elif ai_delete:
                             #     mistake_delete.append(txt)
                                 
-                            mistake_texts_map[predicted].append([txt, processed_text])
+                            # mistake_texts_map[predicted].append([txt, processed_text])
+                            mistake_texts_map[predicted].append(txt)
 
 
                     _i += 1
