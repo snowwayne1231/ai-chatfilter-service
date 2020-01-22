@@ -239,6 +239,7 @@ pip install psycopg2-binary
 pip install websocket
 pip install websocket-client
 pip install zhconv
+pip install xlwt
 ```
 
 
@@ -386,6 +387,10 @@ Enter number:
 ```shell
 python manage.py predict -t speaksome.. -s
 python manage.py predict -i ai/assets/.. -s
+```
+
+```shell
+python manage.py testsocket -i ai/assets/.. -p 8025 -h 127.0.0.1
 ```
 
 

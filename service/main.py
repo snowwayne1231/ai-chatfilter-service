@@ -55,7 +55,7 @@ class MainService():
                 # merged_text = self.get_merged_text(text, user, room)
                 merged_text = text
 
-                if not merged_text:
+                if not merged_text or anchor > 0:
 
                     # prediction = self.STATUS_PREDICTION_NONSENSE
                     prediction = 0

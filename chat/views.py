@@ -10,3 +10,8 @@ def room(request, room_name = ''):
     return render(request, 'room.html', {
         'room_name_json': mark_safe(json.dumps(room_name))
     })
+
+def controller(request):
+    return render(request, 'index.html', {
+        
+    })
