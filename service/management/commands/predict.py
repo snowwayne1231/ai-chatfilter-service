@@ -206,6 +206,8 @@ class Command(BaseCommand):
                 default_width = sheet.col(0).width
                 sheet.col(0).width = default_width * 3
                 sheet.col(5).width = default_width * 3
+
+                title_style = xlwt.easyxf('pattern: pattern solid, fore_colour gray25;')
                 
                 
                 sheet.write(0,0, 'right_ratio')
@@ -229,7 +231,7 @@ class Command(BaseCommand):
 
                 detail_start_row = 12
                 should_be_delete_start_column = 0
-                sheet.write(detail_start_row,should_be_delete_start_column, '應該刪除，但未刪')
+                sheet.write(detail_start_row,should_be_delete_start_column, '應該刪除，但未刪', style=title_style)
                 texts_should_be_deleted_but_not = mistake_texts_map[0]
                 for i in range(1, len(texts_should_be_deleted_but_not)):
                     _row = detail_start_row + i
@@ -237,7 +239,7 @@ class Command(BaseCommand):
                     sheet.write(_row, should_be_delete_start_column, _text)
 
                 mistake_start_column = 5
-                sheet.write(detail_start_row,mistake_start_column, '誤刪')
+                sheet.write(detail_start_row,mistake_start_column, '誤刪', style=title_style)
                 _row = detail_start_row + 1
 
                 for s in _status_list:
