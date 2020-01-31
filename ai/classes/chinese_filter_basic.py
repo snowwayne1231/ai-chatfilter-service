@@ -101,7 +101,6 @@ class BasicChineseFilter():
         
         if not is_check:
             self.save_model(folder + '/model.h5')
-            # self.save_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
         
             print('Successful saved. ')
 
@@ -112,34 +111,26 @@ class BasicChineseFilter():
     def load(self, folder):
         self.saved_folder = folder
         self.load_model(folder + '/model.h5')
-        # self.load_tokenizer_vocabulary(folder + '/tokenizer_vocabulary.pickle')
         self.load_tokenizer_vocabularies()
         
         print('Successful load model. ', folder)
-    
-
-    
-    def save_tokenizer_vocabulary(self, path):
-        with open(path, 'wb+') as handle:
-            pickle.dump(self.tokenizer_vocabulary, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        self.encoder.save_to_file(filename_prefix=path + '.encoder')
-
-
-
-    def load_tokenizer_vocabulary(self, path):
-        with open(path, 'rb') as handle:
-            self.tokenizer_vocabulary = pickle.load(handle)
-            self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
-
-        print('load from file filename_prefix: ', path + '.encoder')
-        self.encoder = tfds.features.text.TokenTextEncoder.load_from_file(filename_prefix=path + '.encoder')
 
 
     def save_tokenizer_vocabularies(self):
-        self.save(is_check=True)
-        with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
-            pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        vocab_size = len(self.tokenizer_vocabularies)
+        if vocab_size < self.full_vocab_size:
+
+            self.save(is_check=True)
+            with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
+                pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            
+            print('saved tokenizer vocabularies, size: ', len(self.tokenizer_vocabularies))
+            self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
+
+        else:
+
+            print('save failed.  tokenizer vocabularies size over[{}].'.format(self.full_vocab_size))
+
 
     def load_tokenizer_vocabularies(self):
         with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'rb') as handle:
@@ -150,7 +141,6 @@ class BasicChineseFilter():
 
     def save_model(self, path):
         return self.model.save(path)
-    
 
 
     def load_model(self, path):
@@ -321,7 +311,7 @@ class BasicChineseFilter():
 
     def tokenize_data(self, datalist):
         # tokenizer_vocabulary = self.tokenizer_vocabulary
-        tokenizer_vocabularies = []
+        tokenizer_vocabularies = self.tokenizer_vocabularies if len(self.tokenizer_vocabularies) > 0 else []
         tokenizer = tfds.features.text.Tokenizer()
         for words in datalist:
             
@@ -334,13 +324,10 @@ class BasicChineseFilter():
                     if not _ in tokenizer_vocabularies:
                         tokenizer_vocabularies.append(_)
             
-        vocab_size = len(tokenizer_vocabularies)
-        print('tokenizer_vocabularies length: ', len(tokenizer_vocabularies))
-        # print(vocabulary_set)
-        # self.tokenizer_vocabulary = tokenizer_vocabulary
+        
         self.tokenizer_vocabularies = tokenizer_vocabularies
-
         self.save_tokenizer_vocabularies()
+        
 
         return self
 
@@ -385,8 +372,7 @@ class BasicChineseFilter():
 
     def bathchs_labeler(self, x, y):
         assert len(x) == len(y)
-        # self.encoder = encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabulary)
-        self.encoder = encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
+        encoder = self.encoder
 
         def encode(text):
             encoded_list = encoder.encode(text)
@@ -499,13 +485,22 @@ class BasicChineseFilter():
 
     def get_encode_word(self, _words):
         _result_text = []
+        _vocal_size = len(self.tokenizer_vocabularies)
+
         for _ in _words:
+            
             _loc = self.encoder.encode(_)
+            
             if len(_loc) > 0:
                 __code = _loc[0]
+
+                if __code > _vocal_size:
+                    self.tokenize_data([_words])
+                    return self.get_encode_word(_words)
+                
                 if __code > 0:
                     _result_text.append(__code)
-
+        
         return _result_text
 
 

@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
             ep = ExcelParser(file=file_path)
             basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息']]
-            row_list = ep.get_row_list(column=basic_model_columns, limit=1000)
+            row_list = ep.get_row_list(column=basic_model_columns, limit=5000)
             for r in row_list:
                 _loc = r[2]
                 if _loc:
@@ -68,7 +68,7 @@ class Command(BaseCommand):
 
                 if msgtxt:
                     print('sending txt: ', msgtxt)
-                    packed = pack(command_hex, msgid=msgid, msgtxt=msgtxt)
+                    packed = pack(command_hex, msgid=msgid+1, msgtxt=msgtxt)
                 else:
                     break
                 

@@ -12,6 +12,7 @@ class MainService():
     ai_app = None
     message_parser = None
     fuzzy_center = None
+    timestamp_ymdh = [0, 0, 0, 0]
     STATUS_PREDICTION_ADVERTISING = 1
     STATUS_PREDICTION_HUMAN_DELETE = 3
     STATUS_PREDICTION_DIRTY_WORD = 4
@@ -106,6 +107,9 @@ class MainService():
             print('merged_text: ', merged_text)
             print('reason_char: ', reason_char)
             print('detail_data: ', detail_data)
+
+
+        self.check_analyzing()
         
         
         result['user'] = user
@@ -142,3 +146,6 @@ class MainService():
             )
 
         record.save()
+
+    def check_analyzing(self):
+        pass

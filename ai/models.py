@@ -75,3 +75,17 @@ class DigitalVocabulary(models.Model):
     def __str__(self):
         return self.digits
 
+
+class NewVocabulary(models.Model):
+    pinyin = models.CharField(max_length=65, default='')
+    type = models.IntegerField(default=1)
+    status = models.IntegerField(default=1)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['pinyin',]),
+        ]
+
+    def __str__(self):
+        return self.pinyin
+

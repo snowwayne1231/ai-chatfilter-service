@@ -231,7 +231,7 @@ class Command(BaseCommand):
 
                 detail_start_row = 12
                 should_be_delete_start_column = 0
-                sheet.write(detail_start_row,should_be_delete_start_column, '應該刪除，但未刪', style=title_style)
+                sheet.write(detail_start_row,should_be_delete_start_column, '舊資料被刪，但未刪除', style=title_style)
                 texts_should_be_deleted_but_not = mistake_texts_map[0]
                 for i in range(1, len(texts_should_be_deleted_but_not)):
                     _row = detail_start_row + i

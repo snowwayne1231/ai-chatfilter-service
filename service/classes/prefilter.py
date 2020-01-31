@@ -15,25 +15,35 @@ class PreFilter():
 
     def find_special_char(self, text):
         next_char = ''
+        size_qk = 0
+        
         for u in text:
             if not (self.is_chinese(u) or self.is_general(u) or self.is_full_character(u)):
                 next_char += u
-        return next_char
+            elif self.is_question_mark(u):
+                size_qk+=1
+
+        is_too_many_question_marks = size_qk >= 3
+
+        return '?' if is_too_many_question_marks else next_char
 
     
     def find_wechat_char(self, text, lowercase_only = True):
         number_size = 0
         eng_size = 0
+        qk_size = 0
         next_char = ''
         length_char = len(text)
 
         for u in text:
             if self.is_number(u):
                 number_size += 1
-                next_char += u
             elif self.is_english(u):
                 eng_size += 1
-                next_char += u
+            else:
+                continue
+
+            next_char += u
         
         is_many_asci = len(next_char) >= 6 and number_size >= 2 and eng_size <= 24
 
@@ -68,5 +78,7 @@ class PreFilter():
         # return (uchar >= u'\u0041' and uchar <= u'\u0039') or (uchar >= u'\u0061' and uchar <= u'\u007a')
         return uchar >= u'\u0061' and uchar <= u'\u007a'
 
+    def is_question_mark(self, uchar):
+        return uchar == u'\u003f'
 
     
