@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.conf import settings
 from ai.apps import MainAiApp
 from dataparser.apps import MessageParser
 from .classes.prefilter import PreFilter
@@ -26,6 +27,8 @@ class MainService():
     STATUS_PREDICTION_BLOCK_WORD = 14
 
     def __init__(self):
+        print('Setting Time Zone: [ {} ]'.format(settings.TIME_ZONE))
+        
         self.ai_app = MainAiApp()
         self.message_parser = MessageParser()
 
@@ -152,54 +155,72 @@ class MainService():
         record.save()
 
     def check_analyzing(self):
-        # _now = datetime.datetime.now()
         _now = timezone.now()
+        today_datetime = timezone.localtime(_now)
         _ymdh = [_now.year, _now.month, _now.day, _now.hour]
-        _localdate = timezone.localdate()
-        print(_now)
-        print('_ymdh: ', _ymdh)
-        print('_localdate: ', _localdate)
-        # self.timestamp_ymdh = [_now.year, _now.month, _now.day, _now.hour]
-        _not_matched = False
-        _not_hour_matched = False
-        
-        for i in [3,2,1,0]:
-            _not_matched = _ymdh[i] != self.timestamp_ymdh[i]
-            if _not_matched:
-                _not_hour_matched = _ymdh[3] != self.timestamp_ymdh[3]
-                break
-        
-        if _not_matched:
+        _not_day_matched = _ymdh[2] != self.timestamp_ymdh[2]
+        _not_hour_matched = _ymdh[3] != self.timestamp_ymdh[3]
 
-            if _not_hour_matched:
-                today_date = timezone.localdate()
-                today_goods = GoodSentence.objects.filter(date__gte=today_date).count()
-                today_blockeds = BlockedSentence.objects.filter(date__gte=today_date).count()
-                today_analyzing = AnalyzingData.objects.filter(
-                    year=_ymdh[0],
-                    month=_ymdh[1],
-                    day=_ymdh[2],
+
+        if _not_day_matched:
+            today_date = today_datetime.replace(hour=0,minute=0,second=0)
+            yesterday_date = today_date + timezone.timedelta(days=-1)
+            yesterday_goods = GoodSentence.objects.filter(date__gte=yesterday_date, date__lte=today_date).count()
+            yesterday_blockeds = BlockedSentence.objects.filter(date__gte=yesterday_date, date__lte=today_date).count()
+
+            yesterday_analyzing = AnalyzingData.objects.filter(
+                year=yesterday_date.year,
+                month=yesterday_date.month,
+                day=yesterday_date.day,
+            )
+
+            if yesterday_analyzing:
+
+                yesterday_analyzing.update(
+                    good_sentence=yesterday_goods,
+                    blocked_sentence=yesterday_blockeds,
                 )
 
-                print('today_goods: ', today_goods)
-                print('today_blockeds: ', today_blockeds)
+            else:
 
-                if today_analyzing:
-                    today_analyzing.good_sentence = today_goods
-                    today_analyzing.blocked_sentence = today_blockeds
+                yesterday_analyzing = AnalyzingData(
+                    year=yesterday_date.year,
+                    month=yesterday_date.month,
+                    day=yesterday_date.day,
+                    good_sentence=yesterday_goods,
+                    blocked_sentence=yesterday_blockeds,
+                )
 
-                    today_analyzing.update()
-                else:
-                    today_analyzing = AnalyzingData(
-                        year=_ymdh[0],
-                        month=_ymdh[1],
-                        day=_ymdh[2],
-                        good_sentence=today_goods,
-                        blocked_sentence=today_blockeds,
-                    )
+                yesterday_analyzing.save()
 
-                    today_analyzing.save()
-                
-                print(today_analyzing)
+            self.timestamp_ymdh[2] = _now.day
+
+        if _not_hour_matched:
+            today_date = today_datetime.replace(hour=0,minute=0,second=0)
+            today_goods = GoodSentence.objects.filter(date__gte=today_date).count()
+            today_blockeds = BlockedSentence.objects.filter(date__gte=today_date).count()
+            today_analyzing = AnalyzingData.objects.filter(
+                year=today_date.year,
+                month=today_date.month,
+                day=today_date.day,
+            )
+
+            if today_analyzing:
+
+                today_analyzing.update(
+                    good_sentence=today_goods,
+                    blocked_sentence=today_blockeds,
+                )
+
+            else:
+                today_analyzing = AnalyzingData(
+                    year=today_date.year,
+                    month=today_date.month,
+                    day=today_date.day,
+                    good_sentence=today_goods,
+                    blocked_sentence=today_blockeds,
+                )
+
+                today_analyzing.save()
                 
             self.timestamp_ymdh = _ymdh
