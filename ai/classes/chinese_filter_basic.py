@@ -21,7 +21,8 @@ class BasicChineseFilter():
     appended_columns = ['TRANSFORMED_WORD']
     data = []
     model = None
-    # tokenizer_vocabulary = set()
+    
+    tokenizer_vocabularies = []
     encoder = None
     saved_folder = None
     jieba_dict = None
