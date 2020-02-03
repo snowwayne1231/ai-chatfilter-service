@@ -6,6 +6,7 @@ from .classes.prefilter import PreFilter
 from .classes.fuzzycenter import FuzzyCenter
 from .models import GoodSentence, BlockedSentence, AnalyzingData
 import numpy as np
+import time
 
 
 
@@ -49,6 +50,7 @@ class MainService():
         text = ''
         merged_text = ''
         reason_char = ''
+        _st_time = time.time()
         # print('receive message :', message)
 
         if message:
@@ -102,10 +104,14 @@ class MainService():
             prediction = self.STATUS_PREDICTION_NO_MSG
 
         # print('prediction :', prediction)
+
         if not silence and message:
+
             self.saveRecord(prediction, message=message, text=text, reason=reason_char)
         
         if detail:
+
+            _ed_time_1 = time.time()
 
             detail_data = self.ai_app.get_details(merged_text)
             print('prediction: ', prediction)
@@ -114,10 +120,10 @@ class MainService():
             print('merged_text: ', merged_text)
             print('reason_char: ', reason_char)
             print('detail_data: ', detail_data)
+            print('spent time: ', _ed_time_1 - _st_time)
 
 
         self.check_analyzing()
-        
         
         result['user'] = user
         result['room'] = room
