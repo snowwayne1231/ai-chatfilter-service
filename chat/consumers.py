@@ -2,7 +2,6 @@ from channels.generic.websocket import WebsocketConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import async_to_sync
 from service.main import MainService
-from datetime import datetime
 
 # from django.conf import settings
 import json
@@ -43,14 +42,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         detail = text_data_json.get('detail', False)
 
         if message:
-            # print('=== think start ===', flush=True)
-            _now = datetime.now()
+            
             results = main_service.think(message=message, user=user, room=room, detail=detail)
-            # print('=== think results ===', flush=True)
-            # print(results)
-            # _now_2 = datetime.now()
-            # _spend_time = (_now_2 - _now).total_seconds()
-            # print('=== Total thinking spend seconds: ', _spend_time, flush=True)
+            
         else:
             results = {
                 'message': message,

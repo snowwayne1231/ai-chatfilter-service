@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
-# from datetime import datetime
 from .translator_pinyin import translate_by_string, traceback_by_stringcode
 from .chinese_filter_basic import BasicChineseFilter
 
@@ -38,7 +37,6 @@ class PinYinFilter(BasicChineseFilter):
         _pinyin = translate_by_string(_string)
         _words = self.jieba_dict.split_word(_pinyin)
         # print(_pinyin)
-        print(_words[0][:-1])
         # exit(2)
         
         _words = [self.parse_digit(_w) if _w[:-1].isdigit() else _w  for _w in _words]

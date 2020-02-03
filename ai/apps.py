@@ -16,7 +16,7 @@ class MainAiApp():
     pinyin_model = None
 
     def __init__(self):
-        print('============= AI MainAiApp =============')
+        print('=============  A.I Init  =============')
         print('using tensorflow version: ', tf.__version__)
         self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path)
     

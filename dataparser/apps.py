@@ -95,7 +95,7 @@ class MessageParser():
     regex_bracket = re.compile("\{[^\}]*\}")
 
     def __init__(self):
-        print('=== MessageParser init ===')
+        print('MessageParser init done.')
 
     
     def parse(self, string):
