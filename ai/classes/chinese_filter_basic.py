@@ -311,7 +311,7 @@ class BasicChineseFilter():
 
     def tokenize_data(self, datalist):
         # tokenizer_vocabulary = self.tokenizer_vocabulary
-        tokenizer_vocabularies = self.tokenizer_vocabularies if len(self.tokenizer_vocabularies) > 0 else []
+        tokenizer_vocabularies = self.tokenizer_vocabularies if self.tokenizer_vocabularies and len(self.tokenizer_vocabularies) > 0 else []
         tokenizer = tfds.features.text.Tokenizer()
         for words in datalist:
             
