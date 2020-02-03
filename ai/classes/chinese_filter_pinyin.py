@@ -6,7 +6,7 @@ from .translator_pinyin import translate_by_string, traceback_by_stringcode
 from .chinese_filter_basic import BasicChineseFilter
 
 import tensorflow as tf
-from ai.models import DigitalVocabulary
+from ai.models import DigitalVocabulary, NewVocabulary
 
 
 
@@ -22,7 +22,8 @@ class PinYinFilter(BasicChineseFilter):
         vocabularies = DigitalVocabulary.objects.all()
         next_dv_map = {}
         for _ in vocabularies:
-            next_dv_map[_.digits] = _.pinyin
+            _bt_key = '{}_'.format(_.digits)
+            next_dv_map[_bt_key] = _.pinyin
 
         self.digital_vocabulary_map = next_dv_map
 
@@ -37,10 +38,10 @@ class PinYinFilter(BasicChineseFilter):
         _pinyin = translate_by_string(_string)
         _words = self.jieba_dict.split_word(_pinyin)
         # print(_pinyin)
-        # print(_words)
+        print(_words[0][:-1])
         # exit(2)
         
-        _words = [self.parse_digit(_w) if _w.isdigit() else _w  for _w in _words]
+        _words = [self.parse_digit(_w) if _w[:-1].isdigit() else _w  for _w in _words]
         # print(_words)
         return _words
 
@@ -53,4 +54,9 @@ class PinYinFilter(BasicChineseFilter):
             return [self.transform_back_str(_) for _ in _encoded]
         else:
             return _encoded
+
+    def add_new_vocabulary(self, _word):
+        _new = NewVocabulary(pinyin=_word)
+        _new.save()
+        return self
     

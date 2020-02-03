@@ -21,7 +21,7 @@ class BasicChineseFilter():
     appended_columns = ['TRANSFORMED_WORD']
     data = []
     model = None
-    
+
     tokenizer_vocabularies = []
     encoder = None
     saved_folder = None
@@ -197,6 +197,11 @@ class BasicChineseFilter():
     def transform_back_str(self, _encoded):
         return _encoded
 
+    # should be override
+    def add_new_vocabulary(self, _word):
+        print('no overwrite this function, word ["{}"]'.format(word))
+        return self
+
 
 
     def build_model(self):
@@ -310,7 +315,7 @@ class BasicChineseFilter():
 
 
 
-    def tokenize_data(self, datalist):
+    def tokenize_data(self, datalist, save_new_vocabulary = False):
         # tokenizer_vocabulary = self.tokenizer_vocabulary
         tokenizer_vocabularies = self.tokenizer_vocabularies if self.tokenizer_vocabularies and len(self.tokenizer_vocabularies) > 0 else []
         tokenizer = tfds.features.text.Tokenizer()
@@ -324,6 +329,9 @@ class BasicChineseFilter():
                     _ = tokens[0]
                     if not _ in tokenizer_vocabularies:
                         tokenizer_vocabularies.append(_)
+
+                        if save_new_vocabulary:
+                            self.add_new_vocabulary(word)
             
         
         self.tokenizer_vocabularies = tokenizer_vocabularies
@@ -496,7 +504,8 @@ class BasicChineseFilter():
                 __code = _loc[0]
 
                 if __code > _vocal_size:
-                    self.tokenize_data([_words])
+                    # find the new word
+                    self.tokenize_data([_words], save_new_vocabulary=True)
                     return self.get_encode_word(_words)
                 
                 if __code > 0:
