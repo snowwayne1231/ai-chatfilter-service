@@ -44,11 +44,12 @@ class PreFilter():
                 continue
 
             next_char += u
-        
-        is_many_asci = len(next_char) >= 6 and number_size >= 2 and eng_size <= 24
 
         _NE_size = number_size + eng_size
-        is_less_meaning = length_char > 0 and _NE_size != length_char and _NE_size / length_char > 0.8 and length_char <= 6
+        
+        is_many_asci = (_NE_size >= 6 and number_size >= 2 and eng_size <= 24) or number_size >= 4
+
+        is_less_meaning = length_char > 0 and _NE_size != length_char and _NE_size / length_char > 0.6 and length_char <= 8
 
         return next_char if is_many_asci or is_less_meaning else ''
 
@@ -72,7 +73,8 @@ class PreFilter():
 
     def is_number(self, uchar):
         # return (uchar >= u'\u0030' and uchar <= u'\u0039') or (uchar >= u'\uff10' and uchar <= u'\uff19')
-        return uchar >= u'\u0030' and uchar <= u'\u0039'
+        chineses = [u'\u4e00', u'\u58f9', u'\u4e8c', u'\u8cb3', u'\u4e09', u'\u53c1', u'\u56db', u'\u8086', u'\u4e94', u'\u4f0d', u'\u5348', u'\u821e', u'\u516d', u'\u9678', u'\u4e03', u'\u67d2', u'\u516b', u'\u5df4', u'\u53ed', u'\u634c', u'\u6252', u'\u4e5d', u'\u4e45', u'\u7396', u'\u9152', u'\u96f6', u'\u9748']
+        return uchar >= u'\u0030' and uchar <= u'\u0039' or uchar in chineses
 
     def is_english(self, uchar):
         # return (uchar >= u'\u0041' and uchar <= u'\u0039') or (uchar >= u'\u0061' and uchar <= u'\u007a')

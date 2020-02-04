@@ -51,6 +51,7 @@ class WebsocketThread (threading.Thread):
             if self.stopped():
                 break
             self.ws.run_forever(ping_interval=10, ping_timeout=5)
+            time.sleep(2)
 
     
     def on_open(self):
