@@ -27,7 +27,7 @@ class BasicChineseFilter():
     saved_folder = None
     jieba_dict = None
 
-    full_vocab_size = 32767
+    full_vocab_size = 65536
     full_words_length = 64
     status_classsets = 8
     avoid_lv = 6
@@ -125,7 +125,7 @@ class BasicChineseFilter():
             with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
                 pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
-            print('saved tokenizer vocabularies, size: ', len(self.tokenizer_vocabularies))
+            # print('saved tokenizer vocabularies, size: ', len(self.tokenizer_vocabularies))
             self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
 
         else:
@@ -316,19 +316,16 @@ class BasicChineseFilter():
 
 
     def tokenize_data(self, datalist, save_new_vocabulary = False):
-        # tokenizer_vocabulary = self.tokenizer_vocabulary
         tokenizer_vocabularies = self.tokenizer_vocabularies if self.tokenizer_vocabularies and len(self.tokenizer_vocabularies) > 0 else []
-        tokenizer = tfds.features.text.Tokenizer()
+
         for words in datalist:
             
             for word in words:
-                tokens = tokenizer.tokenize(word)
-                # tokenizer_vocabulary.update(tokens)
-                if tokens:
-                    # print('tokens: ', tokens)
-                    _ = tokens[0]
-                    if not _ in tokenizer_vocabularies:
-                        tokenizer_vocabularies.append(_)
+
+                if word:
+                    
+                    if not word in tokenizer_vocabularies:
+                        tokenizer_vocabularies.append(word)
 
                         if save_new_vocabulary:
                             self.add_new_vocabulary(word)
@@ -337,7 +334,6 @@ class BasicChineseFilter():
         self.tokenizer_vocabularies = tokenizer_vocabularies
         self.save_tokenizer_vocabularies()
         
-
         return self
 
 
@@ -495,6 +491,7 @@ class BasicChineseFilter():
     def get_encode_word(self, _words):
         _result_text = []
         _vocal_size = len(self.tokenizer_vocabularies)
+        
 
         for _ in _words:
             

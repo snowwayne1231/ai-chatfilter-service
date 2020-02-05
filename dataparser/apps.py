@@ -6,7 +6,7 @@ from datetime import datetime
 from .classes.map_hex import mapHexes
 from .models import CustomDictionaryWord
 from service.models import Blockword
-from ai.models import SoundVocabulary
+from ai.models import SoundVocabulary, NewVocabulary
 from ai.classes.translator_pinyin import translate_by_string
 
 import xlrd
@@ -178,8 +178,12 @@ class JieBaDictionary():
     """
         
     """
+    split_character = '_'
+
     def __init__(self):
         jieba.re_eng = re.compile('[a-zA-Z0-9_]', re.U)
+        dictionary_path = os.path.dirname(__file__) + '/assets/jieba.txt'
+        jieba.initialize(dictionary=dictionary_path)
         self.refresh_dictionary()
         print('JieBaDictionary init done.')
 
@@ -187,15 +191,16 @@ class JieBaDictionary():
     def split_word(self, text=''):
         _list = jieba.cut(text, HMM=False) if text else []
         results = []
-        _idx = 0
+        _buf = ''
         
         for _ in _list:
-            # print('_: ', _)
-            # print('get_FREQL: ', jieba.get_FREQ(_))
             if not _:
                 continue
-            results.append(_)
-            _idx += 1
+            elif  _[-1] == self.split_character:
+                _buf = ''
+                results.append(_)
+            else:
+                _buf += _
         return results
 
 
@@ -215,15 +220,24 @@ class JieBaDictionary():
 
         sound_vocabularies = SoundVocabulary.objects.values_list('pinyin', flat=True)
         for sv in sound_vocabularies:
-            jieba.add_word(sv)
+            if self.is_allowed_word(sv) and self.is_new_word(sv):
+                jieba.add_word(sv)
+
+
+        new_vocabularies = NewVocabulary.objects.values_list('pinyin', flat=True)
+        for nv in new_vocabularies:
+            if self.is_allowed_word(nv) and self.is_new_word(nv):
+                jieba.add_word(nv)
         
 
         return self
 
-        
-    def add_words_by_list(self, list = []):
-        for _ in list:
-            if _:
-                jieba.add_word(_)
 
-        return self
+    def is_new_word(self, _word):
+        freq = jieba.get_FREQ(_word)
+        _is_new = freq is None or freq == 0
+        return _is_new
+
+    
+    def is_allowed_word(self, _word):
+        return _word[-1] == self.split_character

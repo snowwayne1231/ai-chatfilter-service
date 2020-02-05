@@ -36,10 +36,8 @@ class PinYinFilter(BasicChineseFilter):
         # print('transform str: ', _string)
         _pinyin = translate_by_string(_string)
         _words = self.jieba_dict.split_word(_pinyin)
-        # print(_pinyin)
-        # exit(2)
-        
         _words = [self.parse_digit(_w) if _w[:-1].isdigit() else _w  for _w in _words]
+        # print(_pinyin)
         # print(_words)
         return _words
 
@@ -53,8 +51,10 @@ class PinYinFilter(BasicChineseFilter):
         else:
             return _encoded
 
+
     def add_new_vocabulary(self, _word):
-        _new = NewVocabulary(pinyin=_word)
-        _new.save()
+        if self.jieba_dict.is_allowed_word(_word) and self.jieba_dict.is_new_word(_word):
+            _new = NewVocabulary(pinyin=_word)
+            _new.save()
         return self
     

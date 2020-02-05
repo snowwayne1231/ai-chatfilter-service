@@ -12,6 +12,6 @@ def room(request, room_name = ''):
     })
 
 def controller(request):
-    return render(request, 'index.html', {
+    return render(request, 'controller.html', {
         
     })

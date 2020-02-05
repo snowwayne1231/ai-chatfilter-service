@@ -1,0 +1,34 @@
+<!-- chat/templates/chat/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Chat Controller</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <input id="file-input" type="file" accept=".xls,.xlsx"/>
+    <input id="file-submit" type="button" value="確認"/>
+
+    <script>
+        var file_input = document.querySelector('#file-input');
+        var file_submit = document.querySelector('#file-submit');
+        console.log('axios', axios);
+
+        file_submit.onclick = function(e) {
+            var files = file_input.files;
+            var file = files[0];
+            console.log(files);
+            var formData = new FormData();
+            formData.append('file', file);
+            
+            axios.post('/api/upload/', formData, {
+                headers: {
+                    'Content-Type': file.type,
+                    'Content-Disposition': 'attachment; filename=' + file.name,
+                }
+            });
+        };
+    </script>
+</body>
+</html>

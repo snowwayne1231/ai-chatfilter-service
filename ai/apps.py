@@ -29,11 +29,6 @@ class MainAiApp():
             # print('pinyin_prediction: ', pinyin_prediction)
             if not silence:
                 reason = self.pinyin_model.get_reason(txt, pinyin_prediction)
-        # if silence:
-        #     pass
-        # else:
-        #     print('MainAiApp predict txt: ', txt)
-        #     print('Prediction reason: ', reason)
 
         return pinyin_prediction, reason
 

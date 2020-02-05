@@ -108,6 +108,7 @@ class MainService():
         if not silence and message:
 
             self.saveRecord(prediction, message=message, text=text, reason=reason_char)
+            self.check_analyzing()
         
         if detail:
 
@@ -121,9 +122,6 @@ class MainService():
             print('reason_char: ', reason_char)
             print('detail_data: ', detail_data)
             print('spent time: ', _ed_time_1 - _st_time)
-
-
-        self.check_analyzing()
         
         result['user'] = user
         result['room'] = room
