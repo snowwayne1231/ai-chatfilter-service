@@ -1,14 +1,21 @@
 from channels.generic.websocket import WebsocketConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import async_to_sync
-from service.main import MainService
+from service import instance
 
 # from django.conf import settings
 import json
 
-main_service = MainService()
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    """
+
+    """
+
+    main_service = None
+
+
     async def connect(self):
         # self.room_name = self.scope['url_route']['kwargs']['room_name']
         # self.room_group_name = 'chat_%s' % self.room_name
@@ -17,6 +24,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         #     self.room_group_name,
         #     self.channel_name
         # )
+
+        self.main_service = instance.get_main_service()
+        print('ChatConsumer connect!')
 
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -43,7 +53,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if message:
             
-            results = main_service.think(message=message, user=user, room=room, detail=detail)
+            results = self.main_service.think(message=message, user=user, room=room, detail=detail)
             
         else:
             results = {

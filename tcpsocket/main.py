@@ -5,9 +5,9 @@ from chat_package import pack, unpack
 from configparser import RawConfigParser
 from to_websocket import WebsocketThread
 import logging
+sys.path.append("..")
+# from service import instance
 
-# import signal
-# signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SOCKET_DIR)
@@ -31,6 +31,7 @@ sig = config_keys.get('SERVER', 'PWD')
 
 websocket_thread = None
 
+# main_service = instance.get_main_service()
 
 
 class socketTcp(Tcp):
