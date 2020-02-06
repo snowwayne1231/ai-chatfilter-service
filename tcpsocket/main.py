@@ -60,6 +60,7 @@ class socketTcp(Tcp):
                     server_code = 0
                 else:
                     logging.debug('Login Failed. unpacked.sig: {}'.format(unpacked_data.sig))
+
                     server_code = 1
 
                 packed_res = pack(0x040002, code=server_code)
@@ -69,10 +70,10 @@ class socketTcp(Tcp):
 
             elif unpacked_data.cmd == 0x040003:
                 logging.debug('Recived Package is [ Chat ]')
-                logging.debug('msgid: {}'.format(unpacked_data.msgid))
+                # logging.debug('msgid: {}'.format(unpacked_data.msgid))
                 logging.debug('msgtxt: {}'.format(unpacked_data.msgtxt))
-                logging.debug('msgbuffer: {}'.format(unpacked_data.msgbuffer))
-                logging.debug('msgsize: {}'.format(unpacked_data.msgsize))
+                # logging.debug('msgbuffer: {}'.format(unpacked_data.msgbuffer))
+                # logging.debug('msgsize: {}'.format(unpacked_data.msgsize))
 
                 status_code = 0
 
@@ -83,6 +84,28 @@ class socketTcp(Tcp):
                     if prediction and prediction != 0:
                         status_code = 5
                         logging.info('Message be blocked = id: {} txt: {}'.format(unpacked_data.msgid, unpacked_data.msgtxt))
+                    
+                else:
+
+                    logging.error('Websocket is Not Working.')
+
+                packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
+
+            elif unpacked_data.cmd == 0x041003:
+                logging.debug('Recived Package is [ Chat Json ]')
+                logging.debug('json string: {}'.format(unpacked_data.jsonstr))
+
+                status_code = 0
+
+                if websocket_thread:
+
+                    _msg = unpacked_data.json['msg']
+
+                    ai_results = websocket_thread.thinking(msg=_msg, msgid=unpacked_data.msgid)
+                    prediction = ai_results.get('prediction', None)
+                    if prediction and prediction != 0:
+                        status_code = 5
+                        logging.info('Message be blocked = id: {} msg: {}'.format(unpacked_data.msgid, _msg))
                     
                 else:
 

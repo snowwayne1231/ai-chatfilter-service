@@ -57,7 +57,7 @@ class Command(BaseCommand):
                 output_excel=output_excel,
             )
 
-            print(book)
+            print('textbook size: ', len(book))
 
         else:
             

@@ -1,5 +1,5 @@
 import struct
-
+import json
 
 
 def pack(cmd, **options):
@@ -40,6 +40,19 @@ def pack(cmd, **options):
         package = struct.pack(ChatFilterPackage.fmt, cmd, size, msgid, msgsize) + msg_bytes
         # package = struct.pack('!4i100s', cmd, size, msgid, msgsize, msgtxt.encode('utf-8'))
 
+    elif cmd == ChatWithJSONPackage.m_cmd:
+
+        json_data = options.get('json', {})
+        msgid = options.get('msgid', 0x000000)
+        msgtxt = json_data.get('msg', '')
+        roomid = json_data.get('roomid', 'none')
+
+        json_byte = bytes(json.dumps({'msg': msgtxt, 'roomid': roomid}), 'utf-8')
+        jsonsize = len(json_byte)
+
+        size = struct.calcsize(ChatWithJSONPackage.fmt) + jsonsize
+        package = struct.pack(ChatWithJSONPackage.fmt, cmd, size, msgid, jsonsize) + json_byte
+
     elif cmd == ChatFilterResponsePackage.m_cmd:
 
         msgid = options.get('msgid', 0x000000)
@@ -72,6 +85,10 @@ def unpack(buffer):
     elif cmd == ChatFilterPackage.m_cmd:
 
         return ChatFilterPackage(buffer)
+
+    elif cmd == ChatWithJSONPackage.m_cmd:
+
+        return ChatWithJSONPackage(buffer)
 
     elif cmd == ChatFilterResponsePackage.m_cmd:
 
@@ -166,12 +183,44 @@ class ChatFilterPackage(BasicStructPackage):
             self.msgtxt = self.msgbuffer.decode('utf-8', "ignore")
 
 
+class ChatWithJSONPackage(BasicStructPackage):
+    m_cmd = 0x041003
+    fmt = '!4i'
+    msgid = 0x040000
+    jsonsize = 0x000000
+    jsonstr = ''
+    json = {}
+
+    def parse(self, buffer):
+        buffer_size = struct.calcsize(self.fmt)
+        _fmt_buffer = buffer[:buffer_size]
+        _left_buffer = buffer[buffer_size:]
+
+        cmd, size, msgid, jsonsize = struct.unpack(self.fmt, _fmt_buffer)
+        self.cmd = cmd
+        self.size = size
+        self.msgid = msgid
+        self.jsonsize = jsonsize
+        
+        if jsonsize:
+            self.jsonbuffer = _left_buffer[:jsonsize]
+        else:
+            self.jsonbuffer = _left_buffer
+        
+        try:
+            self.jsonstr = self.jsonbuffer.decode('utf-8')
+            self.json = json.loads(self.jsonstr)
+        except:
+            print('>>>>> Unpack Error msgid: ', msgid, ' | jsonbuffer: ', self.jsonbuffer)
+            self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
+            self.json = {}
+
 
 class ChatFilterResponsePackage(BasicStructPackage):
     m_cmd = 0x040004
     fmt = '!4i'
     msgid = 0x000000
-    code = 0x000000 # 0 is pass
+    code = 0x000000 # 0:normal; 1:ads; 2:dirty words; 3:system failure
 
     def parse(self, buffer):
         cmd, size, msgid, code = struct.unpack(self.fmt, buffer)

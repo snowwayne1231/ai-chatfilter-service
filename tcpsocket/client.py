@@ -50,16 +50,17 @@ def let_user_pick(options):
         pass
     return None
 
-cmd_options = ['hearting', 'login', 'login response', 'chatting', 'chat response']
-cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x040004]
+cmd_options = ['hearting', 'login', 'login response', 'chatting', 'chatting json', 'chat response']
+cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x041003, 0x040004]
 
 is_keep_chatting = False
 msgid = 0
+num = 0
 
 while True:
 
     if is_keep_chatting:
-        num = 3
+        pass
     else:
         num = let_user_pick(cmd_options)
         if num is None:
@@ -99,6 +100,30 @@ while True:
         msgtxt = input()
         if msgtxt:
             packed = pack(command_hex, msgid=msgid, msgtxt=msgtxt)
+            is_keep_chatting = True
+        else:
+            is_keep_chatting = False
+            continue
+
+    elif command_hex == 0x041003:
+
+        if msgid > 0:
+            msgid += 1
+        else:
+            print("Please enter msgid: ")
+            msgid = input()
+            msgid = int(msgid)
+
+        print("Please enter msgtxt: ")
+        msgtxt = input()
+        print("Please enter roomid: ")
+        roomid = input()
+        json = {
+            'msg': msgtxt,
+            'roomid': roomid,
+        }
+        if msgtxt and roomid:
+            packed = pack(command_hex, msgid=msgid, json=json)
             is_keep_chatting = True
         else:
             is_keep_chatting = False

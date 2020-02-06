@@ -37,7 +37,8 @@ class PreFilter():
 
         for u in text:
             if self.is_number(u):
-                number_size += 1
+                if '0' not in next_char:
+                    number_size += 1
             elif self.is_english(u):
                 eng_size += 1
             else:
@@ -49,9 +50,11 @@ class PreFilter():
         
         is_many_asci = (_NE_size >= 6 and number_size >= 2 and eng_size <= 24) or number_size >= 4
 
-        is_less_meaning = length_char > 0 and _NE_size != length_char and _NE_size / length_char > 0.6 and length_char <= 8
+        is_less_meaning = _NE_size / length_char > 0.5 and length_char <= 10
 
-        return next_char if is_many_asci or is_less_meaning else ''
+        is_many_mixed = _NE_size >= 6 and (length_char - _NE_size) > 4
+
+        return next_char if is_many_asci or is_less_meaning or is_many_mixed else ''
 
 
     def is_chinese(self, uchar):

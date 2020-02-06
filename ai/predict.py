@@ -75,17 +75,20 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
                 total_wrong_map[predicted] += 1
 
                 if should_be_deleted:
-                    if ans == status_vendor_ai_delete or not processed_text:
+                    if ans == status_vendor_ai_delete:
 
                         total_missing_delete += 1
                         mistake_texts_map[predicted].append(txt)
 
                     elif ans == status_human_delete:
                         # human delete is right
-                        next_learning_book.append(txt)
+                        if processed_text:
+                            next_learning_book.append(txt)
 
                 else:
-
+                    
+                    # if processed_text:
+                    mistake_texts_map[predicted].append(txt)
                     total_mistake_delete += 1
 
             _i += 1
@@ -142,6 +145,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
             'num_total_rights_delete': total_rights_delete,
             'num_total_missing_delete': total_missing_delete,
             'num_total_mistake_delete': total_mistake_delete,
+            'learning_book': next_learning_book,
             'details': {
                 'total_wrong_map': total_wrong_map,
                 'mistake_ratio_map': mistake_ratio_map,

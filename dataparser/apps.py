@@ -197,10 +197,13 @@ class JieBaDictionary():
             if not _:
                 continue
             elif  _[-1] == self.split_character:
+                results.append(_buf + _)
                 _buf = ''
-                results.append(_)
             else:
                 _buf += _
+
+        if _buf:
+            print('why left _buf: ', _buf)
         return results
 
 

@@ -56,6 +56,7 @@ class KnowledgeCenter():
         for v in vocabularies:
             vocabulary_set.update({str(v)})
 
+        # print('upsert_into_dictionary row_data: ', row_data)
         length_rows = len(row_data)
         i = 0
 
@@ -67,17 +68,17 @@ class KnowledgeCenter():
 
         for _ in row_data:
             i += 1
-            word = _[0]
+            word = _[0].strip()
 
             if i % 100 == 0:
                 print('Upsert Vocabularies.. process: {:.2f} % '.format( i / length_rows * 100 ), end='\r')
             
             length_word = len(word)
-            if length_word > 8:
-                continue # strange chinese
+            if length_word > 12:
+                continue # strange length
 
-            if word[0] < '\u4e00' or word[-1] < '\u4e00':
-                continue # is not chinese word
+            # if word[0] < '\u4e00' or word[-1] < '\u4e00':
+                # continue # is not chinese word
 
             if word in vocabulary_set:
                 continue # already in database
