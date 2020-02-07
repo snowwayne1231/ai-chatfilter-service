@@ -187,6 +187,7 @@ class ChatWithJSONPackage(BasicStructPackage):
     m_cmd = 0x041003
     fmt = '!4i'
     msgid = 0x040000
+    roomid = 'none'
     jsonsize = 0x000000
     jsonstr = ''
     json = {}

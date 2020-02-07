@@ -102,7 +102,7 @@ class socketTcp(Tcp):
 
                     _msg = unpacked_data.json['msg']
 
-                    ai_results = websocket_thread.thinking(msg=_msg, msgid=unpacked_data.msgid)
+                    ai_results = websocket_thread.thinking(msg=_msg, msgid=unpacked_data.msgid, room=unpacked_data.roomid)
                     prediction = ai_results.get('prediction', None)
                     if prediction and prediction != 0:
                         status_code = 5
