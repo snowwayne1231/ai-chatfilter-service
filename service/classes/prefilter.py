@@ -50,7 +50,9 @@ class PreFilter():
         
         is_many_asci = (_NE_size >= 6 and number_size >= 2 and eng_size <= 24) or number_size >= 4
 
-        is_less_meaning = _NE_size / length_char > 0.5 and length_char <= 10
+        _NE_ratio = _NE_size / length_char
+
+        is_less_meaning = _NE_ratio > 0.5 and _NE_ratio < 1 and length_char <= 10
 
         is_many_mixed = _NE_size >= 6 and (length_char - _NE_size) > 4
 

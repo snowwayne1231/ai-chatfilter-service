@@ -100,7 +100,7 @@ class socketTcp(Tcp):
 
                 if websocket_thread:
 
-                    _msg = unpacked_data.json['msg']
+                    _msg = unpacked_data.msg
 
                     ai_results = websocket_thread.thinking(msg=_msg, msgid=unpacked_data.msgid, room=unpacked_data.roomid)
                     prediction = ai_results.get('prediction', None)

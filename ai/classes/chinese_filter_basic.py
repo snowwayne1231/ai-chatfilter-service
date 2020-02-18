@@ -31,6 +31,7 @@ class BasicChineseFilter():
     full_words_length = 64
     status_classsets = 8
     avoid_lv = 6
+    max_pinyin_word = 6
     length_x = 0
 
     
@@ -322,7 +323,7 @@ class BasicChineseFilter():
             
             for word in words:
 
-                if word:
+                if word and self.check_word_length(word):
                     
                     if not word in tokenizer_vocabularies:
                         tokenizer_vocabularies.append(word)
@@ -494,6 +495,10 @@ class BasicChineseFilter():
         
 
         for _ in _words:
+
+            if not self.check_word_length(_):
+                _result_text.append(0)
+                continue
             
             _loc = self.encoder.encode(_)
             
@@ -509,6 +514,16 @@ class BasicChineseFilter():
                     _result_text.append(__code)
         
         return _result_text
+
+
+
+    def check_word_length(self, _word):
+        max_pinyin_word = self.max_pinyin_word
+        _word_list = _word.split('_')
+        for _ in _word_list:
+            if len(_) > max_pinyin_word:
+                return False
+        return True
 
 
     

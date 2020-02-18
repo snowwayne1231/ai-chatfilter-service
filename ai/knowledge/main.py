@@ -151,6 +151,7 @@ class KnowledgeCenter():
         for _ in row_data:
             i += 1
             _digit = str(_[0]).strip()
+            _digit = _digit.split('.')[0]
             _word = _[1]
             _word_pinyin = translate_by_string(_word)
 

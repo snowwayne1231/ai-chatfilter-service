@@ -188,6 +188,7 @@ class ChatWithJSONPackage(BasicStructPackage):
     fmt = '!4i'
     msgid = 0x040000
     roomid = 'none'
+    msg = ''
     jsonsize = 0x000000
     jsonstr = ''
     json = {}
@@ -211,6 +212,8 @@ class ChatWithJSONPackage(BasicStructPackage):
         try:
             self.jsonstr = self.jsonbuffer.decode('utf-8')
             self.json = json.loads(self.jsonstr)
+            self.roomid = self.json.get('roomid', 'none')
+            self.msg = self.json.get('msg', '')
         except:
             print('>>>>> Unpack Error msgid: ', msgid, ' | jsonbuffer: ', self.jsonbuffer)
             self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
