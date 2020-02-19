@@ -347,12 +347,14 @@ class BasicChineseFilter():
         y_idx = _full_columns.index('STATUS') if 'STATUS' in _full_columns else -1
         new_x = []
         new_y = []
+        __auto_human_delete_if_not = 3
 
         for _d in self.data:
             if _d[x_idx] and _d[vip_lv_idx] < self.avoid_lv:
-
-                new_x.append(_d[x_idx])
-                new_y.append(_d[y_idx])
+                _t = _d[x_idx]
+                _status = _d[y_idx]
+                new_x.append(_t)
+                new_y.append(_status if _status != '' else __auto_human_delete_if_not)
         
         return new_x, new_y
 
@@ -522,6 +524,7 @@ class BasicChineseFilter():
         _word_list = _word.split('_')
         for _ in _word_list:
             if len(_) > max_pinyin_word:
+                # print('check_word_length find overmax: ', _)
                 return False
         return True
 

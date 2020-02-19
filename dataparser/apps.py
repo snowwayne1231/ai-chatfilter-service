@@ -27,7 +27,9 @@ class ExcelParser():
         return List
     """
     file = None
-    book = None
+    books = []
+    is_multiple = False
+    file_extension = re.compile("^(.*).xlsx?$", re.IGNORECASE)
 
     def __init__(self, **kwargs):
 
@@ -39,8 +41,26 @@ class ExcelParser():
         if self.file:
             start_time = datetime.now()
 
-            book = xlrd.open_workbook(self.file)
-            self.book = book
+            if os.path.isdir(self.file):
+
+                self.is_multiple = True
+
+                for _file in os.listdir(self.file):
+
+                    if self.file_extension.search(_file):
+
+                        _file_path = '{}/{}'.format(self.file, _file)
+                        print('ExcelParser Open File Path: ', _file_path)
+                        book = xlrd.open_workbook(_file_path)
+                        self.books.append(book)
+
+            else:
+
+                self.is_multiple = False
+                book = xlrd.open_workbook(self.file)
+                # self.book = book
+                self.books.append(book)
+
 
             end_time = datetime.now()
             spend_second = (end_time - start_time).total_seconds()
@@ -52,35 +72,54 @@ class ExcelParser():
 
             print('ExcelParser Failed With Wrong File path.')
 
+
+    def get_row_list(self, column=[], limit=0, just_first_sheet=True):
+        total_rows = []
+        for book in self.books:
+
+            if just_first_sheet:
+                sheet = book.sheet_by_index(0)
+                rows = self.get_row_list_by_sheet(sheet, column=column, limit=limit)
+                total_rows += rows
+
+        return total_rows
     
-    def get_row_list(self, column=[], limit=0):
-        sh = self.book.sheet_by_index(0)
-        print("==Sheet name: {0}, rows: {1}, cols:{2}".format(sh.name, sh.nrows, sh.ncols))
-        assert len(column) > 0
+    def get_row_list_by_sheet(self, sheet, column=[], limit=0):
+        sh = sheet
+        print("==Getting Data in Sheet name: {0}, rows: {1}, cols:{2}".format(sh.name, sh.nrows, sh.ncols))
         ary = []
         _columns = []
-        for rx in range(limit if limit > 0 else sh.nrows):
-            
-            child = [x.value for x in sh.row(rx)]
-            if rx == 0:
-                for col in column:
-                    if type(col) == list:
-                        __idx = -1
-                        for __c in col:
-                            __loc_idx = child.index(__c) if __c in child else -1
-                            if __loc_idx >= 0:
-                                __idx = __loc_idx
-                                break
-                    else:
-                        __idx = child.index(col) if col in child else -1
-
-                    _columns.append(__idx)
-
-            else:
-                
-                _next_child = [child[i] if i >= 0 else '' for i in _columns]
-                ary.append(_next_child)
+        if len(column) > 0:
         
+            for rx in range(limit if limit > 0 else sh.nrows):
+                
+                child = [x.value for x in sh.row(rx)]
+                if rx == 0:
+                    for col in column:
+                        if type(col) == list:
+                            __idx = -1
+                            for __c in col:
+                                __loc_idx = child.index(__c) if __c in child else -1
+                                if __loc_idx >= 0:
+                                    __idx = __loc_idx
+                                    break
+                        else:
+                            __idx = child.index(col) if col in child else -1
+
+                        _columns.append(__idx)
+
+                else:
+                    
+                    _next_child = [child[i] if i >= 0 else '' for i in _columns]
+                    ary.append(_next_child)
+        else:
+
+            for rx in range(limit if limit > 0 else sh.nrows):
+
+                child = [x.value for x in sh.row(rx)]
+                ary.append(child)
+        
+
         return ary
 
 
