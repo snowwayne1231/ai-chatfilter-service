@@ -6,7 +6,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from .helper import print_spend_time, get_pinyin_path
-
+from datetime import datetime
 from service.main import MainService
 from dataparser.apps import ExcelParser
 main_service = MainService()
@@ -27,6 +27,8 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
     _basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息'], ['STATUS', '審核結果']]
     _status_list = [0,1,2,3,4,5,10,11,12,13,14,15]
     _i = 0
+
+    _st_time = datetime.now()
 
     ep = ExcelParser(file=file)
     row_list = ep.get_row_list(column=_basic_model_columns)
@@ -226,6 +228,8 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
                 _row += 1
 
         book.save(filename)
+
+    print_spend_time(_st_time)
         
     return ratio_right, next_learning_book
 

@@ -111,6 +111,7 @@ class BasicChineseFilter():
 
 
     def load(self, folder):
+        print('Starting load model: ', folder)
         self.saved_folder = folder
         self.load_model(folder + '/model.h5')
         self.load_tokenizer_vocabularies()
@@ -123,6 +124,9 @@ class BasicChineseFilter():
         if vocab_size < self.full_vocab_size:
 
             self.save(is_check=True)
+            with open(self.saved_folder + '/tokenizer_vocabularies.bak', 'wb+') as handle:
+                pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            
             with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
                 pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
@@ -331,9 +335,9 @@ class BasicChineseFilter():
                         if save_new_vocabulary:
                             self.add_new_vocabulary(word)
             
-        
-        self.tokenizer_vocabularies = tokenizer_vocabularies
-        self.save_tokenizer_vocabularies()
+        if len(tokenizer_vocabularies) > len(self.tokenizer_vocabularies):
+            self.tokenizer_vocabularies = tokenizer_vocabularies
+            self.save_tokenizer_vocabularies()
         
         return self
 
