@@ -102,7 +102,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
 
             if ans == status_vendor_ai_delete:
                 num['vendor_ai'] += 1
-            elif ans == status_vendor_ai_delete:
+            elif ans == status_human_delete:
                 num['human'] += 1
 
             _i += 1
@@ -123,6 +123,9 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
     print('num_total_wrongs: ', num['total_wrong'])
     print('num_missing_delete: ', num['missing_delete'])
     print('num_mistake_delete: ', num['mistake_delete'])
+    print('num_origin_pass: ', _i - (num['vendor_ai'] + num['human']))
+    print('num_origin_vendor_ai_delete: ', num['vendor_ai'])
+    print('num_origin_human_delete: ', num['human'])
 
     ratio_right = "{:2.2%}".format(num['total_right'] /_i)
     ratio_right_delete = "{:2.2%}".format(num['total_right_delete'] / (num['total_right_delete'] + num['missing_delete']))
