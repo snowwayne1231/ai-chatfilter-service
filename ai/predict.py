@@ -93,6 +93,10 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
                         # human delete is right
                         if processed_text:
                             next_learning_book.append(txt)
+                            
+                            # human newly record
+                            num['total_wrong'] -= 1
+                            num['total_right'] += 1
 
                     map['mistake_text'][predicted].append(txt)
 
