@@ -78,6 +78,7 @@ class BasicChineseFilter():
         if self.check_data_shape(data):
 
             self.data = data
+            self.data_length = len(data)
 
             # self.split_word('TEXT')
             self.transform_column('TEXT')
@@ -344,6 +345,7 @@ class BasicChineseFilter():
 
 
     def get_xy_data(self):
+        print('Starting get XY data..', end='\r')
         _full_columns = self.columns + self.appended_columns
         # x_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
         x_idx = _full_columns.index('TRANSFORMED_WORD') if 'TRANSFORMED_WORD' in _full_columns else -1
@@ -353,26 +355,33 @@ class BasicChineseFilter():
         new_y = []
         __auto_human_delete_if_not = 3
 
+        data_length = self.data_length
+        _i = 0
+
         for _d in self.data:
             if _d[x_idx] and _d[vip_lv_idx] < self.avoid_lv:
                 _t = _d[x_idx]
                 _status = _d[y_idx]
                 new_x.append(_t)
                 new_y.append(_status if _status != '' else __auto_human_delete_if_not)
+
+            if _i % 1000 == 0:
+                _percent = _i / data_length
+                print("Getting XY data processing [{:2.1%}]".format(_percent), end="\r")
+
+            _i += 1
         
+        print("Getting XY data sets is done. Total count: ", )
         return new_x, new_y
 
 
 
     def get_train_batchs(self):
-
+        
         x, y = self.get_xy_data()
         length_x = len(x)
         assert length_x > 0
         self.length_x = length_x
-
-        print('======== get_train_batchs =========')
-        print('total x data = ', length_x)
 
         self.tokenize_data(x)
 

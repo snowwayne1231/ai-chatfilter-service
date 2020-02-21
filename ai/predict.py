@@ -84,15 +84,17 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
                 map['wrong'][predicted] += 1
 
                 if should_be_deleted:
+                    
                     if ans == status_vendor_ai_delete:
 
                         num['missing_delete'] += 1
-                        map['mistake_text'][predicted].append(txt)
 
                     elif ans == status_human_delete:
                         # human delete is right
                         if processed_text:
                             next_learning_book.append(txt)
+
+                    map['mistake_text'][predicted].append(txt)
 
                 else:
                     
