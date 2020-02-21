@@ -84,7 +84,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
                 map['wrong'][predicted] += 1
 
                 if should_be_deleted:
-                    
+
                     if ans == status_vendor_ai_delete:
 
                         num['missing_delete'] += 1
@@ -132,8 +132,10 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
     ratio_right = "{:2.2%}".format(num['total_right'] /_i)
     ratio_right_delete = "{:2.2%}".format(num['total_right_delete'] / (num['total_right_delete'] + num['missing_delete']))
     ratio_mistake_delete = "{:2.2%}".format(num['mistake_delete'] / _i)
+    ratio_missing_delete = "{:2.2%}".format(num['missing_delete'] / _i)
     print('ratio right: ', ratio_right)
     print('ratio right delete : ', ratio_right_delete)
+    print('ratio missing delete: ', ratio_missing_delete)
     print('ratio mistake delete: ', ratio_mistake_delete)
     print('================== Prediction Details ==================')
     ratio_mistake_map = {}
@@ -157,6 +159,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
             'num': num,
             'ratio_right': ratio_right,
             'ratio_right_delete': ratio_right_delete,
+            'ratio_missing_delete': ratio_missing_delete,
             'ratio_mistake_delete': ratio_mistake_delete,
             'ratio_mistake_map': ratio_mistake_map,
             'map_details': map,
@@ -184,28 +187,29 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
         sheet.col(5).width = default_width * 3
 
         title_style = xlwt.easyxf('pattern: pattern solid, fore_colour gray25;')
-        
-        
-        sheet.write(0,0, 'ratio_right')
-        sheet.write(0,1, ratio_right)
-        sheet.write(1,0, 'ratio_right_delete')
-        sheet.write(1,1, ratio_right_delete)
-        sheet.write(2,0, 'ratio_mistake_delete')
-        sheet.write(2,1, ratio_mistake_delete)
-        sheet.write(3,0, 'num_rights')
-        sheet.write(3,1, num['total_right'])
-        sheet.write(4,0, 'num_wrongs')
-        sheet.write(4,1, num['total_wrong'])
-        sheet.write(5,0, 'num_total')
-        sheet.write(5,1, num['total'])
-        sheet.write(6,0, 'num_total_rights_delete')
-        sheet.write(6,1, num['total_right_delete'])
-        sheet.write(7,0, 'num_total_missing_delete')
-        sheet.write(7,1, num['missing_delete'])
-        sheet.write(8,0, 'num_total_mistake_delete')
-        sheet.write(8,1, num['mistake_delete'])
 
-        detail_start_row = 12
+        excel_infos = [
+            ('ratio_right', ratio_right),
+            ('ratio_right_delete', ratio_right_delete),
+            ('ratio_mistake_delete', ratio_mistake_delete),
+            ('ratio_missing_delete', ratio_missing_delete),
+            ('num_rights', num['total_right']),
+            ('num_wrongs', num['total_wrong']),
+            ('num_total', num['total']),
+            ('num_total_rights_delete', num['total_right_delete']),
+            ('num_total_missing_delete', num['missing_delete']),
+            ('num_total_mistake_delete', num['mistake_delete']),
+        ]
+
+        _i = 0
+        for ei in excel_infos:
+            _label = ei[0]
+            _val = ei[1]
+            sheet.write(_i,0, _label)
+            sheet.write(_i,1, _val)
+            _i += 1
+
+        detail_start_row = _i + 3
         should_be_delete_start_column = 0
         sheet.write(detail_start_row,should_be_delete_start_column, '未刪除', style=title_style)
         sheet.write(detail_start_row,should_be_delete_start_column +1, '', style=title_style)
