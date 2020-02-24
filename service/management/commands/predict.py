@@ -22,6 +22,10 @@ class Command(BaseCommand):
             help='silence mode.',
         )
         parser.add_argument(
+            '-plus', dest='plus', required=False, action='store_true',
+            help='plus mode.',
+        )
+        parser.add_argument(
             '-json', dest='output_json', required=False, action='store_true',
             help='whether output the result to json file.',
         )
@@ -36,6 +40,7 @@ class Command(BaseCommand):
         text = options.get('text', None)
         input_file = options.get('input_file', None)
         silence = options.get('silence', False)
+        plus = options.get('plus', False)
         output_json = options.get('output_json', False)
         output_excel = options.get('output_excel', False)
 
@@ -53,6 +58,7 @@ class Command(BaseCommand):
             ratio, book = predict_by_excel_file(
                 file=full_file_path,
                 silence=silence,
+                plus=plus,
                 output_json=output_json,
                 output_excel=output_excel,
             )

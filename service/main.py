@@ -46,7 +46,6 @@ class MainService():
 
     def think(self, message, user = '', room = '', silence=False, detail=False):
         result = {}
-        detail_data = {}
         text = ''
         merged_text = ''
         reason_char = ''
@@ -58,77 +57,81 @@ class MainService():
 
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
-
+                return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence)
             else:
-                text, lv, anchor = self.parse_message(message)
+                # temporary to use 
+                return self.return_reslut(0, message=message)
+
+            text, lv, anchor = self.parse_message(message)
+
+                    
+            # merged_text = self.get_merged_text(text, user, room)
+            merged_text = text
+            if not merged_text or anchor > 0:
+
+                # prediction = self.STATUS_PREDICTION_NONSENSE
+                prediction = 0
+                return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence)
+
+
+            reason_char = self.pre_filter.find_wechat_char(merged_text)
+            if reason_char:
+
+                prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
+                return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence)
+
                 
-                # merged_text = self.get_merged_text(text, user, room)
-                merged_text = text
+            reason_char = self.fuzzy_center.find_fuzzy_block_word(merged_text, silence=silence)
+            if reason_char:
 
-                if not merged_text or anchor > 0:
+                prediction = self.STATUS_PREDICTION_BLOCK_WORD
+                return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence)
 
-                    # prediction = self.STATUS_PREDICTION_NONSENSE
-                    prediction = 0
 
-                else:
+            prediction, reason_char = self.ai_app.predict(merged_text, lv=lv, silence=silence)
 
-                    reason_char = self.pre_filter.find_wechat_char(merged_text)
+            self.store_temporary_text(
+                text=text,
+                user=user,
+                room=room,
+                lv=lv,
+                anchor=anchor,
+                prediction=prediction,
+            )
 
-                    if reason_char:
-
-                        prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
-
-                    else:
-                        
-                        reason_char = self.fuzzy_center.find_fuzzy_block_word(merged_text, silence=silence)
-
-                        if reason_char:
-
-                            prediction = self.STATUS_PREDICTION_BLOCK_WORD
-
-                        else:
-
-                            prediction, reason_char = self.ai_app.predict(merged_text, lv=lv, silence=silence)
-
-                            self.store_temporary_text(
-                                text=text,
-                                user=user,
-                                room=room,
-                                lv=lv,
-                                anchor=anchor,
-                                prediction=prediction,
-                            )
-                        
+            return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence, detail=detail)
+                
         else:
 
             prediction = self.STATUS_PREDICTION_NO_MSG
 
-        # print('prediction :', prediction)
+        return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence)
 
-        if not silence and message:
 
-            self.saveRecord(prediction, message=message, text=text, reason=reason_char)
+
+    def return_reslut(self, prediction, message, user='', room='', text='', reason='', silence=True, detail=False):
+        result = {}
+        detail_data = {}
+        if not silence:
+
+            self.saveRecord(prediction, message=message, text=text, reason=reason)
             self.check_analyzing()
         
         if detail:
 
-            _ed_time_1 = time.time()
-
-            detail_data = self.ai_app.get_details(merged_text)
+            detail_data = self.ai_app.get_details(text)
             print('prediction: ', prediction)
             print('message: ', message)
             print('text: ', text)
-            print('merged_text: ', merged_text)
-            print('reason_char: ', reason_char)
+            print('reason: ', reason)
             print('detail_data: ', detail_data)
-            print('spent time: ', _ed_time_1 - _st_time)
         
         result['user'] = user
         result['room'] = room
         result['message'] = message
         result['text'] = text
         result['prediction'] = prediction
-        result['reason_char'] = reason_char
+        result['reason_char'] = reason
         result['detail'] = detail_data
 
         return result

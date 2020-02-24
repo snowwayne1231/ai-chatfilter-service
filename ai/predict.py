@@ -23,7 +23,7 @@ def predict_by_pinyin(text = '', room = '', silence = False, detail=False):
     return prediction, text
 
 
-def predict_by_excel_file(file, silence=True, output_json=False, output_excel=False, status_human_delete=3, status_vendor_ai_delete=5):
+def predict_by_excel_file(file, silence=True, output_json=False, output_excel=False, status_human_delete=3, status_vendor_ai_delete=5, plus=False):
     _basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息'], ['STATUS', '審核結果']]
     _status_list = [0,1,2,3,4,5,10,11,12,13,14,15]
     _i = 0
@@ -95,8 +95,11 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
                             next_learning_book.append(txt)
                             
                             # human newly record
-                            num['total_wrong'] -= 1
-                            num['total_right'] += 1
+                            if plus:
+                                num['total_wrong'] -= 1
+                                num['total_right'] += 1
+                            else:
+                                num['missing_delete'] += 1
 
                     map['mistake_text'][predicted].append(txt)
 

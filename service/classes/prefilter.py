@@ -24,6 +24,8 @@ class PreFilter():
                 size_qk += 1
 
         is_too_many_question_marks = size_qk >= 3
+        if next_char:
+            return next_char
 
         return '?' if is_too_many_question_marks else next_char
 
@@ -88,13 +90,26 @@ class PreFilter():
     def is_question_mark(self, uchar):
         return uchar == u'\u003f'
 
+
     def is_rare_character(self, uchar):
-        is_rare_symbol = (uchar >= u'\u0080' and uchar <= u'\u0e00') or (uchar >= u'\u0fff' and uchar <= u'\u1100') or (uchar >= u'\u1b7f' and uchar <= u'\u2e7f')
-        is_sp_symbol = uchar >= u'\u3190' and uchar <= u'\u31bf'
-        is_odd_symbol = uchar >= u'\u3200' and uchar <= u'\u33ff'
-        is_odd_symbol_2 = uchar >= u'\u4db0' and uchar <= u'\u4dff'
-        is_odd_symbol_3 = uchar >= u'\ua000' and uchar <= u'\uac00'
-        is_odd_symbol_4 = uchar >= u'\ud7b0' and uchar <= u'\ufe2f'
-        is_odd_symbol_5 = uchar >= u'\ufe70' and uchar <= u'\uffff'
+        regexies = [
+            (u'\u0080', u'\u0e00'),
+            (u'\u0fff', u'\u1100'),
+            (u'\u1b7f', u'\u2e7f'),
+            (u'\u3190', u'\u31bf'),
+            (u'\u3200', u'\u33ff'),
+            (u'\u4db0', u'\u4dff'),
+            (u'\ua000', u'\uac00'),
+            (u'\ud7b0', u'\ufe2f'),
+            (u'\ufe70', u'\uffff'),
+        ]
+        for _ in regexies:
+            _st = _[0]
+            _ed = _[1]
+            _res = uchar >= _st and uchar <= _ed
+            if _res:
+                return True
+
+        return False
 
     
