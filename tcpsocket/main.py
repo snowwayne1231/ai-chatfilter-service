@@ -164,6 +164,7 @@ if __name__ == '__main__':
     try:
 
         websocket_thread.start()
+        
         server.serve_forever()
 
     except KeyboardInterrupt:

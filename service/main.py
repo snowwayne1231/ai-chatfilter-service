@@ -55,23 +55,22 @@ class MainService():
         if message:
             reason_char = self.pre_filter.find_special_char(message)
 
+            text, lv, anchor = self.parse_message(message)
+
+            if anchor > 0:
+
+                return self.return_reslut(0, message=message, text=text, silence=silence)
+            
+
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
                 return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence)
-            elif not detail:
-                # temporary to use 
+            elif not detail:   # temporary to use 
                 return self.return_reslut(0, message=message)
 
-            text, lv, anchor = self.parse_message(message)
-
-                    
+            
             # merged_text = self.get_merged_text(text, user, room)
             merged_text = text
-            if not merged_text or anchor > 0:
-
-                # prediction = self.STATUS_PREDICTION_NONSENSE
-                prediction = 0
-                return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence)
 
 
             reason_char = self.pre_filter.find_wechat_char(merged_text)

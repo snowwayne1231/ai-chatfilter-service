@@ -56,6 +56,7 @@ class WebsocketThread (threading.Thread):
     
     def on_open(self):
         logging.info('Web Socket Connection opened.')
+        self.setting()
 
     
     def send_thread(self, data):
@@ -81,7 +82,7 @@ class WebsocketThread (threading.Thread):
                         self._waitting_ids.remove(_msg_id)
                     break
 
-                time.sleep(0.02)
+                time.sleep(0.01)
             
             if self._message_result.get(_msg_id):
 
@@ -129,8 +130,12 @@ class WebsocketThread (threading.Thread):
     def stopped(self):
         return self.stop_event.is_set()
 
+
+    def setting(self):
+        self.pool.apply(self.send_thread, [{'tcp': True, 'msgid': '__tcp__'}])
+
     
-    def thinking(self, msg, msgid, room='none', user='none'):
+    def thinking(self, msg, msgid, room='', user=''):
         _data = {
             'message':msg,
             'msgid':msgid,

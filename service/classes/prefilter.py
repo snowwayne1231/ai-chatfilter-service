@@ -94,15 +94,17 @@ class PreFilter():
     def is_rare_character(self, uchar):
         regexies = [
             (u'\u0080', u'\u0e00'),
-            (u'\u0fff', u'\u1100'),
-            (u'\u1b7f', u'\u2e7f'),
-            (u'\u3190', u'\u31bf'),
-            (u'\u3200', u'\u33ff'),
-            (u'\u4db0', u'\u4dff'),
-            (u'\ua000', u'\uac00'),
-            (u'\ud7b0', u'\ufe2f'),
+            (u'\u0fff', u'\u1100'), # rare symbol
+            (u'\u1b7f', u'\u2025'), # rare symbol
+            (u'\u2027', u'\u2e7f'), # rare symbol
+            (u'\u3190', u'\u31bf'), # special zuyin
+            (u'\u3200', u'\u33ff'), # special number
+            (u'\u4db0', u'\u4dff'), # none sense
+            (u'\ua000', u'\uac00'), # roma special
+            (u'\ud7b0', u'\ufe2f'), # unknown
             (u'\ufe70', u'\uff00'),
-            (u'\uff10', u'\uff19'),
+            (u'\uff10', u'\uff19'), # full digits
+            (u'\uff21', u'\uff5a'), # full english
             (u'\uffa0', u'\uffff'),
         ]
         for _ in regexies:
