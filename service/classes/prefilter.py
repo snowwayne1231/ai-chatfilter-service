@@ -101,7 +101,9 @@ class PreFilter():
             (u'\u4db0', u'\u4dff'),
             (u'\ua000', u'\uac00'),
             (u'\ud7b0', u'\ufe2f'),
-            (u'\ufe70', u'\uffff'),
+            (u'\ufe70', u'\uff00'),
+            (u'\uff10', u'\uff19'),
+            (u'\uffa0', u'\uffff'),
         ]
         for _ in regexies:
             _st = _[0]

@@ -212,9 +212,11 @@ class BasicChineseFilter():
 
     def build_model(self):
         full_words_length = self.full_words_length
+        all_scs = self.status_classsets
 
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length))
+        # model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length))
+        model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs))
         model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
@@ -225,7 +227,7 @@ class BasicChineseFilter():
         # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.sigmoid))
-        model.add(tf.keras.layers.Dense(self.status_classsets, activation=tf.nn.softmax))
+        model.add(tf.keras.layers.Dense(all_scs, activation=tf.nn.softmax))
 
         model.summary()
         

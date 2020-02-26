@@ -228,7 +228,7 @@ class JieBaDictionary():
 
 
     def split_word(self, text=''):
-        _list = jieba.cut(text, HMM=False) if text else []
+        _list = jieba.cut(text, HMM=False, cut_all=False) if text else []
         results = []
         _buf = ''
         
@@ -243,6 +243,8 @@ class JieBaDictionary():
 
         if _buf:
             print('why left _buf: ', _buf)
+            print('text: ', text)
+        
         return results
 
 
@@ -271,6 +273,7 @@ class JieBaDictionary():
             if self.is_allowed_word(nv) and self.is_new_word(nv):
                 jieba.add_word(nv)
         
+        print('FREQ length: ', len(jieba.dt.FREQ))
 
         return self
 
