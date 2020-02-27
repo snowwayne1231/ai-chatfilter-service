@@ -31,7 +31,7 @@ class BasicChineseFilter():
     full_words_length = 64
     status_classsets = 8
     avoid_lv = 6
-    max_pinyin_word = 6
+    max_pinyin_word = 7
     length_x = 0
 
     
@@ -219,8 +219,8 @@ class BasicChineseFilter():
         model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs))
         model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
+        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length, return_sequences=True)))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)))
         # model.add(tf.keras.layers.GlobalAveragePooling1D())
         # model.add(tf.keras.layers.Flatten())
