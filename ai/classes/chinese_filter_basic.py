@@ -1,15 +1,13 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # from copy import deepcopy
-from dataparser.apps import JieBaDictionary
 
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import pickle
-import json
+# import json
+# import sys
 import os
-import sys
 
 
 
@@ -22,30 +20,20 @@ class BasicChineseFilter():
     data = []
     model = None
 
-    tokenizer_vocabularies = []
-    encoder = None
     saved_folder = None
-    jieba_dict = None
-
+    
     full_vocab_size = 65536
     full_words_length = 64
     status_classsets = 8
     avoid_lv = 6
-    max_pinyin_word = 7
     length_x = 0
 
     
     def __init__(self, data = [], load_folder=None):
-
-        self.jieba_dict = JieBaDictionary()
         
         if len(data) > 0:
             
             if self.check_data_shape(data):
-
-                # self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
-                
-                self.tokenizer = tfds.features.text.Tokenizer()
                 
                 self.set_data(data)
             
@@ -115,35 +103,8 @@ class BasicChineseFilter():
         print('Starting load model: ', folder)
         self.saved_folder = folder
         self.load_model(folder + '/model.h5')
-        self.load_tokenizer_vocabularies()
         
         print('Successful load model. ', folder)
-
-
-    def save_tokenizer_vocabularies(self):
-        vocab_size = len(self.tokenizer_vocabularies)
-        if vocab_size < self.full_vocab_size:
-
-            self.save(is_check=True)
-            with open(self.saved_folder + '/tokenizer_vocabularies.bak', 'wb+') as handle:
-                pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
-            with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
-                pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
-            # print('saved tokenizer vocabularies, size: ', len(self.tokenizer_vocabularies))
-            self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
-
-        else:
-
-            print('save failed.  tokenizer vocabularies size over[{}].'.format(self.full_vocab_size))
-
-
-    def load_tokenizer_vocabularies(self):
-        with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'rb') as handle:
-            self.tokenizer_vocabularies = pickle.load(handle)
-            self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
-
         
 
     def save_model(self, path):
@@ -199,17 +160,8 @@ class BasicChineseFilter():
     def transform_str(self, _string):
         return _string
 
-    # should be override
-    def transform_back_str(self, _encoded):
-        return _encoded
 
-    # should be override
-    def add_new_vocabulary(self, _word):
-        print('no overwrite this function, word ["{}"]'.format(word))
-        return self
-
-
-
+    # could be override
     def build_model(self):
         full_words_length = self.full_words_length
         all_scs = self.status_classsets
@@ -245,7 +197,7 @@ class BasicChineseFilter():
         return self
 
 
-
+    # could be overreide
     def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
         if save_folder is not None:
             self.saved_folder = save_folder
@@ -258,9 +210,9 @@ class BasicChineseFilter():
 
         _length_of_data = self.length_x
 
-        BUFFER_SIZE = _length_of_data + 1000
+        BUFFER_SIZE = _length_of_data + 1
         BATCH_SIZE = self.full_words_length
-        VALIDATION_SIZE = int(_length_of_data / 8) if _length_of_data > 5000 else int(_length_of_data / 2)
+        VALIDATION_SIZE = int(_length_of_data / 8) if _length_of_data > 5000 else int(_length_of_data / 3)
 
         # exit(2)
 
@@ -271,10 +223,6 @@ class BasicChineseFilter():
 
             # batch_train_data = batch_train_data.skip(VALIDATION_SIZE)
             # _length_of_data -= VALIDATION_SIZE
-
-        else:
-
-            batch_test_data = self.bathchs_labeler(validation_data.x, validation_data.y)
 
         history = None
         batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[])).repeat(epochs)
@@ -323,29 +271,6 @@ class BasicChineseFilter():
 
 
 
-    def tokenize_data(self, datalist, save_new_vocabulary = False):
-        tokenizer_vocabularies = self.tokenizer_vocabularies if self.tokenizer_vocabularies and len(self.tokenizer_vocabularies) > 0 else []
-
-        for words in datalist:
-            
-            for word in words:
-
-                if word and self.check_word_length(word):
-                    
-                    if not word in tokenizer_vocabularies:
-                        tokenizer_vocabularies.append(word)
-
-                        if save_new_vocabulary:
-                            self.add_new_vocabulary(word)
-            
-        if len(tokenizer_vocabularies) > len(self.tokenizer_vocabularies):
-            self.tokenizer_vocabularies = tokenizer_vocabularies
-            self.save_tokenizer_vocabularies()
-        
-        return self
-
-
-
     def get_xy_data(self):
         print('Starting get XY data..', end='\r')
         _full_columns = self.columns + self.appended_columns
@@ -377,7 +302,7 @@ class BasicChineseFilter():
         return new_x, new_y
 
 
-
+    # could be override
     def get_train_batchs(self):
         
         x, y = self.get_xy_data()
@@ -385,174 +310,43 @@ class BasicChineseFilter():
         assert length_x > 0
         self.length_x = length_x
 
-        self.tokenize_data(x)
-
-        labeled_dataset = self.bathchs_labeler(x, y)
-
-        return labeled_dataset
-
-
-
-    def bathchs_labeler(self, x, y):
-        assert len(x) == len(y)
-        encoder = self.encoder
-
-        def encode(text):
-            encoded_list = encoder.encode(text)
-            if len(encoded_list) > 0:
-                return encoded_list[0]
-            else:
-                return 0
-
         def gen():
             for idx, texts in enumerate(x):
                 next_texts = []
                 st = y[idx] if y[idx] else 0
 
                 for text in texts:
-                    encoded_text = encode(text)
-                    if encoded_text:
-                        next_texts.append(encoded_text)
-                    else:
-                        pass
-                        # print('[bathchs_labeler] gen batches fail with text: ', text)
-
-                if len(next_texts) == 0:
-                    continue
+                    next_texts.append(text)
                     
                 yield next_texts, st
-        
+
         dataset = tf.data.Dataset.from_generator(
             gen,
             ( tf.int64, tf.int64 ),
             ( tf.TensorShape([None]), tf.TensorShape([]) ),
         )
 
-        # print(dataset.take(1))
-        # for __ in dataset.take(10):
-        #     print(__)
-
         return dataset
 
 
-
-    def drop_data_json(self, file = ''):
-        if file == '':
-            return self
-
-        with open(file, 'w+', encoding='utf-8') as f:
-            json.dump(self.data, f, ensure_ascii=False)
-        
-        return self
-
-
-
-    def predictText(self, text, lv = 0):
-        # _text, _lv, _anchor = self.parse_message(text)
-        
-        if lv < self.avoid_lv:
-
-            _words = self.transform(text)
-
-            # print('predictText _words: ', _words)
-
-            _result_text = self.get_encode_word(_words)
-
-            # print('encoded _text : ', _text)
-
-            if len(_result_text) == 0:
-                return 0
-
-            
-            predicted = self.model.predict([_result_text])[0]
-            passible = np.argmax(predicted)
-
-            # print('predicted: ', predicted)
-            # print('passible: ', passible)
-        
-        else:
-
-            passible = 0
-
-        # print('The most likely possible status: ', passible)
+    def predictText(self, text):
+        predicted = self.model.predict([text])[0]
+        passible = np.argmax(predicted)
         return passible
+
 
 
     def get_reason(self, text, prediction):
         reason = ''
-        _words = self.transform(text)
-
-        # print('get_reason _words: ', _words)
-
-        _result_text = self.get_encode_word(_words)
-
-        # print('get_reason _result_text: ', _result_text)
-
-        _res = self.model.predict(_result_text)
-        _i = 0
-        for _ in _res:
-            _max = np.argmax(_)
-            if _max == prediction:
-                vocabulary = _words[_i]
-                # print('vocabulary: ', vocabulary)
-                reason = self.transform_back_str(vocabulary)
-                break
-            _i += 1
-
-        # print('get_reason _res: ', _res)
-
-        # print('get_reason: ', reason)
-        
         return reason
-
-
-    def get_encode_word(self, _words):
-        _result_text = []
-        _vocal_size = len(self.tokenizer_vocabularies)
-        
-
-        for _ in _words:
-
-            if not self.check_word_length(_):
-                _result_text.append(0)
-                continue
-            
-            _loc = self.encoder.encode(_)
-            
-            if len(_loc) > 0:
-                __code = _loc[0]
-
-                if __code > _vocal_size:
-                    # find the new word
-                    self.tokenize_data([_words], save_new_vocabulary=True)
-                    return self.get_encode_word(_words)
-                
-                if __code > 0:
-                    _result_text.append(__code)
-        
-        return _result_text
-
-
-
-    def check_word_length(self, _word):
-        max_pinyin_word = self.max_pinyin_word
-        _word_list = _word.split('_')
-        for _ in _word_list:
-            if len(_) > max_pinyin_word:
-                # print('check_word_length find overmax: ', _)
-                return False
-        return True
 
 
     
     def get_details(self, text):
         words = self.transform(text)
-        result_text = self.get_encode_word(words)
+        predicted = self.model.predict([words])[0]
 
-        predicted = self.model.predict([result_text])[0]
         return {
-            'transformed_words': words,
-            'encoded_words': result_text,
             'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
         }
 
