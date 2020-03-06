@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from ai.train import train_pinyin as handle_train_pinyin
+from ai.train import train_pinyin, train_grammar
 import os
 
 class Command(BaseCommand):
@@ -18,20 +18,28 @@ class Command(BaseCommand):
             '-f', dest='final_accuracy', required=False, type=float,
             help='set should be stoped accuracy ratio.',
         )
+        parser.add_argument(
+            '-grm', dest='grammar_mode', required=False, action='store_true',
+            help='whether grammar mode is on.',
+        )
 
     def handle(self, *args, **options):
         path = options.get('input_excel_path', None)
         is_append_mode = options.get('is_append_mode', False)
         final_accuracy = options.get('final_accuracy', None)
+        grammar_mode = options.get('grammar_mode', False)
     
         self.stdout.write('Handle AI training... ')
 
         if path:
             full_file_path = os.getcwd() + '/' + path
             self.stdout.write('Full input excel path: ' + full_file_path)
-            handle_train_pinyin(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy)
+            if grammar_mode:
+                train_grammar(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy)
+            else:
+                train_pinyin(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy)
         else:
-            handle_train_pinyin(None, final_accuracy=final_accuracy)
+            train_pinyin(None, final_accuracy=final_accuracy)
         
 
         

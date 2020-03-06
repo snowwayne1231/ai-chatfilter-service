@@ -10,7 +10,8 @@ from datetime import datetime
 from dataparser.apps import ExcelParser, MessageParser
 from dataparser.classes.store import ListPickle
 from .classes.chinese_filter_pinyin import PinYinFilter
-from .helper import print_spend_time, get_pinyin_path
+from .classes.chinese_filter_grammar import GrammarFilter
+from .helper import print_spend_time, get_pinyin_path, get_grammar_path
 
 
 
@@ -87,3 +88,51 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
     print_spend_time(_st_time)
 
 
+
+
+def train_grammar(excel_file_path = None, is_append = False, final_accuracy = None):
+
+    _saved_folder = get_grammar_path()
+
+    _st_time = datetime.now() #
+    
+    if excel_file_path:
+
+        ep = ExcelParser(file=excel_file_path)
+        basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息', '禁言内容', '发言内容'], ['STATUS', '審核結果', '状态']]
+        result_list = ep.get_row_list(column=basic_model_columns)
+
+        # print('result_list[0]', result_list[0])
+
+        # if is_save_pickle:
+
+        message_parser = MessageParser()
+        for res in result_list:
+            msg = res[2]
+            text, lv, anchor = message_parser.parse(msg)
+
+            res.append(text)
+            res.append(lv)
+            res.append(anchor)
+    
+
+    print('The result list length: ', len(result_list))
+
+    
+    if os.path.isdir(_saved_folder):
+
+        model = GrammarFilter(load_folder=_saved_folder)
+
+        history = model.fit_model(train_data=result_list, stop_accuracy=final_accuracy)
+
+    else:
+
+        model = GrammarFilter(data=result_list)
+        model.build_model()
+
+        history = model.fit_model(save_folder=_saved_folder, stop_accuracy=final_accuracy)
+
+
+    print('=== history ===')
+    print(history)
+    print_spend_time(_st_time)

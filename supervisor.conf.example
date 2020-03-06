@@ -40,3 +40,8 @@ stderr_logfile=/ai/logs/django-error.log
 
 redirect_stderr=true
 
+
+[inet_http_server]
+port = *:9001
+username = snow
+password = snow

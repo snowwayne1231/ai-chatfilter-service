@@ -65,7 +65,7 @@ class PinYinFilter(BasicChineseFilter):
             return _encoded
 
 
-    # overrie
+    # override
     def build_model(self):
         full_words_length = self.full_words_length
         all_scs = self.status_classsets
@@ -93,8 +93,8 @@ class PinYinFilter(BasicChineseFilter):
         return self
 
 
-    # overrie
-    def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
+    # override
+    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
         if save_folder is not None:
             self.saved_folder = save_folder
         
