@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [_.strip() for _ in config.get('MAIN', 'ALLOWED_HOSTS').split(',
 
 INSTALLED_APPS = [
     'channels',
+    'import_export',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -173,3 +174,6 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 CORS_ORIGIN_ALLOW_ALL  = True
+
+IMPORT_EXPORT_USE_TRANSACTIONS = True
+IMPORT_EXPORT_IMPORT_PERMISSION_CODE = 'add'

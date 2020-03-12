@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
             ep = ExcelParser(file=file_path)
             basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息']]
-            row_list = ep.get_row_list(column=basic_model_columns, limit=5000)
+            row_list = ep.get_row_list(column=basic_model_columns, limit=50000)
             for r in row_list:
                 _loc = r[2]
                 if _loc:
@@ -67,8 +67,11 @@ class Command(BaseCommand):
                 msgtxt = messages[msgid]
 
                 if msgtxt:
-                    print('sending txt: ', msgtxt)
-                    packed = pack(command_hex, msgid=msgid+1, msgtxt=msgtxt)
+                    # print('sending txt: ', msgtxt)
+                    packed = pack(command_hex, msgid=msgid+100000000, msgtxt=msgtxt)
+
+                    if msgid % 100 == 0:
+                        print('{:2.1%}'.format(msgid / length_messages), end="\r")
                 else:
                     break
                 
@@ -76,6 +79,7 @@ class Command(BaseCommand):
 
                 recv_data = client.recv(bufsize)
                 if not recv_data:
+                    print('not receive msgid: {}'.format(msgid))
                     break
 
                 # print('===== receive data =====')
@@ -86,7 +90,7 @@ class Command(BaseCommand):
                 # print('=========================')
 
                 msgid += 1
-                time.sleep(0.2)
+                time.sleep(0.01)
 
             except KeyboardInterrupt:
 

@@ -57,9 +57,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if is_setting_tcp:
             self.is_tcp = True
 
-        if message:
-            
-            results = self.main_service.think(message=message, user=user, room=room, detail=detail)
+        if message and isinstance(msgid, int):
+            if len(message) > 64:
+                message = message[:64]
+            # results = self.main_service.think(message=message, user=user, room=room, detail=detail)
+            results = self.main_service.think(message=message, room=room, detail=detail)
             
         else:
             results = {
@@ -74,7 +76,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'user': user, 
                 'room': room,
                 'msgid': msgid,
-                'message': results.get('message', ''),
+                'message': message,
                 'prediction': int(results.get('prediction', 0)),
                 'reason_char': results.get('reason_char', ''),
                 'detail': results.get('detail', {}),

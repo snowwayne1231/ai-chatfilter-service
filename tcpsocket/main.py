@@ -33,6 +33,11 @@ websocket_thread = None
 
 # main_service = instance.get_main_service()
 
+def log_except_hook(*exc_info):
+    print('log_except_hook')
+    print(exc_info)
+    
+
 
 class socketTcp(Tcp):
     def handle(self):
@@ -72,45 +77,56 @@ class socketTcp(Tcp):
             elif unpacked_data.cmd == 0x040003:
                 logging.debug('Recived Package is [ Chat ]')
                 # logging.debug('msgid: {}'.format(unpacked_data.msgid))
-                logging.debug('msgtxt: {}'.format(unpacked_data.msgtxt))
+                # logging.debug('msgtxt: {}'.format(unpacked_data.msgtxt))
                 # logging.debug('msgbuffer: {}'.format(unpacked_data.msgbuffer))
                 # logging.debug('msgsize: {}'.format(unpacked_data.msgsize))
 
                 status_code = 0
 
                 if websocket_thread:
-
-                    ai_results = websocket_thread.thinking(msg=unpacked_data.msgtxt, msgid=unpacked_data.msgid)
-                    prediction = ai_results.get('prediction', None)
-                    if prediction and prediction != 0:
-                        status_code = 5
-                        logging.info('Message be blocked = id: {} txt: {}'.format(unpacked_data.msgid, unpacked_data.msgtxt))
+                    
+                    _max_msg_legnth = 64
+                    _msg = unpacked_data.msgtxt if len(unpacked_data.msgtxt) < _max_msg_legnth else unpacked_data.msgtxt[:_max_msg_legnth]
+                    if isinstance(unpacked_data.msgid, int) and _msg:
+                        ai_results = websocket_thread.thinking(msg=_msg, msgid=unpacked_data.msgid)
+                        prediction = ai_results.get('prediction', None)
+                    else:
+                        prediction = None
+                    
+                    if prediction:
+                        if prediction != 0:
+                            status_code = 5
+                            logging.info('Message be blocked = id: {} txt: {}'.format(unpacked_data.msgid, unpacked_data.msgtxt))
                     
                 else:
 
-                    logging.error('Websocket is Not Working.')
+                    logging.error('Websocket is Not Working. [txt: {}]'.format(unpacked_data.msgtxt))
 
                 packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
 
             elif unpacked_data.cmd == 0x041003:
                 logging.debug('Recived Package is [ Chat Json ]')
-                logging.debug('json string: {}'.format(unpacked_data.jsonstr))
+                # logging.debug('json string: {}'.format(unpacked_data.jsonstr))
 
                 status_code = 0
 
                 if websocket_thread:
 
-                    _msg = unpacked_data.msg
+                    _max_msg_legnth = 64
+                    _msg = unpacked_data.msg if len(unpacked_data.msg) < _max_msg_legnth else unpacked_data.msg[:_max_msg_legnth]
 
-                    ai_results = websocket_thread.thinking(msg=_msg, msgid=unpacked_data.msgid, room=unpacked_data.roomid)
-                    prediction = ai_results.get('prediction', None)
+                    if isinstance(unpacked_data.msgid, int) and _msg:
+
+                        ai_results = websocket_thread.thinking(msg=_msg, msgid=unpacked_data.msgid, room=unpacked_data.roomid)
+                        prediction = ai_results.get('prediction', None)
+                    
                     if prediction and prediction != 0:
                         status_code = 5
                         logging.info('Message be blocked = id: {} msg: {}'.format(unpacked_data.msgid, _msg))
                     
                 else:
 
-                    logging.error('Websocket is Not Working.')
+                    logging.error('Websocket is Not Working [JSON: {}].'.format(unpacked_data.jsonstr))
 
                 packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
 
@@ -129,10 +145,10 @@ class socketTcp(Tcp):
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
 
     def handle_error(self):
-        logging.error('TCPSocket handle_error!!')
+        logging.error('TCPSocket Handle Error!!')
 
     def server_close(self):
-        logging.error('server_close!!!!')
+        logging.error('TCPSocket Server Closed!!!')
 
 
 

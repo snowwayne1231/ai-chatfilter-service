@@ -31,7 +31,7 @@ class WebsocketThread (threading.Thread):
         self._port = port
         self._url = WS_URL.format(port)
         self.stop_event = threading.Event()
-        self.pool = ThreadPool(processes=2)
+        self.pool = ThreadPool(processes=4)
     
 
     def run(self):
@@ -50,8 +50,8 @@ class WebsocketThread (threading.Thread):
         while True:
             if self.stopped():
                 break
-            self.ws.run_forever(ping_interval=10, ping_timeout=5)
-            time.sleep(2)
+            self.ws.run_forever(ping_interval=10, ping_timeout=2)
+            time.sleep(3)
 
     
     def on_open(self):
@@ -60,13 +60,14 @@ class WebsocketThread (threading.Thread):
 
     
     def send_thread(self, data):
-        _msg_id = data.get('msgid')
+        _msg_id = data.get('msgid', None)
         _limted_timeout = 2
         _now = time.time()
         #
         if _msg_id:
+            if isinstance(_msg_id, int):
+                self._waitting_ids.append(_msg_id)
 
-            self._waitting_ids.append(_msg_id)
             _str = json.dumps(data)
             logging.debug('Web Socket send thread data: {}'.format(_str))
             self.ws.send(_str)
@@ -82,7 +83,7 @@ class WebsocketThread (threading.Thread):
                         self._waitting_ids.remove(_msg_id)
                     break
 
-                time.sleep(0.01)
+                time.sleep(0.005)
             
             if self._message_result.get(_msg_id):
 

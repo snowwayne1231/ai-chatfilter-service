@@ -54,20 +54,18 @@ class MainService():
 
         if message:
             reason_char = self.pre_filter.find_special_char(message)
+            
+            if reason_char:
+                prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
+                return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence)
+            elif not detail:   # temporary to use 
+                return self.return_reslut(0, message=message)
+
 
             text, lv, anchor = self.parse_message(message)
 
             if anchor > 0:
-
                 return self.return_reslut(0, message=message, text=text, silence=silence)
-            
-
-            if reason_char:
-                prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
-                return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence)
-            # elif not detail:   # temporary to use 
-            #     return self.return_reslut(0, message=message)
-
 
             if len(text) == 0:
                 return self.return_reslut(0, message=message, text=text, silence=silence)

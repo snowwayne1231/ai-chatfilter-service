@@ -1,5 +1,6 @@
 import struct
 import json
+import logging
 
 
 def pack(cmd, **options):
@@ -166,6 +167,7 @@ class ChatFilterPackage(BasicStructPackage):
         _left_buffer = buffer[buffer_size:]
 
         cmd, size, msgid, msgsize = struct.unpack(self.fmt, _fmt_buffer)
+
         self.cmd = cmd
         self.size = size
         self.msgid = msgid
@@ -179,8 +181,12 @@ class ChatFilterPackage(BasicStructPackage):
         try:
             self.msgtxt = self.msgbuffer.decode('utf-8')
         except:
-            print('>>>>> Unpack Error msgid: ', msgid, ' | msgbuffer: ', self.msgbuffer)
+            logging.error('Unpack Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
             self.msgtxt = self.msgbuffer.decode('utf-8', "ignore")
+
+
+        if len(self.msgtxt) > 96:
+            self.msgtxt = self.msgtxt[:96]
 
 
 class ChatWithJSONPackage(BasicStructPackage):
@@ -215,7 +221,7 @@ class ChatWithJSONPackage(BasicStructPackage):
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
         except:
-            print('>>>>> Unpack Error msgid: ', msgid, ' | jsonbuffer: ', self.jsonbuffer)
+            logging.error('Unpack Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
             self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
             self.json = {}
 
