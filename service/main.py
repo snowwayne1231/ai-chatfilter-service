@@ -50,11 +50,12 @@ class MainService():
         merged_text = ''
         reason_char = ''
         _st_time = time.time()
-        # print('receive message :', message)
+        print('receive message :', message)
 
         if message:
-            reason_char = self.pre_filter.find_special_char(message)
             
+            reason_char = self.pre_filter.find_special_char(message)
+
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
                 return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence)

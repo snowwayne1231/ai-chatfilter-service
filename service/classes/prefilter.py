@@ -93,10 +93,15 @@ class PreFilter():
 
     def is_rare_character(self, uchar):
         regexies = [
-            (u'\u0080', u'\u0e00'),
+            (u'\u0083', u'\u0083'), # suspect english
+            (u'\u008a', u'\u00a3'), # suspect english
+            (u'\u00a9', u'\u02b8'), # suspect english
+            (u'\u0363', u'\u058f'), # suspect english
+            (u'\u05d0', u'\u0dff'), # suspect english
             (u'\u0fff', u'\u1100'), # rare symbol
-            (u'\u1b7f', u'\u2025'), # rare symbol
-            (u'\u2027', u'\u2e7f'), # rare symbol
+            (u'\u1b7f', u'\u1fff'), # rare symbol
+            (u'\u2028', u'\u25ff'), # rare symbol
+            (u'\u2776', u'\u2e7f'), # rare symbol and suspect digits
             (u'\u3190', u'\u31bf'), # special zuyin
             (u'\u3200', u'\u33ff'), # special number
             (u'\u4db0', u'\u4dff'), # none sense
@@ -106,13 +111,21 @@ class PreFilter():
             (u'\uff10', u'\uff19'), # full digits
             (u'\uff21', u'\uff5a'), # full english
             (u'\uffa0', u'\uffff'),
+            (u'\U0001f000', u'\U0001f2ff'), # utf-16 special number and english
+            (u'\U0001f519', u'\U0001f524'), # utf-16 suspect english
+            (u'\U0001f5da', u'\U0001f5db'), # utf-16 suspect english
+            (u'\U0001f700', u'\U0001f7a7'), # utf-16 suspect english
+            (u'\U00020000', u'\U0002cfff'), # rare chinese
         ]
+        
+        # print('uchar: ', uchar.encode('unicode_escape'))
         for _ in regexies:
             _st = _[0]
             _ed = _[1]
-            _res = uchar >= _st and uchar <= _ed
-            if _res:
-                return True
+            if uchar <= _ed:
+                if uchar >= _st:
+                    return True
+                break
 
         return False
 

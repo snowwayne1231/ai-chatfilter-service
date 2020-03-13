@@ -31,7 +31,7 @@ class BlockedSentenceAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ['message', 'text', 'reason', 'type', 'status', 'date']
     list_filter = ('status', )
     # search_fields = ['message', 'status', 'date']
-    search_fields = ['date']
+    search_fields = ['message']
     empty_value_display = '---'
     resource_class = BlockedSentenceResource
 
