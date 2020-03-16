@@ -16,6 +16,8 @@ class PreFilter():
     def find_special_char(self, text):
         next_char = ''
         size_qk = 0
+
+        text = self.replace_face_symbol(text)
         
         for u in text:
             if self.is_rare_character(u):
@@ -62,7 +64,7 @@ class PreFilter():
 
 
     def is_chinese(self, uchar):
-        return uchar >= u'\u4e00' and uchar <= u'\u9fa5'
+        return (uchar >= u'\u4e00' and uchar <= u'\u9fa5') or (uchar >= u'\uf970' and uchar <= u'\ufa6d')
 
     def is_zuyin(self, uchar):
         return uchar >= u'\u3105' and uchar <= u'\u312b'
@@ -95,27 +97,33 @@ class PreFilter():
         regexies = [
             (u'\u0083', u'\u0083'), # suspect english
             (u'\u008a', u'\u00a3'), # suspect english
-            (u'\u00a9', u'\u02b8'), # suspect english
+            (u'\u00a9', u'\u00b6'), # suspect english
+            (u'\u00b9', u'\u02b8'), # suspect english
             (u'\u0363', u'\u058f'), # suspect english
             (u'\u05d0', u'\u0dff'), # suspect english
             (u'\u0fff', u'\u1100'), # rare symbol
             (u'\u1b7f', u'\u1fff'), # rare symbol
-            (u'\u2028', u'\u25ff'), # rare symbol
-            (u'\u2776', u'\u2e7f'), # rare symbol and suspect digits
+            (u'\u203d', u'\u23e8'), # rare symbol so many close to be suspect
+            (u'\u23fb', u'\u24ff'), # rare symbol so many close to be suspect
+            (u'\u2710', u'\u271f'), # rare symbol and suspect digits
+            (u'\u2776', u'\u2b4f'), # rare symbol and suspect digits
+            (u'\u2bd0', u'\u2e7f'), # rare symbol and suspect digits
             (u'\u3190', u'\u31bf'), # special zuyin
             (u'\u3200', u'\u33ff'), # special number
             (u'\u4db0', u'\u4dff'), # none sense
-            (u'\ua000', u'\uac00'), # roma special
-            (u'\ud7b0', u'\ufe2f'), # unknown
+            (u'\ua000', u'\uabff'), # roma special
+            (u'\ud7b0', u'\uf8ff'), # unknown
             (u'\ufe70', u'\uff00'),
             (u'\uff10', u'\uff19'), # full digits
-            (u'\uff21', u'\uff5a'), # full english
-            (u'\uffa0', u'\uffff'),
+            (u'\uff21', u'\uff3a'), # full english
+            (u'\uff41', u'\uff5a'), # full english
+            (u'\uffa0', u'\uffe1'),
+            (u'\uffe6', u'\uffff'),
             (u'\U0001f000', u'\U0001f2ff'), # utf-16 special number and english
             (u'\U0001f519', u'\U0001f524'), # utf-16 suspect english
             (u'\U0001f5da', u'\U0001f5db'), # utf-16 suspect english
             (u'\U0001f700', u'\U0001f7a7'), # utf-16 suspect english
-            (u'\U00020000', u'\U0002cfff'), # rare chinese
+            # (u'\U00020000', u'\U0002cfff'), # rare chinese
         ]
         
         # print('uchar: ', uchar.encode('unicode_escape'))
@@ -128,5 +136,26 @@ class PreFilter():
                 break
 
         return False
+
+
+    def replace_face_symbol(self, _text):
+        regexs = [
+            r'°□°',
+            r'＾∀＾',
+            r'✿‿✿',
+            r'´◡`',
+            r'༼ つ ◕_◕ ༽つ',
+            r'◕_◕',
+            r'✪▽✪',
+            r'(ง •̀_•́)ง',
+            r'(•̀⌄•́)',
+            r'ฅ՞•ﻌ•՞ฅ',
+            r'(◔.̮◔)',
+            r'(ღ♡‿♡ღ)',
+            r'(○^㉨^)',
+        ]
+        for _r in regexs:
+            _text = re.sub(_r, '', _text)
+        return _text
 
     

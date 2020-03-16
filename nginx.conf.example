@@ -9,6 +9,10 @@ upstream channels-backend {
     server 127.0.0.1:8021;
 }
 
+upstream supervisorctl {
+    server 127.0.0.1:9001;
+}
+
 server {
     # the port site will be served on
     listen 80;
@@ -33,6 +37,11 @@ server {
     location / {
         proxy_pass http://django;
         # include /path/to/mysite/uwsgi_params;
+    }
+
+    # SupervisorCtl web site.
+    location /super {
+        proxy_pass http://supervisorctl;
     }
 
     # 
