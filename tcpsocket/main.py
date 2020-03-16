@@ -83,7 +83,7 @@ class socketTcp(Tcp):
 
                 status_code = 0
 
-                if websocket_thread:
+                if websocket_thread and websocket_thread.is_active:
                     
                     _max_msg_legnth = 64
                     _msg = unpacked_data.msgtxt if len(unpacked_data.msgtxt) < _max_msg_legnth else unpacked_data.msgtxt[:_max_msg_legnth]
@@ -110,7 +110,7 @@ class socketTcp(Tcp):
 
                 status_code = 0
 
-                if websocket_thread:
+                if websocket_thread and websocket_thread.is_active:
 
                     _max_msg_legnth = 64
                     _msg = unpacked_data.msg if len(unpacked_data.msg) < _max_msg_legnth else unpacked_data.msg[:_max_msg_legnth]

@@ -23,6 +23,7 @@ class WebsocketThread (threading.Thread):
     stop_event = None
     ws = None
     pool = None
+    is_active = False
 
 
     def __init__(self, name = 'default', port = 80):
@@ -56,6 +57,7 @@ class WebsocketThread (threading.Thread):
     
     def on_open(self):
         logging.info('Web Socket Connection opened.')
+        self.is_active = True
         self.setting()
 
     
@@ -114,16 +116,19 @@ class WebsocketThread (threading.Thread):
 
     def on_error(self, error):
         logging.error('### Web Socket Error: {}'.format(error))
+        self.is_active = False
         self._waitting_ids = []
         self._message_result = dict()
         # raise Exception(error)
 
 
     def on_close(self):
+        self.is_active = False
         logging.warning("# Web Socket Closed ###")
         
 
     def stop(self):
+        self.is_active = False
         self.stop_event.set()
         self.ws.close()
 
