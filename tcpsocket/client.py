@@ -155,6 +155,7 @@ while True:
     trying_unpacked = unpack(recv_data)
     # print(recv_data)
     print(trying_unpacked)
+    print('code: ', trying_unpacked.code)
     print('=========================')
     # unpacked_data = unpack('i16s', recv_data)
     # print(unpacked_data)
