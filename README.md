@@ -275,6 +275,7 @@ python manage.py knowledge
 > if you need some help then type `python manage.py train -h` have a look on helper and see how to use train
 ```Shell
 python manage.py train -i ai/assets/textbook -f 0.995
+python manage.py train -i ai/assets/textbook/grammar -f 0.995 -grm
 ```
 > after upon that command, you should start an AI training now, Stop anytime when you want by key in Ctrl+C
 

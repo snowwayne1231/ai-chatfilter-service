@@ -17,11 +17,13 @@ class MainService():
     message_parser = None
     fuzzy_center = None
     timestamp_ymdh = [0, 0, 0, 0]
+    
+    STATUS_PREDICTION_NO_MSG = 0
+
     STATUS_PREDICTION_ADVERTISING = 1
     STATUS_PREDICTION_HUMAN_DELETE = 3
     STATUS_PREDICTION_DIRTY_WORD = 4
     STATUS_PREDICTION_OTHER_AI = 5
-    STATUS_PREDICTION_NO_MSG = 0
     STATUS_PREDICTION_SPECIAL_CHAR = 11
     STATUS_PREDICTION_NONSENSE = 12
     STATUS_PREDICTION_WEHCAT_SUSPICION = 13
@@ -59,8 +61,8 @@ class MainService():
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
                 return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence)
-            elif not detail:   # temporary to use 
-                return self.return_reslut(0, message=message)
+            # elif not detail:   # temporary to use 
+            #     return self.return_reslut(0, message=message)
 
 
             text, lv, anchor = self.parse_message(message)

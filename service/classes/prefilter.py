@@ -26,8 +26,8 @@ class PreFilter():
                 size_qk += 1
 
         is_too_many_question_marks = size_qk >= 3
-        if next_char:
-            return next_char
+        # if next_char:
+        #     return next_char
 
         return '?' if is_too_many_question_marks else next_char
 
