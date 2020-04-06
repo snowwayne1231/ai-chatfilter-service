@@ -264,9 +264,7 @@ python manage.py collectstatic
 ### 5. training ai
 > before you train you may need to check your vocabulary dictionary
 ```Shell
-python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_1.xls
-python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_2.xls
-python manage.py knowledge -i ai/assets/chinese/dict_revised_2015_20190712_3.xls
+python manage.py knowledge -i ai/assets/chinese/dict_taiwan.xlsx -lan TW
 python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN
 python manage.py knowledge -i ai/assets/english/dict.xls -lan EN
 python manage.py knowledge -di ai/assets/chinese_digits/dict.xls

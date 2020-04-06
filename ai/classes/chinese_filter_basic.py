@@ -33,12 +33,7 @@ class BasicChineseFilter():
         
         if len(data) > 0:
             
-            if self.check_data_shape(data):
-                
-                self.set_data(data)
-            
-            else:
-
+            if not self.set_data(data):
                 print('Error init with worng length of dataset.')
 
         elif load_folder:
@@ -74,6 +69,7 @@ class BasicChineseFilter():
         else:
             
             print('Set data failed.')
+            return False
 
         return self
 
