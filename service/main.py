@@ -52,7 +52,7 @@ class MainService():
         merged_text = ''
         reason_char = ''
         _st_time = time.time()
-        print('receive message :', message)
+        # print('receive message :', message)
 
         if message:
             

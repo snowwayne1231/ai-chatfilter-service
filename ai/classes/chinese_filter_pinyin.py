@@ -25,6 +25,7 @@ class PinYinFilter(BasicChineseFilter):
     full_vocab_size = 65536
     jieba_dict = None
     encoder = None
+    encoder_size = 0
     unknown_words = []
     unknown_word_key = 'UNKNOWN_'
 
@@ -45,11 +46,13 @@ class PinYinFilter(BasicChineseFilter):
         # print('transform str: ', _string)
         _pinyin = translate_by_string(_string)
         words, unknowns = self.jieba_dict.split_word(_pinyin)
+        # print(_string, ', ', words, ', uk: ' , unknowns)
         if unknowns:
+            print("transform_str unknowns: ", unknowns)
             for _uw in unknowns:
                 
                 # print("unknowns: ", words)
-                # print("unknowns: ", unknowns)
+                
                 if _uw not in self.unknown_words:
                     self.unknown_words.append(_uw)
                     _new = NewVocabulary(pinyin=_uw)
@@ -119,21 +122,21 @@ class PinYinFilter(BasicChineseFilter):
 
         if validation_data is None:
 
-            # batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
-            batch_test_data = batch_train_data.take(VALIDATION_SIZE).shuffle(VALIDATION_SIZE)
+            batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=True).repeat(epochs)
+            batch_test_data = batch_train_data.take(VALIDATION_SIZE).shuffle(VALIDATION_SIZE, reshuffle_each_iteration=True)
 
         else:
             print('Can Not Give Validation Data.')
             exit(2)
 
         history = None
-        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[])).repeat(epochs)
+        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
         batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
 
         # print(batch_train_data)
         # for __ in batch_train_data.take(1):
         #     print(__)
-        
+
         print('==== batch_train_data ====')
         print('Length of Data :: ', _length_of_data)
         print('BUFFER_SIZE :: ', BUFFER_SIZE)
@@ -184,10 +187,12 @@ class PinYinFilter(BasicChineseFilter):
         # with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'rb') as handle:
         #     self.tokenizer_vocabularies = pickle.load(handle)
             # self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
-        vocabulary_length = len(self.jieba_dict.vocabularies)
+        _vocabularies = self.jieba_dict.get_vocabulary()
+        vocabulary_length = len(_vocabularies)
         assert vocabulary_length > 0
         assert vocabulary_length < self.full_vocab_size
-        self.encoder = tfds.features.text.TokenTextEncoder(self.jieba_dict.vocabularies)
+        self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)
+        self.encoder_size = vocabulary_length
 
 
     def tokenize_data(self, datalist):
@@ -218,7 +223,8 @@ class PinYinFilter(BasicChineseFilter):
             for word in words:
                 _list.append(get_encode(word))
 
-            tokenized.append(_list)
+            if _list and len(_list) >0:
+                tokenized.append(_list)
             
             # print('words: ', words)
             # print('next list: ', _list)
@@ -239,6 +245,7 @@ class PinYinFilter(BasicChineseFilter):
             _result_text = self.get_encode_word(_words)
 
             if len(_result_text) == 0:
+                print('text: ', text)
                 return 0
             
             predicted = self.model.predict([_result_text])[0]
@@ -295,27 +302,23 @@ class PinYinFilter(BasicChineseFilter):
 
     def get_encode_word(self, _words):
         _result_text = []
-        _vocal_size = len(self.jieba_dict.vocabularies)
+        _encoder = self.encoder
+        _max_size = self.encoder_size
 
         for _ in _words:
-
-            if not self.check_word_unknown(_):
-                _result_text.append(0)
-                continue
             
-            _loc = self.encoder.encode(_)
+            _loc = _encoder.encode(_)
             
             if len(_loc) > 0:
                 __code = _loc[0]
 
-                if __code > _vocal_size:
+                if __code > _max_size:
                     # find the new word
-                    if self.tokenize_data([[_]], save_new_vocabulary=True):
-                        _result_text.append(__code)
-                    else:
-                        _result_text.append(0)
+                    print('unknown code: ', __code, _)
+                    print('unknown _words: ', _words)
+                    return []
                     
-                elif __code > 0:
+                elif __code >= 0:
                     _result_text.append(__code)
         
         return _result_text
@@ -325,11 +328,10 @@ class PinYinFilter(BasicChineseFilter):
     def get_train_batchs(self):
         
         x, y = self.get_xy_data()
-        length_x = len(x)
-        assert length_x > 0
-        self.length_x = length_x
 
         tokenized_list = self.tokenize_data(x)
+
+        self.length_x = len(tokenized_list)
 
         labeled_dataset = self.bathchs_labeler(tokenized_list, y)
 

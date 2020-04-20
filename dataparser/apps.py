@@ -128,11 +128,15 @@ class ExcelParser():
 class MessageParser():
 
     regex_msg = re.compile("<msg>(.*)</msg>", re.IGNORECASE)
-    regex_xml_lv = re.compile("<lv>(.*)</lv>", re.IGNORECASE)
+    regex_xml_lv = re.compile("<[a-z]*?lv>(.*?)</[a-z]*?lv>", re.IGNORECASE)
     regex_xml_anchor = re.compile("<anchmsg>(.*)</anchmsg>", re.IGNORECASE)
-    regex_xml_tag = re.compile("<[^>]+>[^<]*</[^>]+>")
+    regex_xml_anchor_2 = re.compile("<isAnchorPlatformMsg>(.*)</isAnchorPlatformMsg>", re.IGNORECASE)
+    regex_xml_anchor_3 = re.compile("<anchor>(.*)</anchor>", re.IGNORECASE)
+    
+
+    regex_xml_tag = re.compile("<[^>]+?>[^<]*?</[^>]+?>")
     regex_bracket_lv = re.compile("\{viplv([^\}]*)\}", re.IGNORECASE)
-    regex_bracket_digits = re.compile("\{[a-zA-Z\d\s\:]*\}")
+    regex_bracket_digits = re.compile("\{[a-zA-Z\d\s\:\-]*\}")
 
     def __init__(self):
         print('MessageParser init done.')
@@ -152,6 +156,12 @@ class MessageParser():
             repres_xml_anchor = self.regex_xml_anchor.search(text)
             if repres_xml_anchor:
                 anchor = int(repres_xml_anchor.group(1))
+            else:
+                repres_xml_anchor = self.regex_xml_anchor_2.search(text)
+                if repres_xml_anchor:
+                    anchor = int(repres_xml_anchor.group(1))
+                elif self.regex_xml_anchor_3.search(text):
+                    anchor = 1
             
             text = self.regex_xml_tag.sub("", text)
             
@@ -250,20 +260,31 @@ class JieBaDictionary():
             if not _:
                 continue
             elif  _[-1] == self.split_character:
+
                 if _buf:
                     __ = _buf + _
+                    if __[:-1].isdigit():
+                        results.append(self.number_character)
+                        continue
+
                     _none_tone_word = self.get_none_tone_word(__)
                     if _none_tone_word:
                         results.append(_none_tone_word)
-                    elif __[:-1].isdigit():
-                        results.append(self.number_character)
                     else:
                         # unknown word appears
                         results.append(self.unknown_character)
                         unknowns.append(__)
-                elif len(_) > 1:
-                    results.append(_)
-                _buf = ''
+                    
+                    _buf = ''
+                else:
+                    __ = _
+
+                    if len(__) > 1:
+                        if __[:-1].isdigit():
+                            results.append(self.number_character)
+                        else:
+                            results.append(__)
+
             else:
                 _buf += _
                 # print('split_word buffer add: ', _buf)
