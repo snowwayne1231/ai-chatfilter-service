@@ -40,7 +40,7 @@ class KnowledgeCenter():
         if file_path:
 
             ep = ExcelParser(file=file_path)
-            rows = ep.get_row_list(column=['字詞名', '釋義'])
+            rows = ep.get_row_list(column=['字詞名', '釋義', '詞性'])
 
             self.upsert_into_dictionary(rows, language_code)
         
@@ -51,10 +51,16 @@ class KnowledgeCenter():
     
     def upsert_into_dictionary(self, row_data, language_code='TW'):
         lan_code = Language.objects.get(code=language_code)
+        part_speechs = PartOfSpeech.objects.all()
+        part_map = {}
+        for ps in part_speechs:
+            part_map[ps.code.upper()] = ps
+        
         vocabularies = Vocabulary.objects.all()
         vocabulary_set = set()
         for v in vocabularies:
             vocabulary_set.update({str(v)})
+        
 
         # print('upsert_into_dictionary row_data: ', row_data)
         length_rows = len(row_data)
@@ -62,6 +68,8 @@ class KnowledgeCenter():
 
         sound_vocabularies = SoundVocabulary.objects.all()
         sv_map = {}
+
+        _too_many_dup = 0
         for instance in sound_vocabularies:
             sv_map[str(instance)] = instance
         
@@ -81,7 +89,13 @@ class KnowledgeCenter():
                 # continue # is not chinese word
 
             if word in vocabulary_set:
+                # print('Duplicate word: ', word)
+                # _too_many_dup += 1
+                # if _too_many_dup > 10:
+                #     print('Too Many Duplicate Words Then Stop Upserting.')
+                #     return self
                 continue # already in database
+            # _too_many_dup = 0
             
             # insert
             meaning = _[1]
@@ -92,12 +106,23 @@ class KnowledgeCenter():
                     if pos > 0:
                         meaning = meaning[:pos]
 
+
             _v = Vocabulary(
                 context=word,
                 meaning=meaning,
                 language=lan_code,
             )
             _v.save()
+
+            speech_code = _[2]
+            if speech_code:
+                speech_codes = speech_code.split(',')
+                for sc in speech_codes:
+                    sc = sc.strip().upper()
+                    code = part_map.get(sc, None)
+                    if code:
+                        _v.part.add(code)
+            
             vocabulary_set.update({word})
             
             # sound

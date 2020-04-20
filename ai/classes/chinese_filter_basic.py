@@ -22,7 +22,6 @@ class BasicChineseFilter():
 
     saved_folder = None
     
-    full_vocab_size = 65536
     full_words_length = 64
     status_classsets = 8
     avoid_lv = 6
@@ -139,6 +138,10 @@ class BasicChineseFilter():
 
         _transformed_idx = _full_columns.index('TRANSFORMED_WORD')
         _length_of_columns = len(_full_columns)
+        _length_of_data = len(self.data)
+        _i = 0
+
+        print('Start Transform Data..')
 
         for d in self.data:
             _text = d[column_idx]
@@ -148,6 +151,12 @@ class BasicChineseFilter():
                 d[_transformed_idx] = _transformed_words
             else:
                 d.append(_transformed_words)
+
+            _i += 1
+            if _i % 200 == 0:
+                print(' {:.2f}%'.format(_i / _length_of_data * 100), end='\r')
+
+        print('Transform Data Done.')
 
         return self
 
@@ -163,18 +172,7 @@ class BasicChineseFilter():
         all_scs = self.status_classsets
 
         model = tf.keras.Sequential()
-        # model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length))
-        model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs))
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
-        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)))
-        # model.add(tf.keras.layers.GlobalAveragePooling1D())
-        # model.add(tf.keras.layers.Flatten())
-        # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.sigmoid))
         model.add(tf.keras.layers.Dense(all_scs, activation=tf.nn.softmax))
 
         model.summary()
@@ -294,7 +292,7 @@ class BasicChineseFilter():
 
             _i += 1
         
-        print("Getting XY data sets is done. Total count: ", )
+        print("Getting XY data sets is done. Total count: ", len(new_x))
         return new_x, new_y
 
 

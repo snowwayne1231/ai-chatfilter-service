@@ -4,7 +4,7 @@ import os
 from .translator_pinyin import translate_by_string, traceback_by_stringcode
 from .chinese_filter_basic import BasicChineseFilter
 from dataparser.apps import JieBaDictionary
-from ai.models import DigitalVocabulary, NewVocabulary
+from ai.models import DigitalVocabulary, SoundVocabulary, NewVocabulary
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -20,39 +20,45 @@ class PinYinFilter(BasicChineseFilter):
 
     digital_vocabulary_map = {}
     tokenizer_vocabularies = []
-    status_classsets = 8
+    num_status_classs = 8
     max_pinyin_word = 7
+    full_vocab_size = 65536
     jieba_dict = None
     encoder = None
+    unknown_words = []
+    unknown_word_key = 'UNKNOWN_'
 
     def __init__(self, data = [], load_folder=None):
 
         self.jieba_dict = JieBaDictionary()
-
-        vocabularies = DigitalVocabulary.objects.all()
-        next_dv_map = {}
-        for _ in vocabularies:
-            _bt_key = '{}_'.format(_.digits)
-            next_dv_map[_bt_key] = _.pinyin
-
-        self.digital_vocabulary_map = next_dv_map
+        self.load_new_vocabulary_to_unknown_words()
         
         super().__init__(data=data, load_folder=load_folder)
+
+
+    def load_new_vocabulary_to_unknown_words(self):
+        self.unknown_words = list(NewVocabulary.objects.values_list('pinyin', flat=True))
     
 
     #override return list
     def transform_str(self, _string):
         # print('transform str: ', _string)
         _pinyin = translate_by_string(_string)
-        _words = self.jieba_dict.split_word(_pinyin)
-        _words = [self.parse_digit(_w) if _w[:-1].isdigit() else _w  for _w in _words]
+        words, unknowns = self.jieba_dict.split_word(_pinyin)
+        if unknowns:
+            for _uw in unknowns:
+                
+                # print("unknowns: ", words)
+                # print("unknowns: ", unknowns)
+                if _uw not in self.unknown_words:
+                    self.unknown_words.append(_uw)
+                    _new = NewVocabulary(pinyin=_uw)
+                    _new.save()
+                    # print('_string: ', _string)
+                    print("Pinyin Filter: transform_str unknown word found: ", _uw, ' | ', _string)
         # print(_pinyin)
-        # print(_words)
-        return _words
-
-
-    def parse_digit(self, _string):
-        return self.digital_vocabulary_map.get(_string, _string)
+        # print(words)
+        return words
 
 
     def transform_back_str(self, _encoded):
@@ -68,14 +74,14 @@ class PinYinFilter(BasicChineseFilter):
     # override
     def build_model(self):
         full_words_length = self.full_words_length
-        all_scs = self.status_classsets
+        all_scs = self.num_status_classs
 
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs))
         # model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
+        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs)))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
+        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         model.add(tf.keras.layers.Dense(all_scs, activation=tf.nn.softmax))
 
@@ -102,7 +108,7 @@ class PinYinFilter(BasicChineseFilter):
         if train_data is not None:
             self.set_data(train_data)
 
-
+        # return exit(2)
         batch_train_data = self.get_train_batchs()
 
         _length_of_data = self.length_x
@@ -111,26 +117,30 @@ class PinYinFilter(BasicChineseFilter):
         BATCH_SIZE = self.full_words_length
         VALIDATION_SIZE = int(_length_of_data / 8) if _length_of_data > 5000 else int(_length_of_data / 2)
 
-        # exit(2)
-
         if validation_data is None:
 
-            batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
-            batch_test_data = batch_train_data.take(VALIDATION_SIZE)
+            # batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
+            batch_test_data = batch_train_data.take(VALIDATION_SIZE).shuffle(VALIDATION_SIZE)
 
         else:
-
-            batch_test_data = self.bathchs_labeler(validation_data.x, validation_data.y)
+            print('Can Not Give Validation Data.')
+            exit(2)
 
         history = None
         batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[])).repeat(epochs)
         batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
 
+        # print(batch_train_data)
+        # for __ in batch_train_data.take(1):
+        #     print(__)
+        
         print('==== batch_train_data ====')
         print('Length of Data :: ', _length_of_data)
         print('BUFFER_SIZE :: ', BUFFER_SIZE)
         print('BATCH_SIZE :: ', BATCH_SIZE)
         print('VALIDATION_SIZE :: ', VALIDATION_SIZE)
+
+        # exit(2)
 
         steps = int(_length_of_data / BATCH_SIZE)
         vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE)
@@ -171,63 +181,52 @@ class PinYinFilter(BasicChineseFilter):
 
     
     def load_tokenizer_vocabularies(self):
-        with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'rb') as handle:
-            self.tokenizer_vocabularies = pickle.load(handle)
-            self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
+        # with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'rb') as handle:
+        #     self.tokenizer_vocabularies = pickle.load(handle)
+            # self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
+        vocabulary_length = len(self.jieba_dict.vocabularies)
+        assert vocabulary_length > 0
+        assert vocabulary_length < self.full_vocab_size
+        self.encoder = tfds.features.text.TokenTextEncoder(self.jieba_dict.vocabularies)
 
 
-    def save_tokenizer_vocabularies(self):
-        vocab_size = len(self.tokenizer_vocabularies)
-        print('save_tokenizer_vocabularies length: ', vocab_size)
-        if vocab_size < self.full_vocab_size:
+    def tokenize_data(self, datalist):
+        print('Start Tokenize Data.')
+        self.load_tokenizer_vocabularies()
+        encoder = self.encoder
+        unknowns = self.unknown_words
+        _i = 0
+        _total = len(datalist)
+        tokenized = []
 
-            self.save(is_check=True)
-            with open(self.saved_folder + '/tokenizer_vocabularies.bak', 'wb+') as handle:
-                pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
-            with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
-                pickle.dump(self.tokenizer_vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
-            # print('saved tokenizer vocabularies, size: ', len(self.tokenizer_vocabularies))
-            self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
+        def get_encode(text):
+            encoded_list = encoder.encode(text)
+            if len(encoded_list) > 0:
+                return encoded_list[0]
+            else:
+                return 0
 
-        else:
-
-            print('save failed.  tokenizer vocabularies size over[{}].'.format(self.full_vocab_size))
-
-
-    def tokenize_data(self, datalist, save_new_vocabulary = False):
-        have_new = False
-        _vocabularies = self.tokenizer_vocabularies if self.tokenizer_vocabularies and len(self.tokenizer_vocabularies) > 0 else []
-        _order_size = len(_vocabularies)
+        # print(datalist[:10])
         
-
         for words in datalist:
-            
+            _i += 1
+            if _i % 1000 == 0:
+                _percent = _i / _total * 100
+                print(" {:.2f}%".format(_percent), end="\r")
+
+            _list = []
             for word in words:
+                _list.append(get_encode(word))
 
-                if word and self.check_word_length(word):
-                    
-                    if not word in _vocabularies:
-                        _vocabularies.append(word)
-
-                        if save_new_vocabulary:
-                            self.add_new_vocabulary(word)
+            tokenized.append(_list)
             
-        if len(_vocabularies) > _order_size:
-            self.tokenizer_vocabularies = _vocabularies
-            self.save_tokenizer_vocabularies()
-            have_new = True
+            # print('words: ', words)
+            # print('next list: ', _list)
         
-        return have_new
-
-
-
-    def add_new_vocabulary(self, _word):
-        if self.jieba_dict.is_allowed_word(_word) and self.jieba_dict.is_new_word(_word):
-            _new = NewVocabulary(pinyin=_word)
-            _new.save()
-        return self
+        
+        print('Tokenize Done.')
+        
+        return tokenized
 
     
     # override
@@ -255,7 +254,7 @@ class PinYinFilter(BasicChineseFilter):
 
 
     
-    def check_word_length(self, _word):
+    def check_word_unknown(self, _word):
         max_pinyin_word = self.max_pinyin_word
         _word_list = _word.split('_')
         for _ in _word_list:
@@ -264,56 +263,43 @@ class PinYinFilter(BasicChineseFilter):
         return True
 
 
-
     def bathchs_labeler(self, x, y):
         assert len(x) == len(y)
         encoder = self.encoder
-
-        def encode(text):
-            encoded_list = encoder.encode(text)
-            if len(encoded_list) > 0:
-                return encoded_list[0]
-            else:
-                return 0
+        full_words_length = self.full_words_length
 
         def gen():
             for idx, texts in enumerate(x):
-                next_texts = []
-                st = y[idx] if y[idx] else 0
-
-                for text in texts:
-                    encoded_text = encode(text)
-                    if encoded_text:
-                        next_texts.append(encoded_text)
-                    else:
-                        pass
-
-                if len(next_texts) == 0:
+                _len = len(texts)
+                if _len == 0:
                     continue
-                    
-                yield next_texts, st
+
+                st = y[idx] if y[idx] else 0
+                npts = np.pad(texts, (0, full_words_length - _len), 'constant')
+
+                yield npts, np.int64(st)
+                # yield npts, [0,0,0,0,0,0,0,0]
         
         dataset = tf.data.Dataset.from_generator(
             gen,
             ( tf.int64, tf.int64 ),
-            ( tf.TensorShape([None]), tf.TensorShape([]) ),
+            ( tf.TensorShape([full_words_length]), tf.TensorShape([]) ),
         )
 
-        # print(dataset.take(1))
+        # print(dataset)
         # for __ in dataset.take(10):
         #     print(__)
-
+        # exit(2)
         return dataset
 
 
     def get_encode_word(self, _words):
         _result_text = []
-        _vocal_size = len(self.tokenizer_vocabularies)
-        
+        _vocal_size = len(self.jieba_dict.vocabularies)
 
         for _ in _words:
 
-            if not self.check_word_length(_):
+            if not self.check_word_unknown(_):
                 _result_text.append(0)
                 continue
             
@@ -343,9 +329,9 @@ class PinYinFilter(BasicChineseFilter):
         assert length_x > 0
         self.length_x = length_x
 
-        self.tokenize_data(x)
+        tokenized_list = self.tokenize_data(x)
 
-        labeled_dataset = self.bathchs_labeler(x, y)
+        labeled_dataset = self.bathchs_labeler(tokenized_list, y)
 
         return labeled_dataset
 

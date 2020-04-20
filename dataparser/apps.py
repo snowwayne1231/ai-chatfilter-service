@@ -6,13 +6,14 @@ from datetime import datetime
 from .classes.map_hex import mapHexes
 from .models import CustomDictionaryWord
 from service.models import Blockword
-from ai.models import SoundVocabulary, NewVocabulary
+from ai.models import SoundVocabulary, NewVocabulary, DigitalVocabulary
 from ai.classes.translator_pinyin import translate_by_string
 
 import xlrd
 import os
 import re
 import jieba
+import pickle
 
 
 class DataparserConfig(AppConfig):
@@ -131,7 +132,7 @@ class MessageParser():
     regex_xml_anchor = re.compile("<anchmsg>(.*)</anchmsg>", re.IGNORECASE)
     regex_xml_tag = re.compile("<[^>]+>[^<]*</[^>]+>")
     regex_bracket_lv = re.compile("\{viplv([^\}]*)\}", re.IGNORECASE)
-    regex_bracket = re.compile("\{[^\}]*\}")
+    regex_bracket_digits = re.compile("\{[a-zA-Z\d\s\:]*\}")
 
     def __init__(self):
         print('MessageParser init done.')
@@ -160,16 +161,17 @@ class MessageParser():
             repres_bracket_lv = self.regex_bracket_lv.match(text)
             if repres_bracket_lv:
                 lv = int(repres_bracket_lv.group(1))
+                text = self.regex_bracket_lv.sub("", text)
             
-            text = self.regex_bracket.sub("", text)
+            text = self.regex_bracket_digits.sub("", text)
 
-        text = self.translate_special_char(text)
+        text = self.trim_only_general_and_chinese(text)
         # text = self.split_word(text)
 
         return text, lv, anchor
 
     
-    def translate_special_char(self, string):
+    def trim_only_general_and_chinese(self, string):
         _result = ''
 
         for uc in string:
@@ -188,26 +190,25 @@ class MessageParser():
             
             
             # 【2000-206F】 General Punctuation 一般標點符號 # 8216
-            if _code >= 0x2000 and _code <= 0x206f: continue
+            # if _code >= 0x2000 and _code <= 0x206f: continue
             # 【3000-303F】 CJK Symbols and Punctuation 中日韓符號和標點  # 12290
-            if _code >= 0x3000 and _code <= 0x303f: continue
+            # if _code >= 0x3000 and _code <= 0x303f: continue
 
-            # if _code < 0x0020 or _code > 0x7e:
-            if _code < 0x0030 or _code > 0x7a or (_code >= 0x3a and _code <= 0x40 ):
-                continue
-                # out of English or digits
-                _hex16 = hex(_code)
-                _string = mapHexes.get(_code, None)
-                
-                if _string:
-                    _result += _string
-                else:
-                    # _result += uc
-                    # print('out of char: ', _code, _hex16, uc, ' - ', _string)
-                    pass
-                
-            else:
+            if _code == 0x0020 or (_code >= 0x0030 and _code <= 0x0039) or (_code >= 0x0041 and _code <= 0x005a) or (_code >= 0x0061 and _code <= 0x007a):
                 _result += chr(_code).lower()
+
+            # if (_code < 0x0030 and _code != 0x0020) or 
+            #     _code > 0x7f or 
+            #     (_code >= 0x3a and _code <= 0x40 ):
+            #     continue
+                # out of English or digits
+                # _hex16 = hex(_code)
+                # _string = mapHexes.get(_code, None)
+                
+                # if _string:
+                #     _result += _string
+            # else:
+            #     _result += chr(_code).lower()
         
         return _result
 
@@ -218,37 +219,67 @@ class JieBaDictionary():
         
     """
     split_character = '_'
+    unknown_character = '#?#'
+    pad_character = '#PAD#'
+    number_character = '#NUM#'
+    folder = os.path.dirname(__file__)
+    pickle_folder = os.path.dirname(__file__) + '/_pickles'
+    vocabularies = []
+    none_tone_map = {}
 
     def __init__(self):
         jieba.re_eng = re.compile('[a-zA-Z0-9_]', re.U)
-        dictionary_path = os.path.dirname(__file__) + '/assets/jieba.txt'
-        jieba.initialize(dictionary=dictionary_path)
+        jieba.initialize(dictionary=self.folder + '/assets/jieba.txt')
+
+        if not os.path.isdir(self.pickle_folder):
+            os.mkdir(self.pickle_folder)
+        
+        self.load_vocabularies()
+        
         self.refresh_dictionary()
-        print('JieBaDictionary init done.')
+        print('JieBaDictionary Initial Done.')
 
 
     def split_word(self, text=''):
         _list = jieba.cut(text, HMM=False, cut_all=False) if text else []
         results = []
+        unknowns = []
         _buf = ''
         
         for _ in _list:
             if not _:
                 continue
             elif  _[-1] == self.split_character:
-                results.append(_buf + _)
+                if _buf:
+                    __ = _buf + _
+                    _none_tone_word = self.get_none_tone_word(__)
+                    if _none_tone_word:
+                        results.append(_none_tone_word)
+                    elif __[:-1].isdigit():
+                        results.append(self.number_character)
+                    else:
+                        # unknown word appears
+                        results.append(self.unknown_character)
+                        unknowns.append(__)
+                elif len(_) > 1:
+                    results.append(_)
                 _buf = ''
             else:
                 _buf += _
+                # print('split_word buffer add: ', _buf)
+                # print('text: ', text)
 
         if _buf:
             print('why left _buf: ', _buf)
             print('text: ', text)
+            unknowns.append(_buf)
         
-        return results
+        return results, unknowns
 
 
     def refresh_dictionary(self):
+        print('JieBaDictionary: Start Refresh Dictionary.')
+        _older_v_size = len(self.vocabularies)
         
         # dictionary_list = CustomDictionaryWord.objects.all()
         # for d in dictionary_list:
@@ -258,31 +289,149 @@ class JieBaDictionary():
 
         # blockwords = Blockword.objects.all()
         # for b in blockwords:
-        #     text = b.text
+        #     text = b.text 
         #     jieba.add_word(text)
         #     jieba.add_word(translate_by_string(text))
 
+        _percent = 0
+
         sound_vocabularies = SoundVocabulary.objects.values_list('pinyin', flat=True)
+        _total = len(sound_vocabularies)
+        _i = 0
         for sv in sound_vocabularies:
-            if self.is_allowed_word(sv) and self.is_new_word(sv):
-                jieba.add_word(sv)
+            self.add_word(sv)
+            self.add_none_tone_word(sv)
 
-
-        new_vocabularies = NewVocabulary.objects.values_list('pinyin', flat=True)
-        for nv in new_vocabularies:
-            if self.is_allowed_word(nv) and self.is_new_word(nv):
-                jieba.add_word(nv)
+            if _i % 500 == 0:
+                _percent = _i / _total * 100
+                print(' {:.2f}%'.format(_percent), end="\r")
+            _i += 1
         
-        print('FREQ length: ', len(jieba.dt.FREQ))
+        
+        # new_vocabularies = NewVocabulary.objects.values_list('pinyin', flat=True)
+        # for nv in new_vocabularies:
+        #     self.add_word(nv)
+
+
+        digital_vocabularies = DigitalVocabulary.objects.all()
+        for dv in digital_vocabularies:
+            digit = '{}_'.format(dv.digits)
+            dv_pinyin = dv.pinyin
+            self.add_word(digit)
+            self.add_word(dv_pinyin)
+
+        if len(self.vocabularies) > _older_v_size:
+            self.save_vocabularies()
+        
+        print('FREQ length: ', len(jieba.dt.FREQ), ', Vocabulary: ', len(self.vocabularies))
+        # print(len(self.none_tone_map))
 
         return self
 
 
+    def add_word(self, word):
+        if self.is_allowed_word(word) and self.is_new_word(word):
+            jieba.add_word(word)
+            self.vocabularies.append(word)
+            
+            return True
+        return False
+
+    
+    def add_none_tone_word(self, word):
+        if word.count(self.split_character) <= 4 and word[-2].isdigit():
+            _no_digit_word = re.sub(r'[\d]+', '', word)
+            if self.is_single_word(_no_digit_word):
+                self.add_word(_no_digit_word)
+            
+            _key = _no_digit_word.replace(self.split_character, '')
+            # _key = re.sub(r'[\d]+', '', _key)
+            words = self.none_tone_map.get(_key, [])
+            if word not in words:
+                words += [word]
+                self.none_tone_map[_key] = words
+        
+        return False
+
+
+    def add_vocabulary(self, words):
+        count = 0
+        should_be_insertd = []
+        for w in words:
+            if self.add_word(w):
+                count += 1
+                should_be_insertd.append(w)
+        self.save_vocabularies()
+
+        return count
+
+
+    def get_none_tone_word(self, pinyin):
+        g_map = self.none_tone_map
+        _pinyin = pinyin.replace(self.split_character, '')
+        _basic = g_map.get(_pinyin, None)
+        if _basic:
+            return _basic[0]
+        
+        _buf = ''
+        _tmp_word = ''
+        _i = 0
+        _len = len(_pinyin)
+        _words = []
+        
+        while _i < _len:
+            _p = _pinyin[_i]
+            _buf += _p
+            _basic = g_map.get(_buf, None)
+            if _basic:
+                _tmp_word = _basic[0]
+            else:
+                _words.append(_tmp_word)
+                _buf = _p
+            _i += 1
+        
+        _basic = g_map.get(_buf, None)
+        if _basic:
+            _words.append(_basic[0])
+            return ''.join(_words)
+        else:
+            # print('word left _buf: ', _buf)
+            # print('unknown none tone word _pinyin: ', _pinyin)
+            return None
+
+
+    def get_vocabulary(self):
+        return [self.pad_character, self.unknown_character, self.number_character, '#reserve#'] + self.vocabularies
+
     def is_new_word(self, _word):
-        freq = jieba.get_FREQ(_word)
-        _is_new = freq is None or freq == 0
-        return _is_new
+        return _word not in self.vocabularies
 
     
     def is_allowed_word(self, _word):
-        return _word[-1] == self.split_character
+        return len(_word) > 1 and _word[-1] == self.split_character
+
+
+    def is_single_word(self, _word):
+        return _word.count('_') == 1
+
+    
+    def load_vocabularies(self):
+        path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
+        if os.path.isfile(path):
+            with open(path, 'rb') as handle:
+                _list = pickle.load(handle)
+                if _list and len(_list) > 0:
+                    for _ in _list:
+                        jieba.add_word(_)
+                    self.vocabularies = _list
+        else:
+            self.save_vocabularies()
+
+
+    def save_vocabularies(self):
+        with open(self.pickle_folder + '/tokenizer_vocabularies.bak', 'wb+') as handle:
+            pickle.dump(self.vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        with open(self.pickle_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
+            pickle.dump(self.vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
