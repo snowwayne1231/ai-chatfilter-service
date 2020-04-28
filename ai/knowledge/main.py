@@ -6,6 +6,8 @@ import re
 class KnowledgeCenter():
 
     dot_pattern = re.compile("[\u3002|\u002c|\u300a|\u3008]")
+    vocabulary_map = {}
+    sound_vocabulary_map = {}
 
     def __init__(self):
         pass
@@ -43,10 +45,6 @@ class KnowledgeCenter():
             rows = ep.get_row_list(column=['字詞名', '釋義', '詞性'])
 
             self.upsert_into_dictionary(rows, language_code)
-        
-        else:
-            pass
-
     
     
     def upsert_into_dictionary(self, row_data, language_code='TW'):
@@ -69,7 +67,7 @@ class KnowledgeCenter():
         sound_vocabularies = SoundVocabulary.objects.all()
         sv_map = {}
 
-        _too_many_dup = 0
+        # _too_many_dup = 0
         for instance in sound_vocabularies:
             sv_map[str(instance)] = instance
         
@@ -127,7 +125,8 @@ class KnowledgeCenter():
             
             # sound
 
-            word_pinyin = translate_by_string(word)
+            # word_pinyin = translate_by_string(word)
+            word_pinyin = translate_by_string(word, no_tone=True)
             
             sv_instance = sv_map.get(word_pinyin, None)
             if sv_instance:
@@ -165,11 +164,11 @@ class KnowledgeCenter():
 
     def upsert_into_digital_dictionary(self, row_data):
 
-        digital_vocabularies = list(DigitalVocabulary.objects.values_list('pinyin', flat=True))
+        _v_rows = [[_[1], '', ''] for _ in row_data]
 
-        # vocabulary_set = set()
-        # for _ in digital_vocabularies:
-        #     vocabulary_set.update({_})
+        self.upsert_into_dictionary(_v_rows)
+
+        digital_vocabularies = list(DigitalVocabulary.objects.values_list('pinyin', flat=True))
 
         length_rows = len(row_data)
         i = 0
@@ -192,6 +191,8 @@ class KnowledgeCenter():
             )
             _v.save()
             digital_vocabularies.append(_word_pinyin)
+
+        
             
         print('Upsert Digital Vocabularies Successful. process: 100.00 %  ')
 

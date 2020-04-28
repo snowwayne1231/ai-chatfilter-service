@@ -17,7 +17,7 @@ class GrammarFilter(BasicChineseFilter):
     re_is_chinese = re.compile('[\u4e00-\u9fa5]')
     re_is_english = re.compile('[a-zA-Z]')
     re_is_number = re.compile('[0-9]')
-    re_is_other = re.compile('[\u9fa5-\uffff]')
+    re_is_other = re.compile('[\u0020-\u0085]')
 
     STATUS_EMPTY = 0
     STATUS_CHINESE = 1
@@ -46,6 +46,8 @@ class GrammarFilter(BasicChineseFilter):
                 _next.append(self.STATUS_ENGLISH)
             elif self.re_is_number.match(_s):
                 _next.append(self.STATUS_NUMBER)
+            elif self.re_is_other.match(_s):
+                _next.append(self.STATUS_OTHER)
             else:
                 _next.append(self.STATUS_UNKNOW)
         # print('transform_str next: ', _next)
@@ -93,21 +95,24 @@ class GrammarFilter(BasicChineseFilter):
 
         _length_of_data = self.length_x
         
-        BATCH_SIZE = 3
+        BATCH_SIZE = 32
         BUFFER_SIZE = _length_of_data + 1
         VALIDATION_SIZE = int(_length_of_data / 8) if _length_of_data > 5000 else int(_length_of_data / 2)
 
+        # print("batch_train_data: ", batch_train_data)
+        # for _ in batch_train_data.take(2):
+        #     print(_)
         # exit(2)
 
         if validation_data is None:
 
-            batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
+            batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=True).repeat(epochs)
             batch_test_data = batch_train_data.take(VALIDATION_SIZE)
 
 
         history = None
-        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([self.full_words_length],[])).repeat(epochs)
-        batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([self.full_words_length],[]))
+        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
+        batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
 
         # for _ in batch_train_data:                  
         #     print("2 _: ", _)
@@ -123,9 +128,9 @@ class GrammarFilter(BasicChineseFilter):
         steps = int(_length_of_data / BATCH_SIZE)
         vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE)
 
-        print("batch_train_data: ", batch_train_data)
-        for _ in batch_train_data.take(1):
-            print(_)
+        # print("batch_train_data: ", batch_train_data)
+        # for _ in batch_train_data.take(1):
+        #     print(_)
         
         # print(list(batch_train_data.take(1).as_numpy_iterator()))
         # exit(2)
@@ -162,24 +167,16 @@ class GrammarFilter(BasicChineseFilter):
         x, y = self.get_xy_data()
         self.length_x = len(x)
 
-        _status_e = self.STATUS_EMPTY
         _full_wl = self.full_words_length
 
         def gen():
             for idx, texts in enumerate(x):
-                _len = len(texts)
-                _left_pad = int((_full_wl - _len) / 2)
+                if len(texts) == 0:
+                    continue
 
-                if _left_pad >= 0:
-                    _right_pad = _full_wl - _left_pad - _len
-                    next_txt = ([_status_e] * _left_pad) + texts + ([_status_e] * _right_pad)
-                    
-                else:
-                    next_txt = next_txt[:_full_wl]
-
-                st = 1 if y[idx] else 0
+                st = 1 if y[idx] and y[idx] > 0 else 0
                 
-                yield np.array(next_txt), st
+                yield self.parse_texts(texts), st
 
         dataset = tf.data.Dataset.from_generator(
             gen,
@@ -188,4 +185,47 @@ class GrammarFilter(BasicChineseFilter):
         )
 
         return dataset
+
+
+    def parse_texts(self, texts):
+        next_txt = []
+        _len = len(texts)
+        _full_wl = self.full_words_length
+        _status_e = self.STATUS_EMPTY
+        _left_pad = int((_full_wl - _len) / 2)
+
+        if _left_pad >= 0:
+            _right_pad = _full_wl - _left_pad - _len
+            next_txt = ([_status_e] * _left_pad) + texts + ([_status_e] * _right_pad)
+            
+        else:
+            next_txt = next_txt[:_full_wl]
+        
+        return np.array(next_txt)
     
+
+    # override
+    def predictText(self, text, lv = 0):
+        
+        if lv < self.avoid_lv:
+
+            _words = self.transform(text)
+
+            if len(_words) == 0:
+                return 0
+
+            _words = self.parse_texts(_words)
+
+            # print('predictText  _words : ', _words, _words.shape)
+            
+            predicted = self.model.predict(np.array([_words]))
+            passible = np.argmax(predicted)
+
+            # print('predicted: ', predicted)
+            # print('passible: ', passible)
+        
+        else:
+
+            passible = 0
+
+        return passible

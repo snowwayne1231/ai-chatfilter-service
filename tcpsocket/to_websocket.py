@@ -24,6 +24,7 @@ class WebsocketThread (threading.Thread):
     ws = None
     pool = None
     is_active = False
+    second_warn_spend_time = 0.35
 
 
     def __init__(self, name = 'default', port = 80):
@@ -71,8 +72,9 @@ class WebsocketThread (threading.Thread):
                 self._waitting_ids.append(_msg_id)
 
             _str = json.dumps(data)
-            logging.debug('Web Socket send thread data: {}'.format(_str))
+            logging.debug('Web Socket Send Thread ID: {}'.format(_msg_id))
             self.ws.send(_str)
+            _gap = 0
 
             while _msg_id in self._waitting_ids:
                 # print('whileing _msg_id: ', _msg_id)
@@ -85,11 +87,15 @@ class WebsocketThread (threading.Thread):
                         self._waitting_ids.remove(_msg_id)
                     break
 
-                time.sleep(0.005)
+                time.sleep(0.002)
             
-            if self._message_result.get(_msg_id):
+
+            if self._message_result.get(_msg_id, None):
 
                 _res = self._message_result.pop(_msg_id)
+
+                if _gap > self.second_warn_spend_time:
+                    logging.warning('# Web Socket Slow Warning By Data: {}'.format(_str))
 
             else:
 
@@ -97,7 +103,7 @@ class WebsocketThread (threading.Thread):
 
         else:
 
-            logging.info('Web Socket no need think [without msg id].')
+            logging.info('Web Socket No Need Think [without msg id].')
             _res = {}
 
         return _res
@@ -138,7 +144,7 @@ class WebsocketThread (threading.Thread):
 
 
     def setting(self):
-        self.pool.apply(self.send_thread, [{'tcp': True, 'msgid': '__tcp__'}])
+        return self.pool.apply(self.send_thread, [{'tcp': True, 'msgid': '__tcp__'}])
 
     
     def thinking(self, msg, msgid, room='', user=''):

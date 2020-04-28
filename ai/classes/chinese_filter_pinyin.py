@@ -28,10 +28,13 @@ class PinYinFilter(BasicChineseFilter):
     encoder_size = 0
     unknown_words = []
     unknown_word_key = 'UNKNOWN_'
+    tmp_encoded_text = []
+    unknown_position = 0
 
     def __init__(self, data = [], load_folder=None):
 
         self.jieba_dict = JieBaDictionary()
+        self.unknown_position = self.jieba_dict.get_unknown_position()
         self.load_new_vocabulary_to_unknown_words()
         
         super().__init__(data=data, load_folder=load_folder)
@@ -45,20 +48,22 @@ class PinYinFilter(BasicChineseFilter):
     def transform_str(self, _string):
         # print('transform str: ', _string)
         _pinyin = translate_by_string(_string)
+        
         words, unknowns = self.jieba_dict.split_word(_pinyin)
         # print(_string, ', ', words, ', uk: ' , unknowns)
+        
         if unknowns:
-            print("transform_str unknowns: ", unknowns)
+            # print("transform_str unknowns: ", unknowns)
             for _uw in unknowns:
                 
                 # print("unknowns: ", words)
                 
                 if _uw not in self.unknown_words:
                     self.unknown_words.append(_uw)
-                    _new = NewVocabulary(pinyin=_uw)
+                    _new = NewVocabulary(pinyin=_uw, text=_string[:64])
                     _new.save()
                     # print('_string: ', _string)
-                    print("Pinyin Filter: transform_str unknown word found: ", _uw, ' | ', _string)
+                    print("Pinyin Filter: transform_str [] unknown word found: ", _uw, ' | ', _string)
         # print(_pinyin)
         # print(words)
         return words
@@ -184,13 +189,11 @@ class PinYinFilter(BasicChineseFilter):
 
     
     def load_tokenizer_vocabularies(self):
-        # with open(self.saved_folder + '/tokenizer_vocabularies.pickle', 'rb') as handle:
-        #     self.tokenizer_vocabularies = pickle.load(handle)
-            # self.encoder = tfds.features.text.TokenTextEncoder(self.tokenizer_vocabularies)
         _vocabularies = self.jieba_dict.get_vocabulary()
         vocabulary_length = len(_vocabularies)
         assert vocabulary_length > 0
         assert vocabulary_length < self.full_vocab_size
+        self.tokenizer_vocabularies = _vocabularies
         self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)
         self.encoder_size = vocabulary_length
 
@@ -242,10 +245,15 @@ class PinYinFilter(BasicChineseFilter):
 
             _words = self.transform(text)
 
+            if len(_words) == 0:
+                return 0
+
             _result_text = self.get_encode_word(_words)
 
+            self.tmp_encoded_text = _result_text
+
             if len(_result_text) == 0:
-                print('text: ', text)
+                print('no result text: {},  words: {},  length: {}'.format(text, _words, len(text)))
                 return 0
             
             predicted = self.model.predict([_result_text])[0]
@@ -314,9 +322,8 @@ class PinYinFilter(BasicChineseFilter):
 
                 if __code > _max_size:
                     # find the new word
-                    print('unknown code: ', __code, _)
-                    print('unknown _words: ', _words)
-                    return []
+                    # print('unknown encode word: {},  _words: {}'.format(_, _words))
+                    _result_text.append(self.unknown_position)
                     
                 elif __code >= 0:
                     _result_text.append(__code)
@@ -340,12 +347,10 @@ class PinYinFilter(BasicChineseFilter):
 
     # override
     def get_details(self, text):
-        words = self.transform(text)
-        result_text = self.get_encode_word(words)
+        result_text = self.tmp_encoded_text
 
         predicted = self.model.predict([result_text])[0]
         return {
-            'transformed_words': words,
             'encoded_words': result_text,
             'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
         }
@@ -354,18 +359,26 @@ class PinYinFilter(BasicChineseFilter):
     # override
     def get_reason(self, text, prediction):
         reason = ''
-        _words = self.transform(text)
-
-        _result_text = self.get_encode_word(_words)
+        _result_text = self.tmp_encoded_text
 
         _res = self.model.predict(_result_text)
         _i = 0
         for _ in _res:
             _max = np.argmax(_)
             if _max == prediction:
-                vocabulary = _words[_i]
-                reason = self.transform_back_str(vocabulary)
+                # vocabulary = _words[_i]
+                # reason = self.transform_back_str(vocabulary)
+                reason = self.get_decode_str(_result_text[_i])
                 break
             _i += 1
         
         return reason
+
+
+    def get_decode_str(self, code):
+        _pinyin = self.tokenizer_vocabularies[code] if len(self.tokenizer_vocabularies) > code else None
+        if _pinyin:
+            return self.transform_back_str(_pinyin)
+        else:
+            return ''
+        

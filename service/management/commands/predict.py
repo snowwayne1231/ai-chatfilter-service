@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from ai.predict import predict_by_pinyin, predict_by_excel_file
+from ai.predict import predict_by_ai, predict_by_excel_file
 import os, json, xlwt
 # import gc
 
@@ -47,7 +47,7 @@ class Command(BaseCommand):
         if text:
 
             self.stdout.write('Word of Prediction: ' + text)
-            res = predict_by_pinyin(text, silence=silence, detail=True)
+            res = predict_by_ai(text, silence=silence, detail=True)
             self.stdout.write('Prediction is: ' + str(res))
 
         elif input_file:

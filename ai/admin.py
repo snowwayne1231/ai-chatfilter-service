@@ -51,8 +51,8 @@ class DigitalVocabularyAdmin(admin.ModelAdmin):
 
 
 class NewVocabularyAdmin(admin.ModelAdmin):
-    fields = ['pinyin', 'type', 'status']
-    list_display = ['pinyin', 'type', 'status']
+    fields = ['pinyin', 'text', 'type', 'status']
+    list_display = ['pinyin', 'text']
     empty_value_display = '---'
 
     search_fields = ('pinyin', )

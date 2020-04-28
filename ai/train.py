@@ -47,12 +47,10 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
 
         result_list = []
     
-        
-    pk_result_list = pk.get_list()
 
 
     if is_append or len(result_list) == 0:
-        result_list = result_list + pk_result_list
+        result_list = result_list + pk.get_list()
 
     if len(result_list) == 0:
         print('Wrong with no file path input.')

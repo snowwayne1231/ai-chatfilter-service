@@ -4,13 +4,12 @@ import re
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
 
 class PreFilter():
-    white_words = []
     temporary_messages = []
+    max_same_room_word = 2
 
 
     def __init__(self):
-        self.white_words = []
-
+        self.temporary_messages = []
 
 
     def find_special_char(self, text):
@@ -158,4 +157,34 @@ class PreFilter():
             _text = re.sub(_r, '', _text)
         return _text
 
-    
+
+    def check_same_room_conversation(self, _text, _before_room_texts):
+        _num_matched = 0
+
+        english_text = self.replace_only_left_english(_text)
+        if english_text:
+            for _rt in _before_room_texts:
+                if self.replace_only_left_english(_rt) == english_text:
+                    _num_matched += 1
+                    if _num_matched > self.max_same_room_word:
+                        return 'too many same English'
+
+        bankerplayer_text = self.replace_only_left_bankerplayer(_text)
+
+        if bankerplayer_text:
+            for _rt in _before_room_texts:
+                # if len(_rt) >= 10:
+                #     continue
+                if self.replace_only_left_bankerplayer(_rt):
+                    _num_matched += 1
+                    if _num_matched > self.max_same_room_word:
+                        return 'too many talked on banker and player'
+
+        return ''
+
+
+    def replace_only_left_english(self, _text):
+        return re.sub(r'[^(a-zA-Z)]+', '', _text)
+
+    def replace_only_left_bankerplayer(self, _text):
+        return re.sub(r'[^(莊庄装閒閑闲贤)]+', '', _text)

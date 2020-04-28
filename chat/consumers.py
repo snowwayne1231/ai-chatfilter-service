@@ -16,6 +16,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     main_service = None
     is_tcp = False
     room_group_name = 'chatting_filter'
+    max_message_length = 255
 
 
     async def connect(self):
@@ -58,8 +59,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.is_tcp = True
 
         if message and isinstance(msgid, int):
-            if len(message) > 64:
-                message = message[:64]
+            if len(message) > self.max_message_length:
+                message = message[:self.max_message_length]
             # results = self.main_service.think(message=message, user=user, room=room, detail=detail)
             results = self.main_service.think(message=message, room=room, detail=detail)
             

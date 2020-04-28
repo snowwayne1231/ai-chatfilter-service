@@ -10,12 +10,13 @@ g_split_character = '_'
 g_space = ' '
 g_pinyin_reg = re.compile('^[a-zA-Z0-9]+')
 
-def translate_by_string(_string):
-    # _words = pinyin(_string, strict=g_strict, style=Style.NORMAL, heteronym=g_heteronym)
-
+def translate_by_string(_string, no_tone=True):
     _tmps = []
-    
-    _words = pinyin(_string, strict=g_strict, style=Style.TONE3, heteronym=g_heteronym)
+
+    if no_tone:
+        _words = pinyin(_string, strict=g_strict, style=Style.NORMAL, heteronym=g_heteronym)
+    else:
+        _words = pinyin(_string, strict=g_strict, style=Style.TONE3, heteronym=g_heteronym)
 
     for _w in _words:
         _first_word = _w[0]
@@ -25,7 +26,7 @@ def translate_by_string(_string):
                 _tmps += _first_word.split(g_space)
             else:
                 _tmps.append(_first_word)
-
+    _tmps = [_ for _ in _tmps if _]
     _next = g_split_character.join(_tmps).lower() + g_split_character
 
     return _next

@@ -12,13 +12,18 @@ from dataparser.apps import ExcelParser
 main_service = MainService()
 
 
-def predict_by_pinyin(text = '', room = '', silence = False, detail=False):
+def predict_by_ai(text = '', room = '', silence = False, detail=False):
     
     # _text, _lv, _anchor = message_parser.parse(text)
 
     results = main_service.think(message=text, user='', room=room, silence=silence, detail=detail)
     prediction = results.get('prediction', 0)
-    text = results.get('text', 0)
+    # reason_char = results.get('reason_char', '')
+    text = results.get('text', '')
+    spend_time = results.get('spend_time', 0)
+
+    if spend_time > 0.35:
+        print('Spend Too Much Time of Think. Time({}), Text({}), P({})'.format(spend_time, text, prediction))
 
     return prediction, text
 
@@ -65,13 +70,14 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
             # room = row[0]
             ans = int(row[3])
             txt = row[2]
+            room = row[0]
             should_be_deleted = ans > 0
             # print(txt)
-            predicted, processed_text = predict_by_pinyin(txt, silence=silence)
+            predicted, processed_text = predict_by_ai(txt, silence=silence, room=room)
             my_ai_deleted = predicted > 0
             # print(predicted)
 
-            if should_be_deleted == my_ai_deleted:
+            if should_be_deleted == my_ai_deleted or not processed_text:
 
                 num['total_right'] += 1
                 map['right'][predicted] += 1
@@ -115,7 +121,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
                 num['human'] += 1
 
             _i += 1
-            if _i % 100 == 0:
+            if _i % 200 == 0:
                 
                 percent = _i / num['total']
                 print("Progress of Prediction: {:2.1%}".format(percent), end="\r")
@@ -137,7 +143,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
     print('num_origin_human_delete: ', num['human'])
 
     ratio_right = "{:2.2%}".format(num['total_right'] /_i)
-    ratio_right_delete = "{:2.2%}".format(num['total_right_delete'] / (num['total_right_delete'] + num['missing_delete']))
+    ratio_right_delete = "{:2.2%}".format((num['total_right_delete'] / (num['total_right_delete'] + num['missing_delete'])) if num['total_right_delete'] > 0 else 0)
     ratio_mistake_delete = "{:2.2%}".format(num['mistake_delete'] / _i)
     ratio_missing_delete = "{:2.2%}".format(num['missing_delete'] / _i)
     print('ratio right: ', ratio_right)
@@ -245,7 +251,8 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
 
         book.save(filename)
 
-    print_spend_time(_st_time)
+    spend_sec = print_spend_time(_st_time)
+    print('Average Time Spent Per Sentence: {:.4f}s'.format(spend_sec / num['total']))
         
     return ratio_right, next_learning_book
 

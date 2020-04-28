@@ -78,6 +78,7 @@ class DigitalVocabulary(models.Model):
 
 class NewVocabulary(models.Model):
     pinyin = models.CharField(max_length=65, default='')
+    text = models.CharField(max_length=65, default='')
     type = models.IntegerField(default=1)
     status = models.IntegerField(default=1)
 

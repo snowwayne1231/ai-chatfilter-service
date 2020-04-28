@@ -176,7 +176,8 @@ class MessageParser():
             text = self.regex_bracket_digits.sub("", text)
 
         text = self.trim_only_general_and_chinese(text)
-        # text = self.split_word(text)
+        
+        print(text, lv, anchor)
 
         return text, lv, anchor
 
@@ -229,7 +230,7 @@ class JieBaDictionary():
         
     """
     split_character = '_'
-    unknown_character = '#?#'
+    unknown_character = '#UNKNOW#'
     pad_character = '#PAD#'
     number_character = '#NUM#'
     folder = os.path.dirname(__file__)
@@ -257,25 +258,27 @@ class JieBaDictionary():
         _buf = ''
         
         for _ in _list:
+            # print('split_word _: ', _)
             if not _:
                 continue
             elif  _[-1] == self.split_character:
 
                 if _buf:
                     __ = _buf + _
+                    _buf = ''
                     if __[:-1].isdigit():
                         results.append(self.number_character)
                         continue
 
-                    _none_tone_word = self.get_none_tone_word(__)
-                    if _none_tone_word:
-                        results.append(_none_tone_word)
+                    _none_tone_words = self.get_none_tone_word(__)
+                    if _none_tone_words:
+                        # print('_none_tone_words: {},  origin: {}'.format(_none_tone_words, __))
+                        results += _none_tone_words
                     else:
                         # unknown word appears
                         results.append(self.unknown_character)
                         unknowns.append(__)
                     
-                    _buf = ''
                 else:
                     __ = _
 
@@ -291,8 +294,8 @@ class JieBaDictionary():
                 # print('text: ', text)
 
         if _buf:
-            print('why left _buf: ', _buf)
-            print('text: ', text)
+            print('split_word [] Why left _buf: ', _buf)
+            print('split_word [] text: ', text)
             unknowns.append(_buf)
         
         return results, unknowns
@@ -328,6 +331,8 @@ class JieBaDictionary():
                 print(' {:.2f}%'.format(_percent), end="\r")
             _i += 1
         
+        # print([_[1] for _ in self.none_tone_map.items()if len(_[1]) > 1])
+        # exit(2)
         
         # new_vocabularies = NewVocabulary.objects.values_list('pinyin', flat=True)
         # for nv in new_vocabularies:
@@ -360,10 +365,11 @@ class JieBaDictionary():
 
     
     def add_none_tone_word(self, word):
-        if word.count(self.split_character) <= 4 and word[-2].isdigit():
+        # if word.count(self.split_character) <= 4 and word[-2].isdigit():
+        if word.count(self.split_character) <= 4 and re.match(r'.*[\d]', word) == None:
             _no_digit_word = re.sub(r'[\d]+', '', word)
-            if self.is_single_word(_no_digit_word):
-                self.add_word(_no_digit_word)
+            # if self.is_single_word(_no_digit_word):
+            #     self.add_word(_no_digit_word)
             
             _key = _no_digit_word.replace(self.split_character, '')
             # _key = re.sub(r'[\d]+', '', _key)
@@ -371,17 +377,18 @@ class JieBaDictionary():
             if word not in words:
                 words += [word]
                 self.none_tone_map[_key] = words
+                return True
         
         return False
 
 
     def add_vocabulary(self, words):
         count = 0
-        should_be_insertd = []
+        # should_be_insertd = []
         for w in words:
             if self.add_word(w):
                 count += 1
-                should_be_insertd.append(w)
+                # should_be_insertd.append(w)
         self.save_vocabularies()
 
         return count
@@ -391,30 +398,74 @@ class JieBaDictionary():
         g_map = self.none_tone_map
         _pinyin = pinyin.replace(self.split_character, '')
         _basic = g_map.get(_pinyin, None)
-        if _basic:
-            return _basic[0]
-        
+        if _basic and len(_basic) == 1:
+            return _basic
+        # jing_yan_
         _buf = ''
-        _tmp_word = ''
+        _tmp_words = []
         _i = 0
         _len = len(_pinyin)
         _words = []
-        
+        # merge single word
         while _i < _len:
             _p = _pinyin[_i]
             _buf += _p
             _basic = g_map.get(_buf, None)
             if _basic:
-                _tmp_word = _basic[0]
+                _tmp_words = _basic
             else:
-                _words.append(_tmp_word)
-                _buf = _p
+                if _tmp_words:
+                    _words.append(_tmp_words)
+                    _tmp_words = []
+                    _buf = _p
             _i += 1
         
         _basic = g_map.get(_buf, None)
         if _basic:
-            _words.append(_basic[0])
-            return ''.join(_words)
+            _words.append(_basic)
+            # print('get_none_tone_word [] _words: ', _words)
+            # merge sentence
+            final_words = []
+            _i = 0
+            _len_words = len(_words)
+            _vocabularies = self.vocabularies
+            while _i < _len_words:
+                _num_find_match = _i
+                _ws = _words[_i]
+                _next_i = _i +1
+                for _w in _ws:
+                    _merge_word = _w
+                    while _next_i < _len_words:
+                        _ws_next = _words[_next_i]
+                        _is_find_next_match = False
+                        for _w_n in _ws_next:
+                            tmp_word = _merge_word + _w_n
+                            # _matched = g_map.get(tmp_word, None)
+                            _matched = tmp_word in _vocabularies
+                            if _matched:
+                                _is_find_next_match = True
+                                _num_find_match = _next_i
+                                _merge_word = tmp_word
+                                break
+                        
+                        if _is_find_next_match:
+                            _next_i += 1
+                        else:
+                            break
+                    
+                    if _num_find_match > _i:
+                        # found match
+                        final_words.append(_merge_word)
+                        break
+                
+                if _num_find_match == _i:
+                    final_words.append(_ws[0])
+                else:
+                    _i = _num_find_match
+                
+                _i += 1
+
+            return final_words
         else:
             # print('word left _buf: ', _buf)
             # print('unknown none tone word _pinyin: ', _pinyin)
@@ -423,6 +474,9 @@ class JieBaDictionary():
 
     def get_vocabulary(self):
         return [self.pad_character, self.unknown_character, self.number_character, '#reserve#'] + self.vocabularies
+
+    def get_unknown_position(self):
+        return self.get_vocabulary().index(self.unknown_character)
 
     def is_new_word(self, _word):
         return _word not in self.vocabularies

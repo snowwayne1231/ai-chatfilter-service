@@ -31,6 +31,8 @@ sig = config_keys.get('SERVER', 'PWD')
 
 websocket_thread = None
 
+g_max_msg_legnth = 255
+
 # main_service = instance.get_main_service()
 
 def log_except_hook(*exc_info):
@@ -85,8 +87,7 @@ class socketTcp(Tcp):
 
                 if websocket_thread and websocket_thread.is_active:
                     
-                    _max_msg_legnth = 64
-                    _msg = unpacked_data.msgtxt if len(unpacked_data.msgtxt) < _max_msg_legnth else unpacked_data.msgtxt[:_max_msg_legnth]
+                    _msg = unpacked_data.msgtxt if len(unpacked_data.msgtxt) < g_max_msg_legnth else unpacked_data.msgtxt[:g_max_msg_legnth]
                     if isinstance(unpacked_data.msgid, int) and _msg:
                         ai_results = websocket_thread.thinking(msg=_msg, msgid=unpacked_data.msgid)
                         prediction = ai_results.get('prediction', None)
@@ -112,8 +113,7 @@ class socketTcp(Tcp):
 
                 if websocket_thread and websocket_thread.is_active:
 
-                    _max_msg_legnth = 64
-                    _msg = unpacked_data.msg if len(unpacked_data.msg) < _max_msg_legnth else unpacked_data.msg[:_max_msg_legnth]
+                    _msg = unpacked_data.msg if len(unpacked_data.msg) < g_max_msg_legnth else unpacked_data.msg[:g_max_msg_legnth]
 
                     if isinstance(unpacked_data.msgid, int) and _msg:
 
