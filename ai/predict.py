@@ -10,6 +10,7 @@ from datetime import datetime
 from service.main import MainService
 from dataparser.apps import ExcelParser
 main_service = MainService()
+main_service.open_mind()
 
 
 def predict_by_ai(text = '', room = '', silence = False, detail=False):
@@ -29,7 +30,8 @@ def predict_by_ai(text = '', room = '', silence = False, detail=False):
 
 
 def predict_by_excel_file(file, silence=True, output_json=False, output_excel=False, status_human_delete=3, status_vendor_ai_delete=5, plus=False):
-    _basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息'], ['STATUS', '審核結果']]
+    status_water_army = 2
+    _basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息'], ['STATUS', '審核結果'], ['FIX']]
     _status_list = [0,1,2,3,4,5,10,11,12,13,14,15]
     _i = 0
 
@@ -47,6 +49,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
         'mistake_delete': 0,
         'vendor_ai': 0,
         'human': 0,
+        'water_army': 0,
     }
 
     map = {
@@ -68,7 +71,8 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
         
         for row in row_list:
             # room = row[0]
-            ans = int(row[3])
+            fix = int(row[4]) if str(row[4]).isdigit() else None
+            ans = fix if fix is not None and fix >= 0 else int(row[3]) 
             txt = row[2]
             room = row[0]
             should_be_deleted = ans > 0
@@ -91,23 +95,22 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
 
                 if should_be_deleted:
 
-                    if ans == status_vendor_ai_delete:
-
-                        num['missing_delete'] += 1
-
-                    elif ans == status_human_delete:
+                    if ans == status_human_delete or ans == status_water_army:
                         # human delete is right
-                        if processed_text:
-                            next_learning_book.append(txt)
+                        # next_learning_book.append(txt)
+                        
+                        # human newly record
+                        if plus:
+                            num['total_right_delete'] += 1
+                            num['total_wrong'] -= 1
+                            num['total_right'] += 1
                             
-                            # human newly record
-                            if plus:
-                                num['total_wrong'] -= 1
-                                num['total_right'] += 1
-                            else:
-                                num['missing_delete'] += 1
-
-                    map['mistake_text'][predicted].append(txt)
+                        else:
+                            num['missing_delete'] += 1
+                            map['mistake_text'][predicted].append(txt)
+                    else:
+                        num['missing_delete'] += 1
+                        map['mistake_text'][predicted].append(txt)
 
                 else:
                     
@@ -119,9 +122,11 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
                 num['vendor_ai'] += 1
             elif ans == status_human_delete:
                 num['human'] += 1
+            elif ans == status_water_army:
+                num['water_army'] += 1
 
             _i += 1
-            if _i % 200 == 0:
+            if _i % 100 == 0:
                 
                 percent = _i / num['total']
                 print("Progress of Prediction: {:2.1%}".format(percent), end="\r")
@@ -141,6 +146,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
     print('num_origin_pass: ', _i - (num['vendor_ai'] + num['human']))
     print('num_origin_vendor_ai_delete: ', num['vendor_ai'])
     print('num_origin_human_delete: ', num['human'])
+    print('num_water_army: ', num['water_army'])
 
     ratio_right = "{:2.2%}".format(num['total_right'] /_i)
     ratio_right_delete = "{:2.2%}".format((num['total_right_delete'] / (num['total_right_delete'] + num['missing_delete'])) if num['total_right_delete'] > 0 else 0)

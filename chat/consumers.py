@@ -16,7 +16,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     main_service = None
     is_tcp = False
     room_group_name = 'chatting_filter'
-    max_message_length = 255
+    # max_message_length = 255
 
 
     async def connect(self):
@@ -54,21 +54,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user = text_data_json.get('user', None)
         room = text_data_json.get('room', None)
         detail = text_data_json.get('detail', False)
+        prediction = text_data_json.get('prediction', 0)
+
+        results = {'prediction': prediction}
 
         if is_setting_tcp:
             self.is_tcp = True
 
         if message and isinstance(msgid, int):
-            if len(message) > self.max_message_length:
-                message = message[:self.max_message_length]
-            # results = self.main_service.think(message=message, user=user, room=room, detail=detail)
-            results = self.main_service.think(message=message, room=room, detail=detail)
+            if detail:
+                results = self.main_service.think(message=message, room=room, detail=detail)
+                print('websocket ai think: ', results)
             
-        else:
-            results = {
-                'msgid': msgid,
-                'prediction': 0,
-            }
+            self.main_service.saveRecord(prediction, message=message)
+            
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -102,13 +101,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if type_msg is int:
                 await self.send(text_data=json.dumps({
                     'msgid': msgid,
-                    'prediction': prediction,
+                    # 'prediction': prediction,
                 }))
             elif type_msg is str:
                 await self.send(text_data=json.dumps({
                     'msgid': msgid,
                 }))
         else:
+
             await self.send(text_data=json.dumps({
                 'msgid': msgid,
                 'message': message,

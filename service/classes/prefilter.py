@@ -42,6 +42,7 @@ class PreFilter():
             if self.is_number(u):
                 if '0' not in next_char:
                     number_size += 1
+                    # print('is number: ', u)
             elif self.is_english(u):
                 eng_size += 1
             else:
@@ -52,10 +53,12 @@ class PreFilter():
         _NE_size = number_size + eng_size
 
         _NE_ratio = _NE_size / length_char
-        
-        is_many_asci = (_NE_size >= 6 and number_size >= 2) or number_size > 4
 
-        is_many_language = _NE_ratio > 0.3 and _NE_ratio < 1 and number_size > 0 and eng_size > 0
+        # print('find_wechat_char _NE_size: ', _NE_size, eng_size, number_size)
+        
+        is_many_asci = (_NE_size >= 6 and number_size >= 2) or number_size > 5
+
+        is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and number_size > 0 and eng_size > 0
 
         # is_many_mixed = _NE_size >= 6 and (length_char - _NE_size) > 4
 

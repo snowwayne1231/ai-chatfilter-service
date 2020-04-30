@@ -127,11 +127,11 @@ class ExcelParser():
 
 class MessageParser():
 
-    regex_msg = re.compile("<msg>(.*)</msg>", re.IGNORECASE)
+    regex_msg = re.compile("<msg>(.*)</msg>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_lv = re.compile("<[a-z]*?lv>(.*?)</[a-z]*?lv>", re.IGNORECASE)
-    regex_xml_anchor = re.compile("<anchmsg>(.*)</anchmsg>", re.IGNORECASE)
-    regex_xml_anchor_2 = re.compile("<isAnchorPlatformMsg>(.*)</isAnchorPlatformMsg>", re.IGNORECASE)
-    regex_xml_anchor_3 = re.compile("<anchor>(.*)</anchor>", re.IGNORECASE)
+    regex_xml_anchor = re.compile("<anchmsg>(.*)</anchmsg>", flags= re.IGNORECASE | re.DOTALL)
+    regex_xml_anchor_2 = re.compile("<isAnchorPlatformMsg>(.*)</isAnchorPlatformMsg>", flags= re.IGNORECASE | re.DOTALL)
+    regex_xml_anchor_3 = re.compile("<anchor>(.*)</anchor>", flags= re.IGNORECASE | re.DOTALL)
     
 
     regex_xml_tag = re.compile("<[^>]+?>[^<]*?</[^>]+?>")
@@ -177,7 +177,7 @@ class MessageParser():
 
         text = self.trim_only_general_and_chinese(text)
         
-        print(text, lv, anchor)
+        # print(text, lv, anchor)
 
         return text, lv, anchor
 
@@ -275,9 +275,19 @@ class JieBaDictionary():
                         # print('_none_tone_words: {},  origin: {}'.format(_none_tone_words, __))
                         results += _none_tone_words
                     else:
-                        # unknown word appears
-                        results.append(self.unknown_character)
-                        unknowns.append(__)
+                        if __.count(self.split_character) > 1:
+                            __words = __.split(self.split_character)
+                            _map = self.none_tone_map
+                            for _word in __words:
+                                if _word:
+                                    if _map.get(_word, None):
+                                        results.append(_word+self.split_character)
+                                    else:
+                                        results.append(self.unknown_character)
+                                        unknowns.append(_word+self.split_character)
+                        else:
+                            results.append(self.unknown_character)
+                            unknowns.append(__)
                     
                 else:
                     __ = _
@@ -395,6 +405,7 @@ class JieBaDictionary():
 
 
     def get_none_tone_word(self, pinyin):
+        # print('get_none_tone_word pinyin: ', pinyin)
         g_map = self.none_tone_map
         _pinyin = pinyin.replace(self.split_character, '')
         _basic = g_map.get(_pinyin, None)

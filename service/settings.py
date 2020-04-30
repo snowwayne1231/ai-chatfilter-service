@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'ai',
     'dataparser',
     'service',
+    'tcpsocket',
 ]
 
 REST_FRAMEWORK = {

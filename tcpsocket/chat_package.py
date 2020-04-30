@@ -158,7 +158,7 @@ class ChatFilterPackage(BasicStructPackage):
     fmt = '!4i'
     msgid = 0x040000
     msgsize = 0x000000
-    msgtxt = '' # max 100 char
+    msg = '' # max 255 char
     msgbuffer = b''
 
     def parse(self, buffer):
@@ -179,14 +179,14 @@ class ChatFilterPackage(BasicStructPackage):
             self.msgbuffer = _left_buffer
         
         try:
-            self.msgtxt = self.msgbuffer.decode('utf-8')
+            self.msg = self.msgbuffer.decode('utf-8')
         except:
             logging.error('Unpack Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
-            self.msgtxt = self.msgbuffer.decode('utf-8', "ignore")
+            self.msg = self.msgbuffer.decode('utf-8', "ignore")
 
 
-        if len(self.msgtxt) > 96:
-            self.msgtxt = self.msgtxt[:96]
+        if len(self.msg) > 255:
+            self.msg = self.msg[:255]
 
 
 class ChatWithJSONPackage(BasicStructPackage):

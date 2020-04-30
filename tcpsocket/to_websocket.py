@@ -7,7 +7,7 @@ from multiprocessing.pool import ThreadPool
 import logging
 # logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d | %I:%M:%S %p :: ', level=logging.DEBUG)
 
-WS_URL =  "ws://127.0.0.1:{}/ws/chat/"
+WS_URL =  "ws://{}:{}/ws/chat/"
 # websocket.enableTrace(True)
 
 
@@ -27,11 +27,11 @@ class WebsocketThread (threading.Thread):
     second_warn_spend_time = 0.35
 
 
-    def __init__(self, name = 'default', port = 80):
+    def __init__(self, name = 'default', host = '0.0.0.0', port = 80):
         threading.Thread.__init__(self)
         self._name = name
         self._port = port
-        self._url = WS_URL.format(port)
+        self._url = WS_URL.format(host, port)
         self.stop_event = threading.Event()
         self.pool = ThreadPool(processes=4)
     
@@ -41,7 +41,7 @@ class WebsocketThread (threading.Thread):
 
 
     def on_start(self):
-        
+        # print('on start: ', self._url)
         self.ws = websocket.WebSocketApp(self._url,
                                     on_message=self.on_message,
                                     on_error=self.on_error,
@@ -64,10 +64,12 @@ class WebsocketThread (threading.Thread):
     
     def send_thread(self, data):
         _msg_id = data.get('msgid', None)
-        _limted_timeout = 2
+        _limted_timeout = 1
         _now = time.time()
         #
         if _msg_id:
+
+            # print('send_thread: ', data)
             if isinstance(_msg_id, int):
                 self._waitting_ids.append(_msg_id)
 
@@ -147,12 +149,13 @@ class WebsocketThread (threading.Thread):
         return self.pool.apply(self.send_thread, [{'tcp': True, 'msgid': '__tcp__'}])
 
     
-    def thinking(self, msg, msgid, room='', user=''):
+    def send_msg(self, msgid, msg, room='', user='', prediction=0):
         _data = {
             'message':msg,
             'msgid':msgid,
             'room':room,
             'user':user,
+            'prediction': prediction,
         }
         # print('thinking start run!!')
 

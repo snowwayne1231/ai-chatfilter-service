@@ -11,19 +11,23 @@ import time
 
 
 
-
 class MainService():
+    """
+
+    """
     pre_filter = None
     ai_app = None
     message_parser = None
     fuzzy_center = None
     chat_store = None
-    timestamp_ymdh = [0, 0, 0, 0]
+    is_open_mind = False
 
+
+    timestamp_ymdh = [0, 0, 0, 0]
     service_avoid_filter_lv = 6
+
     
     STATUS_PREDICTION_NO_MSG = 0
-
     STATUS_PREDICTION_ADVERTISING = 1
     STATUS_PREDICTION_HUMAN_DELETE = 3
     STATUS_PREDICTION_DIRTY_WORD = 4
@@ -34,31 +38,38 @@ class MainService():
     STATUS_PREDICTION_BLOCK_WORD = 14
     STATUS_PREDICTION_SUSPECT_WATER_ARMY = 15
 
-    def __init__(self):
-        print('Setting Time Zone: [ {} ]'.format(settings.TIME_ZONE))
-        
-        self.ai_app = MainAiApp()
-        self.message_parser = MessageParser()
 
-        
-        self.pre_filter = PreFilter()
-        self.fuzzy_center = FuzzyCenter()
+    def __init__(self):
+
+        self.message_parser = MessageParser()
         self.chat_store = ChatStore()
         self.check_analyzing()
-        print('=============  Main Service Activated.  =============')
+        print('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
 
+
+    def open_mind(self):
+        if self.is_open_mind:
+            return True
+        
+        self.pre_filter = PreFilter()
+        self.ai_app = MainAiApp()
+        self.is_open_mind = True
+        # self.fuzzy_center = FuzzyCenter()
     
+
     def parse_message(self, string):
         return self.message_parser.parse(string)
 
 
     def think(self, message, user = '', room = '', silence=False, detail=False):
-        result = {}
-        text = ''
-        merged_text = ''
-        reason_char = ''
         st_time = time.time()
-        print('receive message :', message)
+        if not self.is_open_mind:
+            print('AI Is Not Ready..')
+            return self.return_reslut(0, message=message, st_time=st_time)
+        
+        text = ''
+        reason_char = ''
+        # print('receive message :', message)
 
         if message:
             
@@ -80,18 +91,16 @@ class MainService():
                 return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
             
             
-            # merged_text = self.get_merged_text(text, user, room)
-            merged_text = text
             if lv < self.service_avoid_filter_lv:
 
-                reason_char = self.pre_filter.find_wechat_char(merged_text)
+                reason_char = self.pre_filter.find_wechat_char(text)
                 if reason_char:
 
                     prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
                     return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence, st_time=st_time)
 
                 
-                # reason_char = self.fuzzy_center.find_fuzzy_block_word(merged_text, silence=silence)
+                # reason_char = self.fuzzy_center.find_fuzzy_block_word(text, silence=silence)
                 # if reason_char:
 
                 #     prediction = self.STATUS_PREDICTION_BLOCK_WORD
@@ -99,7 +108,7 @@ class MainService():
 
 
                 room_texts = self.chat_store.get_texts_by_room(room)
-                reason_char = self.pre_filter.check_same_room_conversation(merged_text, room_texts)
+                reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
                 if reason_char:
                     prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
                     # print('deleted by SUSPECT_WATER_ARMY: ', text)
@@ -107,7 +116,7 @@ class MainService():
 
 
             #main ai
-            prediction, reason_char = self.ai_app.predict(merged_text, lv=lv, silence=silence)
+            prediction, reason_char = self.ai_app.predict(text, lv=lv, silence=silence)
 
             if prediction == 0:
                 self.store_temporary_text(
@@ -129,10 +138,10 @@ class MainService():
     def return_reslut(self, prediction, message, user='', room='', text='', reason='', silence=True, detail=False, st_time=0):
         result = {}
         detail_data = {}
-        if not silence:
+        # if not silence:
 
-            self.saveRecord(prediction, message=message, text=text, reason=reason)
-            self.check_analyzing()
+        #     self.saveRecord(prediction, message=message, text=text, reason=reason)
+        #     self.check_analyzing()
         
         if detail:
 
@@ -160,8 +169,6 @@ class MainService():
     def store_temporary_text(self, text, user, room):
         self.chat_store.upsert_text(text, user, room)
 
-    def get_merged_text(self, text, user, room):
-        return self.chat_store.get_merged_text(text, user, room)
 
     def saveRecord(self, prediction, message, text='', reason=''):
         if prediction == 0:
@@ -172,14 +179,20 @@ class MainService():
             )
         else:
             # save to blocked
+            if text:
+                _text, lv, anchor = self.parse_message(message)
+            else:
+                _text = ''
+            
             record = BlockedSentence(
                 message=message[:95],
-                text=text[:63],
+                text=_text[:63],
                 reason=reason[:63] if reason else '',
                 status=int(prediction),
             )
 
         record.save()
+        self.check_analyzing()
 
 
     def check_analyzing(self):
