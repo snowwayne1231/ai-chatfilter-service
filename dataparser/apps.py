@@ -90,6 +90,15 @@ class ExcelParser():
         print("==Getting Data in Sheet name: {0}, rows: {1}, cols:{2}".format(sh.name, sh.nrows, sh.ncols))
         ary = []
         _columns = []
+
+        def parse_str(value):
+            if isinstance(value, str):
+                return value
+            elif isinstance(value, int):
+                return str(value)
+            else:
+                return str(int(value))
+            
         if len(column) > 0:
         
             for rx in range(limit if limit > 0 else sh.nrows):
@@ -111,13 +120,13 @@ class ExcelParser():
 
                 else:
                     
-                    _next_child = [child[i] if i >= 0 else '' for i in _columns]
+                    _next_child = [parse_str(child[i]) if i >= 0 else '' for i in _columns]
                     ary.append(_next_child)
         else:
 
             for rx in range(limit if limit > 0 else sh.nrows):
 
-                child = [x.value for x in sh.row(rx)]
+                child = [parse_str(x.value) for x in sh.row(rx)]
                 ary.append(child)
         
 
@@ -145,6 +154,12 @@ class MessageParser():
     def parse(self, string):
         lv = 0
         anchor = 0
+        repres_msg = None
+        # try:
+        #     repres_msg = self.regex_msg.match(string)
+        # except Exception as ex:
+        #     print('string: ', string)
+        #     print(ex)
         repres_msg = self.regex_msg.match(string)
 
         if repres_msg:
