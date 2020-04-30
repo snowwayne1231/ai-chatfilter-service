@@ -25,6 +25,7 @@ class WebsocketThread (threading.Thread):
     pool = None
     is_active = False
     second_warn_spend_time = 0.35
+    tcp_potokey = '__tcp__'
 
 
     def __init__(self, name = 'default', host = '0.0.0.0', port = 80):
@@ -66,6 +67,7 @@ class WebsocketThread (threading.Thread):
         _msg_id = data.get('msgid', None)
         _limted_timeout = 1
         _now = time.time()
+        _res = {}
         #
         if _msg_id:
 
@@ -74,39 +76,32 @@ class WebsocketThread (threading.Thread):
                 self._waitting_ids.append(_msg_id)
 
             _str = json.dumps(data)
-            logging.debug('Web Socket Send Thread ID: {}'.format(_msg_id))
+            # logging.debug('Web Socket Send Thread ID: {}'.format(_msg_id))
             self.ws.send(_str)
-            _gap = 0
+            # _gap = 0
 
-            while _msg_id in self._waitting_ids:
-                # print('whileing _msg_id: ', _msg_id)
-                # time.sleep(1)
-                _gap = time.time() - _now
-                # logging.debug('_gap: {}'.format(_gap))
-                if _gap > _limted_timeout:
-                    logging.error('### Web Socket Timeout.. msgid:[ {} ]'.format(_msg_id))
-                    if _msg_id in self._waitting_ids:
-                        self._waitting_ids.remove(_msg_id)
-                    break
+            # while _msg_id in self._waitting_ids:
+                
+            #     _gap = time.time() - _now
+                
+            #     if _gap > _limted_timeout:
+            #         logging.error('### Web Socket Timeout.. msgid:[ {} ]'.format(_msg_id))
+            #         if _msg_id in self._waitting_ids:
+            #             self._waitting_ids.remove(_msg_id)
+            #         break
 
-                time.sleep(0.002)
-            
+            #     time.sleep(0.002)
 
-            if self._message_result.get(_msg_id, None):
+            # if self._message_result.get(_msg_id, None):
 
-                _res = self._message_result.pop(_msg_id)
+            #     _res = self._message_result.pop(_msg_id)
 
-                if _gap > self.second_warn_spend_time:
-                    logging.warning('# Web Socket Slow Warning By Data: {}'.format(_str))
-
-            else:
-
-                _res = {}
+            #     if _gap > self.second_warn_spend_time:
+            #         logging.warning('# Web Socket Slow Warning By Data: {}'.format(_str))
 
         else:
 
             logging.info('Web Socket No Need Think [without msg id].')
-            _res = {}
 
         return _res
 
@@ -115,12 +110,14 @@ class WebsocketThread (threading.Thread):
         # print('on_message', message)
         _json = json.loads(message)
         _msg_id = _json.get('msgid', None)
-        logging.debug('Web Socket on_message: {}'.format(message))
+        
         if _msg_id and _msg_id in self._waitting_ids:
             self._waitting_ids.remove(_msg_id)
-            self._message_result.update({_msg_id: _json})
-        else:
-            pass
+        elif _msg_id != self.tcp_potokey:
+            logging.debug('Web Socket on_message recive unknown msgid: {}'.format(message))
+
+        # self._message_result.update({_msg_id: _json})
+        
 
     def on_error(self, error):
         logging.error('### Web Socket Error: {}'.format(error))
@@ -146,7 +143,7 @@ class WebsocketThread (threading.Thread):
 
 
     def setting(self):
-        return self.pool.apply(self.send_thread, [{'tcp': True, 'msgid': '__tcp__'}])
+        return self.pool.apply(self.send_thread, [{'tcp': True, 'msgid': self.tcp_potokey}])
 
     
     def send_msg(self, msgid, msg, room='', user='', prediction=0):

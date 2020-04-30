@@ -63,6 +63,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if message and isinstance(msgid, int):
             if detail:
+                if not self.main_service.is_open_mind:
+                    self.main_service.open_mind()
+                
                 results = self.main_service.think(message=message, room=room, detail=detail)
                 print('websocket ai think: ', results)
             

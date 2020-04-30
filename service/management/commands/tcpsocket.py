@@ -29,10 +29,17 @@ class Command(BaseCommand):
         
         if port is None:
             port = 8025
+        else:
+            port = int(port)
+        
         if host is None:
             host = '0.0.0.0'
+        
         if webport is None:
             webport = 8000
+        else:
+            webport = int(webport)
+
         if webhost is None:
             webhost = '127.0.0.1'
         # bufsize = 1024

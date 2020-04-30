@@ -368,7 +368,8 @@ class PinYinFilter(BasicChineseFilter):
             if _max == prediction:
                 # vocabulary = _words[_i]
                 # reason = self.transform_back_str(vocabulary)
-                reason = self.get_decode_str(_result_text[_i])
+                _icode = _result_text[_i]
+                reason = self.get_decode_str(_icode)
                 break
             _i += 1
         
@@ -376,7 +377,7 @@ class PinYinFilter(BasicChineseFilter):
 
 
     def get_decode_str(self, code):
-        _pinyin = self.tokenizer_vocabularies[code] if len(self.tokenizer_vocabularies) > code else None
+        _pinyin = self.tokenizer_vocabularies[code-1] if len(self.tokenizer_vocabularies) >= code else None
         if _pinyin:
             return self.transform_back_str(_pinyin)
         else:
