@@ -174,7 +174,7 @@ class GrammarFilter(BasicChineseFilter):
                 if len(texts) == 0:
                     continue
 
-                st = 1 if y[idx] and y[idx] > 0 else 0
+                st = 1 if y[idx] and int(y[idx]) > 0 else 0
                 
                 yield self.parse_texts(texts), st
 
