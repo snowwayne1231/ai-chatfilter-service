@@ -89,7 +89,7 @@ class socketTcp(Tcp):
                     prediction = ai_results.get('prediction', None)
                 
                 if prediction:
-                    if prediction != 0:
+                    if prediction > 0:
                         status_code = 5
                         logging.info('Message be blocked = id: {} txt: {}'.format(unpacked_data.msgid, unpacked_data.msg))
 
@@ -108,7 +108,7 @@ class socketTcp(Tcp):
                     prediction = ai_results.get('prediction', None)
                 
 
-                if prediction and prediction != 0:
+                if prediction and prediction > 0:
                     status_code = 5
                     logging.info('Message be blocked = id: {} msg: {}'.format(unpacked_data.msgid, _msg))
                 
@@ -127,7 +127,7 @@ class socketTcp(Tcp):
             
             
             self.request.sendall(packed_res)
-            if self.callback and prediction:
+            if self.callback and prediction is not None:
                 self.callback(unpacked_data, int(prediction), status_code)
             # self.request.sendall(recived)
         
