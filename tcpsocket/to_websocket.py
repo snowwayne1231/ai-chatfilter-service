@@ -113,8 +113,8 @@ class WebsocketThread (threading.Thread):
         
         if _msg_id and _msg_id in self._waitting_ids:
             self._waitting_ids.remove(_msg_id)
-        elif _msg_id != self.tcp_potokey:
-            logging.debug('Web Socket on_message recive unknown msgid: {}'.format(message))
+        # elif _msg_id != self.tcp_potokey:
+        #     logging.debug('Web Socket on_message recive unknown msgid: {}'.format(message))
 
         # self._message_result.update({_msg_id: _json})
         

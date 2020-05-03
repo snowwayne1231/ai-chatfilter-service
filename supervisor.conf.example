@@ -8,7 +8,7 @@ logfile = /ai/logs/supervisord.log
 
 directory=/ai/ai-chatfilter-service
 
-command=/ai/venv/bin/python manage.py tcpsocket -port 8025 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
+command=/ai/venv/bin/python manage.py tcpsocket -port 8026 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
 
 autostart=true
 autorestart=true
@@ -26,7 +26,7 @@ redirect_stderr=true
 
 directory=/ai/ai-chatfilter-service
 
-command=/ai/venv/bin/python manage.py tcpsocket -port 8026 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
+command=/ai/venv/bin/python manage.py tcpsocket -port 8027 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
 
 autostart=true
 autorestart=true
