@@ -127,7 +127,7 @@ class socketTcp(Tcp):
             
             
             self.request.sendall(packed_res)
-            if self.callback:
+            if self.callback and prediction:
                 self.callback(unpacked_data, int(prediction), status_code)
             # self.request.sendall(recived)
         
