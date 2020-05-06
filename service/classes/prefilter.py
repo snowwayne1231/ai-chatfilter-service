@@ -106,7 +106,8 @@ class PreFilter():
             (u'\u0fff', u'\u1100'), # rare symbol
             (u'\u1b7f', u'\u1fff'), # rare symbol
             (u'\u203d', u'\u23e8'), # rare symbol so many close to be suspect
-            (u'\u23fb', u'\u24ff'), # rare symbol so many close to be suspect
+            (u'\u23fb', u'\u2647'), # rare symbol so many close to be suspect
+            (u'\u26a2', u'\u26bc'), # rare symbol so many close to be suspect
             (u'\u2710', u'\u271f'), # rare symbol and suspect digits
             (u'\u2776', u'\u2b4f'), # rare symbol and suspect digits
             (u'\u2bd0', u'\u2e7f'), # rare symbol and suspect digits

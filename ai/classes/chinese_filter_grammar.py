@@ -39,6 +39,7 @@ class GrammarFilter(BasicChineseFilter):
     def transform_str(self, _string):
         # print('transform str: ', _string)
         _next = []
+        _string = _string.replace(' ', '')
         for _s in _string:
             if self.re_is_chinese.match(_s):
                 _next.append(self.STATUS_CHINESE)
