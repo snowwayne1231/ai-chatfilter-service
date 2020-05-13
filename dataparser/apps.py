@@ -311,7 +311,7 @@ class JieBaDictionary():
                     __ = _buf + _
                     _buf = ''
                     if __[:-1].isdigit():
-                        print('[split_word] number_character 111 __: ', __)
+                        # print('[split_word] number_character 111 __: ', __)
                         results.append(self.number_character)
                         continue
 
@@ -339,7 +339,7 @@ class JieBaDictionary():
 
                     if len(__) > 1:
                         if __[:-1].isdigit():
-                            print('[split_word] number_character 222 __: ', __)
+                            # print('[split_word] number_character 222 __: ', __)
                             results.append(self.number_character)
                         else:
                             results.append(__)
