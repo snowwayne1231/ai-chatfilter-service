@@ -552,6 +552,7 @@ class JieBaDictionary():
     def load_vocabularies(self, vocabulary=None):
         _list = []
         if isinstance(vocabulary, list) and len(vocabulary) >0:
+            print('===========load_vocabularies by vocabulary: ', vocabulary[:10])
             _list = vocabulary
         else:
             path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
@@ -560,6 +561,8 @@ class JieBaDictionary():
                     _list = pickle.load(handle)
             else:
                 self.save_vocabularies()
+
+            print('===========load_vocabularies by local file: ', _list[:10])
 
         for _ in _list:
             jieba.add_word(_)
