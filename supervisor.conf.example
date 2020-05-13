@@ -31,11 +31,11 @@ command=/opt/venv/bin/python manage.py tcpsocket -port 8027 -host 0.0.0.0 -webpo
 autostart=true
 autorestart=true
 
-stdout_logfile=/ai/logs/tcpsocket_2.log
+stdout_logfile=/opt/logs/tcpsocket_2.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=8
 
-stderr_logfile=/ai/logs/tcpsocket_2-error.log
+stderr_logfile=/opt/logs/tcpsocket_2-error.log
 
 redirect_stderr=true
 
