@@ -167,8 +167,9 @@ class GrammarFilter(BasicChineseFilter):
                 
         except KeyboardInterrupt:
             print('Keyboard pressed. Stop Tranning.')
-        except Exception:
+        except Exception as err:
             print('Exception on Fit model.')
+            print('Exception Message: {}'.format(err))
         
         return history
 
