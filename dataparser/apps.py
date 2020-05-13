@@ -302,7 +302,7 @@ class JieBaDictionary():
         _buf = ''
         
         for _ in _list:
-            print('split_word single _: ', _)
+            # print('split_word single _: ', _)
             if not _:
                 continue
             elif  _[-1] == self.split_character:
@@ -354,10 +354,9 @@ class JieBaDictionary():
             print('split_word [] text: ', text)
             unknowns.append(_buf)
         
-        print('[split_word] origin text: ', text)
-        
-        print('[split_word] results: ', results)
-        print('[split_word] unknowns: ', unknowns)
+        # print('[split_word] origin text: ', text)
+        # print('[split_word] results: ', results)
+        # print('[split_word] unknowns: ', unknowns)
         return results, unknowns
 
 
