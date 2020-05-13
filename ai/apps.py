@@ -18,14 +18,14 @@ class MainAiApp():
     pinyin_model = None
     grammar_model = None
 
-    def __init__(self):
+    def __init__(self, jieba_vocabulary=[], pinyin_unknown_words=[]):
         print('=============  A.I Init  =============')
         print('using tensorflow version: ', tf.__version__)
-        self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path)
+        self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path, jieba_vocabulary=jieba_vocabulary, unknown_words=pinyin_unknown_words)
         self.grammar_model = GrammarFilter(load_folder=grammar_model_path)
     
 
-    def predict(self, txt, lv=0, silence=False):
+    def predict(self, txt, lv=0, with_reason=False):
         prediction = 0
         reason = ''
         # return 0, ''
@@ -33,14 +33,16 @@ class MainAiApp():
         if pinyin_prediction > 0:
             # print('pinyin_prediction: ', pinyin_prediction)
             prediction = pinyin_prediction
-            if not silence:
+            if with_reason:
                 reason = self.pinyin_model.get_reason(txt, pinyin_prediction)
+
+                if not reason:
+                    reason = txt
         
         else:
             grammar_prediction = self.grammar_model.predictText(txt, lv)
             prediction = grammar_prediction
-            if grammar_prediction == 1:
-                # print('delted by grammar_prediction: ', txt)
+            if grammar_prediction > 0 and with_reason:
                 reason = 'delted by grammar model'
 
 
@@ -48,5 +50,31 @@ class MainAiApp():
 
     
     def get_details(self, txt):
-        return self.pinyin_model.get_details(txt) if txt else {}
+        if txt:
+            _pinyin_detail = self.pinyin_model.get_details(txt)
+            _grammer_detail = self.grammar_model.get_details(txt)
+            print('_grammer_detail: ', _grammer_detail)
+            
+        else:
+            _pinyin_detail = {}
+            _grammer_detail = {}
+            
+        return {
+            'text': txt,
+            'pinyin': _pinyin_detail,
+            'grammar': _grammer_detail,
+        }
+
+    def get_pinyin_vocabulary(self):
+        return self.pinyin_model.get_pure_vocabulary()
+
+    def get_pinyin_unknowns(self):
+        return self.pinyin_model.get_unknown_words_and_message()
+
+    def get_path_pinyin(self):
+        return self.pinyin_model.get_saved_model_path()
+
+    def get_path_grammar(self):
+        return self.grammar_model.get_saved_model_path()
+
 

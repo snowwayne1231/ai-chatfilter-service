@@ -16,6 +16,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from .views import ServiceAPIView
+from service import instance
+from django.http import FileResponse, HttpResponse
+
+# main_service = instance.get_main_service(is_admin=True)
+
+# def read_pinyin_file(request):
+#     _file = main_service.get_pinyin_model_file()
+#     print('_file: ', _file)
+#     return HttpResponse(_file, content_type='application/octet-stream')
+
 
 urlpatterns = [
     path('chat/', include('chat.urls')),
@@ -23,4 +33,5 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
     path('api/upload/', ServiceAPIView.as_view()),
+    # path('api/model/pinyin', read_pinyin_file),
 ]

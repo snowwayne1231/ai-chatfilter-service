@@ -6,7 +6,7 @@ from django import forms
 from import_export.admin import ImportExportModelAdmin, ImportExportActionModelAdmin, ExportMixin
 from import_export.signals import post_export
 from service.resources import BlockedSentenceResource
-from service.models import Blockword, Whiteword, BlockUser, BlockedSentence, GoodSentence, AnalyzingData
+from service.models import Blockword, Whiteword, BlockUser, BlockedSentence, GoodSentence, AnalyzingData, UnknownWord, Textbook
 import datetime
 
 
@@ -109,11 +109,24 @@ class BsExportForm(forms.Form):
 class GoodSentenceAdmin(admin.ModelAdmin):
     fields = ['message', 'text', 'type', 'status']
     list_display = ['message', 'text', 'type', 'status', 'date']
+    search_fields = ['text']
     empty_value_display = '---'
 
 class AnalyzingDataAdmin(admin.ModelAdmin):
     fields = ['year', 'month', 'day', 'good_sentence', 'blocked_sentence', 'json_blocked_detail', 'json_addition']
     list_display = ['year', 'month', 'day', 'good_sentence', 'blocked_sentence']
+    empty_value_display = '---'
+
+class UnknownWordAdmin(admin.ModelAdmin):
+    fields = ['unknown', 'text', 'status']
+    list_display = ['unknown', 'text', 'status', 'date']
+    search_fields = ['unknown']
+    empty_value_display = '---'
+
+class TextbookAdmin(admin.ModelAdmin):
+    fields = ['message', 'text', 'status', 'type', 'model']
+    list_display = ['text', 'status', 'type', 'model', 'date']
+    search_fields = ['text']
     empty_value_display = '---'
     
 
@@ -123,3 +136,5 @@ admin.site.register(Whiteword, WhitewordAdmin)
 admin.site.register(BlockedSentence, BlockedSentenceAdmin)
 admin.site.register(GoodSentence, GoodSentenceAdmin)
 admin.site.register(AnalyzingData, AnalyzingDataAdmin)
+admin.site.register(UnknownWord, UnknownWordAdmin)
+admin.site.register(Textbook, TextbookAdmin)

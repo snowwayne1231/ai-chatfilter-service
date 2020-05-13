@@ -9,7 +9,7 @@ from .helper import print_spend_time, get_pinyin_path
 from datetime import datetime
 from service.main import MainService
 from dataparser.apps import ExcelParser
-main_service = MainService()
+main_service = MainService(True)
 main_service.open_mind()
 
 

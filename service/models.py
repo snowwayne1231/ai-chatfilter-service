@@ -53,3 +53,32 @@ class AnalyzingData(models.Model):
     blocked_sentence = models.PositiveIntegerField(default=0)
     json_blocked_detail = models.CharField(max_length=2048, blank=True)
     json_addition = models.CharField(max_length=1024, blank=True)
+
+
+class UnknownWord(models.Model):
+    unknown = models.CharField(max_length=64)
+    text = models.CharField(max_length=64, null=True, blank=True)
+    status = models.IntegerField(default=1)
+    date = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['-date',]),
+            models.Index(fields=['status',]),
+        ]
+
+
+class Textbook(models.Model):
+    message = models.CharField(max_length=255)
+    text = models.CharField(max_length=64)
+    type = models.IntegerField(default=1)  # 1= normal, 2=check right
+    status = models.IntegerField(default=1)
+    model = models.IntegerField(default=1)  # 0= all, 1= pinyin, 2= grammar
+    date = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['-date',]),
+            models.Index(fields=['status',]),
+            models.Index(fields=['model',]),
+        ]

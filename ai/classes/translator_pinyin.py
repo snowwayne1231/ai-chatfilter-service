@@ -46,5 +46,5 @@ def traceback_by_stringcode(_code):
         else:
             _list = []
 
-    return ','.join(_list)
+    return '|'.join(_list)
 

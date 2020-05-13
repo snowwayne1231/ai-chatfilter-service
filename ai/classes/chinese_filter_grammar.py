@@ -6,6 +6,7 @@ from .chinese_filter_basic import BasicChineseFilter
 import tensorflow as tf
 import os, re
 import numpy as np
+from datetime import datetime, timedelta
 
 
 
@@ -29,6 +30,7 @@ class GrammarFilter(BasicChineseFilter):
     status_classsets = 2
     full_words_length = 64
 
+    basic_num_dataset = 5000
 
     # def __init__(self, data = [], load_folder=None):
         
@@ -84,7 +86,7 @@ class GrammarFilter(BasicChineseFilter):
 
 
     # override
-    def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
+    def fit_model(self, epochs=3, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None):
         if save_folder is not None:
             self.saved_folder = save_folder
         
@@ -138,6 +140,8 @@ class GrammarFilter(BasicChineseFilter):
         
 
         try:
+            _start = datetime.now()
+            _end = _start + timedelta(hours=stop_hours)
             while True:
                 history = self.model.fit(
                     batch_train_data,
@@ -156,8 +160,15 @@ class GrammarFilter(BasicChineseFilter):
                     if acc >= stop_accuracy:
                         break
                 
+                if stop_hours:
+                    _now = datetime.now()
+                    if _now > _end:
+                        break
+                
         except KeyboardInterrupt:
             print('Keyboard pressed. Stop Tranning.')
+        except Exception:
+            print('Exception on Fit model.')
         
         return history
 
@@ -166,6 +177,13 @@ class GrammarFilter(BasicChineseFilter):
     def get_train_batchs(self):
         
         x, y = self.get_xy_data()
+
+        _basic = int(self.basic_num_dataset / len(x))
+
+        if _basic >= 1:
+            x = x * (_basic+1)
+            y = y * (_basic+1)
+
         self.length_x = len(x)
 
         _full_wl = self.full_words_length
@@ -203,6 +221,28 @@ class GrammarFilter(BasicChineseFilter):
             next_txt = next_txt[:_full_wl]
         
         return np.array(next_txt)
+
+
+    # override
+    def get_details(self, text):
+
+        _words = self.transform(text)
+
+        if len(_words) == 0:
+            return 0
+
+        _texts = self.parse_texts(_words)
+
+        # print('predictText  _words : ', _words, _words.shape)
+        
+        predicted = self.model.predict(np.array([_texts]))[0]
+
+        # print('grammar predicted: ', predicted)
+
+        return {
+            'grammar_words': _words,
+            'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
+        }
     
 
     # override
@@ -219,7 +259,7 @@ class GrammarFilter(BasicChineseFilter):
 
             # print('predictText  _words : ', _words, _words.shape)
             
-            predicted = self.model.predict(np.array([_words]))
+            predicted = self.model.predict(np.array([_words]))[0]
             passible = np.argmax(predicted)
 
             # print('predicted: ', predicted)

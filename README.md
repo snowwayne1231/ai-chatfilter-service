@@ -166,20 +166,16 @@ cd /ai/ai-chatfilter-service
 cp nginx.conf.example nginx.conf
 nano nginx.conf
 ```
-```nginx
-location /static {
-    alias /path/to/mysite/static;
-}
-```
 > change all `/path/to/mysite/` to `/ai/ai-chatfilter-service/`
+example fix path below:
 ```nginx
 location /static {
-    alias /ai/ai-chatfilter-service/static;
+    alias /path/to/mysite/static;  --->  alias /ai/ai-chatfilter-service/static;
 }
 ```
 > change server name you own or if you want pass any request change to `_`
 ```EditorConfig
-server_name 0.0.0.0;
+server_name _;
 ```
 >  make symbolic link to niginx configs
 ```Shell
@@ -272,8 +268,8 @@ python manage.py knowledge
 ```
 > if you need some help then type `python manage.py train -h` have a look on helper and see how to use train
 ```Shell
-python manage.py train -i ai/assets/textbook -f 0.995
-python manage.py train -i ai/assets/textbook/grammar -f 0.995 -grm
+python manage.py train -i ai/assets/textbook -f 0.995 -t 2
+python manage.py train -i ai/assets/textbook/grammar -f 0.995 -grm -t 2
 ```
 > after upon that command, you should start an AI training now, Stop anytime when you want by key in Ctrl+C
 
@@ -404,5 +400,7 @@ python manage.py clear goodsentence
 python manage.py dumpdata service > service/seed/initial.json
 
 python manage.py loaddata service/seed/initial.json
+
+python manage.py upsert -i ../excel file -model textbook
 ```
 

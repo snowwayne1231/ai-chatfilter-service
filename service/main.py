@@ -3,11 +3,14 @@ from django.conf import settings
 from ai.apps import MainAiApp
 from dataparser.apps import MessageParser
 from .classes.prefilter import PreFilter
-from .classes.fuzzycenter import FuzzyCenter
+# from .classes.fuzzycenter import FuzzyCenter
 from .classes.chatstore import ChatStore
-from .models import GoodSentence, BlockedSentence, AnalyzingData
+from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, Textbook
 import numpy as np
 import time
+from service.widgets import printt
+from ai.apps import pinyin_model_path, grammar_model_path
+from django.core.files.base import ContentFile
 
 
 
@@ -21,10 +24,11 @@ class MainService():
     fuzzy_center = None
     chat_store = None
     is_open_mind = False
-
+    is_admin_server = False
 
     timestamp_ymdh = [0, 0, 0, 0]
     service_avoid_filter_lv = 6
+    service_avoid_ai_lv = 15
 
     
     STATUS_PREDICTION_NO_MSG = 0
@@ -39,22 +43,45 @@ class MainService():
     STATUS_PREDICTION_SUSPECT_WATER_ARMY = 15
 
 
-    def __init__(self):
+    def __init__(self, is_admin_server = False):
 
         self.message_parser = MessageParser()
         self.chat_store = ChatStore()
-        self.check_analyzing()
+        if is_admin_server:
+            self.is_admin_server = True
+            self.check_analyzing()
         print('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
 
 
-    def open_mind(self):
+    def open_mind(self, pinyin_data=None):
         if self.is_open_mind:
             return True
-        
+
         self.pre_filter = PreFilter()
-        self.ai_app = MainAiApp()
+        
+        if pinyin_data:
+            _vocabulary = pinyin_data.get('vocabulary', [])
+            _unknowns = pinyin_data.get('unknowns', [])
+            _unknown_words = [_[0] for _ in _unknowns]
+            self.ai_app = MainAiApp(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words)
+
+            
+        elif self.is_admin_server:
+
+            self.ai_app = MainAiApp()
+            _vocabulary = self.ai_app.get_pinyin_vocabulary()
+        
+        else:
+            printt('Open Mind Failed. It is Not Admin Server.')
+            return False
+        
+        _single_words = [_ for _ in _vocabulary if _.count('_') == 1]
+        self.pre_filter.set_single_words(_single_words)
+
         self.is_open_mind = True
         # self.fuzzy_center = FuzzyCenter()
+
+        return True
     
 
     def parse_message(self, string):
@@ -116,7 +143,8 @@ class MainService():
 
 
             #main ai
-            prediction, reason_char = self.ai_app.predict(text, lv=lv, silence=silence)
+            if lv < self.service_avoid_ai_lv:
+                prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
 
             if prediction == 0:
                 self.store_temporary_text(
@@ -146,11 +174,11 @@ class MainService():
         if detail:
 
             detail_data = self.ai_app.get_details(text)
-            print('prediction: ', prediction)
-            print('message: ', message)
-            print('text: ', text)
-            print('reason: ', reason)
-            print('detail_data: ', detail_data)
+            # print('prediction: ', prediction)
+            # print('message: ', message)
+            # print('text: ', text)
+            # print('reason: ', reason)
+            # print('detail_data: ', detail_data)
 
         ed_time = time.time()
         
@@ -158,7 +186,7 @@ class MainService():
         result['room'] = room
         result['message'] = message
         result['text'] = text
-        result['prediction'] = prediction
+        result['prediction'] = int(prediction)
         result['reason_char'] = reason
         result['detail'] = detail_data
         result['spend_time'] = ed_time - st_time
@@ -171,28 +199,34 @@ class MainService():
 
 
     def saveRecord(self, prediction, message, text='', reason=''):
-        if prediction == 0:
-            # save to good sentence
-            record = GoodSentence(
-                message=message[:95],
-                text=text[:63],
-            )
-        else:
-            # save to blocked
-            if text:
-                _text, lv, anchor = self.parse_message(message)
+        if self.is_admin_server:
+            if prediction == 0:
+                # save to good sentence
+                record = GoodSentence(
+                    message=message[:95],
+                    text=text[:63],
+                )
             else:
-                _text = ''
-            
-            record = BlockedSentence(
-                message=message[:95],
-                text=_text[:63],
-                reason=reason[:63] if reason else '',
-                status=int(prediction),
-            )
+                # save to blocked
+                if text:
+                    _text, lv, anchor = self.parse_message(message)
+                else:
+                    _text = ''
+                
+                record = BlockedSentence(
+                    message=message[:95],
+                    text=_text[:63],
+                    reason=reason[:63] if reason else '',
+                    status=int(prediction),
+                )
 
-        record.save()
-        self.check_analyzing()
+            record.save()
+        
+            self.check_analyzing()
+
+        else:
+
+            print('Save Record Failed, Is Not Admin Server.')
 
 
     def check_analyzing(self):
@@ -265,3 +299,37 @@ class MainService():
                 today_analyzing.save()
                 
             self.timestamp_ymdh = _ymdh
+
+
+    def get_pinyin_data(self):
+        if self.ai_app:
+            return {
+                'vocabulary': self.ai_app.get_pinyin_vocabulary(),
+                'unknowns': self.get_pinyin_unknowns(),
+            }
+        else:
+            return {}
+
+    def get_pinyin_unknowns(self):
+        if self.is_admin_server:
+            _unknowns = [[_, ''] for _ in UnknownWord.objects.values_list('unknown', flat=True)]
+        else:
+            _unknowns = self.ai_app.get_pinyin_unknowns()
+
+
+        return _unknowns
+
+    def get_train_textbook(self):
+        _limit = 5000
+        queryset = Textbook.objects.filter(type=1).values_list('text', 'model', 'status').order_by('-id')[:_limit]
+        result = list(queryset)
+        # print('get_train_textbook: ', result)
+        return result
+
+
+    def fit_pinyin_model(self, datalist):
+        _hours = 2
+        print('=== fit_pinyin_model ===', _hours)
+        self.ai_app.pinyin_model.fit_model(train_data=datalist, stop_hours=_hours)
+        print('=== fit_pinyin_model end ===')
+

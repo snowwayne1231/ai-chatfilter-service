@@ -13,9 +13,9 @@ class MemoryController(object):
         pass
         
 
-    def get_main_service(self):
+    def get_main_service(self, is_admin = False):
         if self.main_service is None:
-            self.main_service = MainService()
+            self.main_service = MainService(is_admin)
 
         return self.main_service
 

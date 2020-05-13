@@ -1,11 +1,11 @@
 from tcpsocket.to_websocket import WebsocketThread
 from tcpsocket.tcp import socketTcp
 
-import socketserver
+import socketserver, socket
 import os, sys, getopt
 import logging
 # sys.path.append("..")
-# from service import instance
+from service import instance
 
 
 
@@ -13,26 +13,38 @@ class LaunchTcpSocket():
 
     addr = (None, None)
     server = None
+    service_instance = None
     websocket = None
+    ws_url = ''
+    remote_vocabulary = []
+    local_host = (None, None)
+    is_tcp_connecting = False
 
     def __init__(self, host, port, webhost, webport):
         # print('LaunchTcpSocket: ', host, port)
-        self.addr = (host, port)
-        self.server = socketserver.ThreadingTCPServer(self.addr, self.handler_factory())
-        self.websocket = WebsocketThread("Websocket Thread-1", host=webhost, port=webport)
+        host_name = socket.gethostname() 
+        host_ip = socket.gethostbyname(host_name)
+        self.local_host = (host_name, host_ip)
 
-        logging.info('TCP Socket Server launched on port :: {}'.format(self.addr[1]))
+        self.addr = (host, port)
+        self.websocket = WebsocketThread("Websocket Thread-1", host=webhost, port=webport, local_host=self.local_host, on_message_callback=self.on_websocket_message)
+        self.ws_url = self.websocket.get_ws_url()
+
         self.start()
 
     
     def handler_factory(self):
-        callback = self.handle_callback
+        callback = self.handle_tcp_callback
+        on_open = self.handle_tcp_open
+        on_close = self.handle_tcp_close
+        service_instance = self.service_instance
+        
         def createHandler(*args, **keys):
-            return socketTcp(callback, *args, **keys)
+            return socketTcp(callback, service_instance, on_open, on_close, *args, **keys)
         return createHandler
     
 
-    def handle_callback(self, data, prediction, status_code):
+    def handle_tcp_callback(self, data, prediction, status_code):
         if prediction is None:
             return
         
@@ -43,17 +55,42 @@ class LaunchTcpSocket():
                 _msg = data.msg
                 _room = data.roomid if hasattr(data, 'roomid') else ''
                 self.websocket.send_msg(msgid=_msgid, msg=_msg, room=_room, prediction=prediction)
-            
-            
         else:
-
             logging.error('Websocket is Not Working. [txt: {}]'.format(data.msg))
+
+    
+    def handle_tcp_open(self):
+        self.is_tcp_connecting = True
+
+
+    def handle_tcp_close(self):
+        self.is_tcp_connecting = False
+
+
+    def on_websocket_message(self, msgid, message):
+        print('on_websocket_message msgid: ', msgid)
+        if msgid == self.websocket.key_send_train_remotely:
+            print('message: ', len(message))
+            print('self.server: ', self.server)
+            print('service_instance: ', self.service_instance)
+            self.service_instance.fit_pinyin_model()
+
     
 
     def start(self):
         try:
 
             self.websocket.start()
+
+            while not self.websocket.is_active:
+                pass
+
+            self.pinyin_data = self.websocket.get_remote_pinyin_data()
+            self.service_instance = instance.get_main_service()
+            self.service_instance.open_mind(pinyin_data=self.pinyin_data)
+
+            self.server = socketserver.ThreadingTCPServer(self.addr, self.handler_factory())
+            logging.info('TCP Socket Server launched on port :: {}'.format(self.addr[1]))
             self.server.serve_forever()
 
         except KeyboardInterrupt:

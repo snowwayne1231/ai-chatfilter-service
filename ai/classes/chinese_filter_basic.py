@@ -192,7 +192,7 @@ class BasicChineseFilter():
 
 
     # could be overreide
-    def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None):
+    def fit_model(self, epochs=1, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None):
         if save_folder is not None:
             self.saved_folder = save_folder
         
@@ -280,11 +280,17 @@ class BasicChineseFilter():
         _i = 0
 
         for _d in self.data:
-            if _d[x_idx] and _d[vip_lv_idx] < self.avoid_lv:
-                _t = _d[x_idx]
+            _t = _d[x_idx]
+            if _t:
                 _status = _d[y_idx]
-                new_x.append(_t)
-                new_y.append(_status if _status != '' else __auto_human_delete_if_not)
+                if _status:
+                    _status = int(_status)
+                else:
+                    continue
+                _vip_lv = _d[vip_lv_idx]
+                if _vip_lv < self.avoid_lv or _status > 0:
+                    new_x.append(_t)
+                    new_y.append(_status if _status != '' else __auto_human_delete_if_not)
 
             if _i % 1000 == 0:
                 _percent = _i / data_length
@@ -341,6 +347,11 @@ class BasicChineseFilter():
         predicted = self.model.predict([words])[0]
 
         return {
+            'transformed_words': words,
             'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
         }
+
+
+    def get_saved_folder(self):
+        return self.saved_folder
 

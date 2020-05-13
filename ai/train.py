@@ -15,7 +15,7 @@ from .helper import print_spend_time, get_pinyin_path, get_grammar_path
 
 
 
-def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = None):
+def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = None, max_spend_time=0):
 
     pinyin_saved_folder = get_pinyin_path()
     
@@ -69,7 +69,7 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
 
         piny = PinYinFilter(load_folder=pinyin_saved_folder)
 
-        history = piny.fit_model(train_data=result_list, stop_accuracy=final_accuracy)
+        history = piny.fit_model(train_data=result_list, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
 
     else:
 
@@ -77,7 +77,7 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
         # piny.transfrom_column('TEXT')
         piny.build_model()
 
-        history = piny.fit_model(save_folder=pinyin_saved_folder, stop_accuracy=final_accuracy)
+        history = piny.fit_model(save_folder=pinyin_saved_folder, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
 
         # piny.save(pinyin_saved_folder)
 
@@ -88,7 +88,7 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
 
 
 
-def train_grammar(excel_file_path = None, is_append = False, final_accuracy = None):
+def train_grammar(excel_file_path = None, is_append = False, final_accuracy = None, max_spend_time=0):
 
     _saved_folder = get_grammar_path()
 
@@ -121,14 +121,14 @@ def train_grammar(excel_file_path = None, is_append = False, final_accuracy = No
 
         model = GrammarFilter(load_folder=_saved_folder)
 
-        history = model.fit_model(train_data=result_list, stop_accuracy=final_accuracy)
+        history = model.fit_model(train_data=result_list, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
 
     else:
 
         model = GrammarFilter(data=result_list)
         model.build_model()
 
-        history = model.fit_model(save_folder=_saved_folder, stop_accuracy=final_accuracy)
+        history = model.fit_model(save_folder=_saved_folder, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
 
 
     print('=== history ===')

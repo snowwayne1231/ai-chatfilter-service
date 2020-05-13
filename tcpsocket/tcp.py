@@ -23,23 +23,26 @@ logging_level = logging.DEBUG if bool('True' in config_setting.get('MAIN', 'DEBU
 logging.basicConfig(format='[%(levelname)s]%(asctime)s %(message)s', datefmt='(%m/%d) %I:%M:%S %p :: ', level=logging_level)
 
 
-from service import instance
-
 class socketTcp(Tcp):
 
     callback = None
+    on_client_open = None
+    on_client_close = None
     service_instance = None
     
 
-    def __init__(self, callback, *args, **keys):
+    def __init__(self, callback, service_instance, on_client_open = None, on_client_close = None, *args, **keys):
         self.callback = callback
-        self.service_instance = instance.get_main_service()
-        self.service_instance.open_mind()
+        self.on_client_open = on_client_open
+        self.on_client_close = on_client_close
+        self.service_instance = service_instance
+        
         super().__init__(*args, **keys)
     
 
     def handle(self):
         logging.info('**TCPSocket Version[{}] clinet has connected, address: {}'.format(version, self.client_address))
+        self.on_client_open()
         while True:
             recived = self.request.recv(1024)
             if not recived:
@@ -132,10 +135,13 @@ class socketTcp(Tcp):
             # self.request.sendall(recived)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
+        self.on_client_close()
 
     def handle_error(self):
         logging.error('TCPSocket Handle Error!!')
+        self.on_client_close()
 
     def server_close(self):
         logging.error('TCPSocket Server Closed!!!')
+        self.on_client_close()
 

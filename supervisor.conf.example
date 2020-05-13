@@ -1,41 +1,41 @@
 [supervisord]
 
-logfile = /ai/logs/supervisord.log
+logfile = /opt/logs/supervisord.log
 
 
 
 [program:tcpsocket]
 
-directory=/ai/ai-chatfilter-service
+directory=/opt/ai-chatfilter-service
 
-command=/ai/venv/bin/python manage.py tcpsocket -port 8026 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
+command=/opt/venv/bin/python manage.py tcpsocket -port 8026 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
 
 autostart=true
 autorestart=true
 
-stdout_logfile=/ai/logs/tcpsocket.log
+stdout_logfile=/opt/logs/tcpsocket.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=8
 
-stderr_logfile=/ai/logs/tcpsocket-error.log
+stderr_logfile=/opt/logs/tcpsocket-error.log
 
 redirect_stderr=true
 
 
 [program:tcpsocket-2]
 
-directory=/ai/ai-chatfilter-service
+directory=/opt/ai-chatfilter-service
 
-command=/ai/venv/bin/python manage.py tcpsocket -port 8027 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
+command=/opt/venv/bin/python manage.py tcpsocket -port 8027 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
 
 autostart=true
 autorestart=true
 
-stdout_logfile=/ai/logs/tcpsocket-2.log
+stdout_logfile=/ai/logs/tcpsocket_2.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=8
 
-stderr_logfile=/ai/logs/tcpsocket-2-error.log
+stderr_logfile=/ai/logs/tcpsocket_2-error.log
 
 redirect_stderr=true
 
@@ -43,18 +43,18 @@ redirect_stderr=true
 
 [program:django]
 
-directory=/ai/ai-chatfilter-service
+directory=/opt/ai-chatfilter-service
 
-command=/ai/venv/bin/python manage.py runserver 0.0.0.0:8000
+command=/opt/venv/bin/python manage.py runserver 0.0.0.0:8000
 
 autostart=true
 autorestart=true
 
-stdout_logfile=/ai/logs/django.log
+stdout_logfile=/opt/logs/django.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=5
 
-stderr_logfile=/ai/logs/django-error.log
+stderr_logfile=/opt/logs/django-error.log
 
 redirect_stderr=true
 

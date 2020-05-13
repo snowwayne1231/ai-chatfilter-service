@@ -19,6 +19,10 @@ class Command(BaseCommand):
             help='set should be stoped accuracy ratio.',
         )
         parser.add_argument(
+            '-t', dest='time', required=False, type=int,
+            help='how many time to spend.',
+        )
+        parser.add_argument(
             '-grm', dest='grammar_mode', required=False, action='store_true',
             help='whether grammar mode is on.',
         )
@@ -28,6 +32,7 @@ class Command(BaseCommand):
         is_append_mode = options.get('is_append_mode', False)
         final_accuracy = options.get('final_accuracy', None)
         grammar_mode = options.get('grammar_mode', False)
+        max_spend_time = options.get('time', 0)
     
         self.stdout.write('Handle AI training... ')
 
@@ -35,9 +40,9 @@ class Command(BaseCommand):
             full_file_path = os.getcwd() + '/' + path
             self.stdout.write('Full input excel path: ' + full_file_path)
             if grammar_mode:
-                train_grammar(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy)
+                train_grammar(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
             else:
-                train_pinyin(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy)
+                train_pinyin(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
         else:
             train_pinyin(None, final_accuracy=final_accuracy)
         

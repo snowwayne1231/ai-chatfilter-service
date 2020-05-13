@@ -6,7 +6,7 @@ regex_chinese = re.compile('[\u4e00-\u9fa5]+')
 class PreFilter():
     temporary_messages = []
     max_same_room_word = 2
-
+    single_words = []
 
     def __init__(self):
         self.temporary_messages = []
@@ -36,8 +36,9 @@ class PreFilter():
         eng_size = 0
         qk_size = 0
         next_char = ''
+        text = text.replace(' ', '')
         length_char = len(text)
-
+    
         for u in text:
             if self.is_number(u):
                 if '0' not in next_char:
@@ -59,6 +60,28 @@ class PreFilter():
         is_many_asci = (_NE_size >= 6 and number_size >= 2) or number_size > 5
 
         is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and number_size > 0 and eng_size > 0
+
+        if _NE_ratio == 1 and length_char >= 3 and length_char <= 8:
+            _english = self.replace_only_left_english(text)
+            _buf = ''
+            _tmp_word = ''
+            _words = []
+            for _ in _english:
+                _buf += _
+                if _buf in self.single_words:
+                    _tmp_word = _buf
+                else:
+                    if _tmp_word:
+                        _words.append(_tmp_word)
+                        _tmp_word = ''
+                        _buf = _
+            
+            if _tmp_word == _buf:
+                _words.append(_tmp_word)
+            else:
+                is_many_language = True
+                next_char += ' | Wrong English Words.'
+
 
         # is_many_mixed = _NE_size >= 6 and (length_char - _NE_size) > 4
 
@@ -162,16 +185,24 @@ class PreFilter():
         return _text
 
 
+    def set_single_words(self, words):
+        _word_list = [self.replace_only_left_english(_) for _ in words]
+        self.single_words = [_ for _ in _word_list if _]
+
+
     def check_same_room_conversation(self, _text, _before_room_texts):
         _num_matched = 0
 
         english_text = self.replace_only_left_english(_text)
         if english_text:
-            for _rt in _before_room_texts:
-                if self.replace_only_left_english(_rt) == english_text:
-                    _num_matched += 1
-                    if _num_matched > self.max_same_room_word:
-                        return 'too many same English'
+            if len(english_text) >= 4:
+                for _rt in _before_room_texts:
+                    if self.replace_only_left_english(_rt) == english_text:
+                        return 'not allow same English keep typing'
+                        # _num_matched += 1
+                        # if _num_matched >= self.max_same_room_word:
+                        #     return 'too many same English'
+                        
 
         bankerplayer_text = self.replace_only_left_bankerplayer(_text)
 

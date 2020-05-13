@@ -137,15 +137,20 @@ class ExcelParser():
 class MessageParser():
 
     regex_msg = re.compile("<msg>(.*)</msg>", flags= re.IGNORECASE | re.DOTALL)
-    regex_xml_lv = re.compile("<[a-z]*?lv>(.*?)</[a-z]*?lv>", re.IGNORECASE)
+    regex_xml_lv = re.compile("<[a-z]*?lv>(.*?)</[a-z]*?lv>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_anchor = re.compile("<anchmsg>(.*)</anchmsg>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_anchor_2 = re.compile("<isAnchorPlatformMsg>(.*)</isAnchorPlatformMsg>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_anchor_3 = re.compile("<anchor>(.*)</anchor>", flags= re.IGNORECASE | re.DOTALL)
-    
 
     regex_xml_tag = re.compile("<[^>]+?>[^<]*?</[^>]+?>")
-    regex_bracket_lv = re.compile("\{viplv([^\}]*)\}", re.IGNORECASE)
+    # regex_xml_at = re.compile("<at>(.*)</at>", flags= re.IGNORECASE | re.DOTALL)
+    regex_xml_broke_start = re.compile("(<msg>)|(<.*$)", flags= re.IGNORECASE)
+    regex_xml_broke_end = re.compile("<[^>]+?$")
+
+    regex_bracket_lv = re.compile("\{viplv(.+?)\}", flags= re.IGNORECASE | re.DOTALL)
     regex_bracket_digits = re.compile("\{[a-zA-Z\d\s\:\-]*\}")
+
+    regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
 
     def __init__(self):
         print('MessageParser init done.')
@@ -163,7 +168,10 @@ class MessageParser():
         repres_msg = self.regex_msg.match(string)
 
         if repres_msg:
+
             text = repres_msg.group(1)
+            # print('string: ', string)
+            # print('text: ', text)
             repres_xml_lv = self.regex_xml_lv.search(text)
             if repres_xml_lv:
                 lv = int(repres_xml_lv.group(1))
@@ -178,19 +186,42 @@ class MessageParser():
                 elif self.regex_xml_anchor_3.search(text):
                     anchor = 1
             
+            # at_msg = self.regex_xml_at(text)
+            # if at_msg:
+            #     text = at_msg.group(1)
+            # else:
+
             text = self.regex_xml_tag.sub("", text)
             
         else:
-            text = string
-            
+
+            text = string.strip()
+
             repres_bracket_lv = self.regex_bracket_lv.match(text)
+
             if repres_bracket_lv:
+                
                 lv = int(repres_bracket_lv.group(1))
                 text = self.regex_bracket_lv.sub("", text)
-            
-            text = self.regex_bracket_digits.sub("", text)
 
+            else:
+
+                repres_xml_lv = self.regex_xml_lv.search(text)
+                if repres_xml_lv:
+                    # broke message..
+                    lv = int(repres_xml_lv.group(1))
+                    text = self.regex_xml_tag.sub("", text)
+                    text = self.regex_xml_broke_start.sub("", text)
+                    text = self.regex_xml_broke_end.sub("", text)
+
+
+        text = self.regex_bracket_digits.sub("", text)
         text = self.trim_only_general_and_chinese(text)
+
+        _is_all_english_word = self.regex_all_english_word.match(text)
+        if _is_all_english_word and len(text) > 7:
+            print('[INFO] All English Allow Pass: [{}].'.format(text))
+            lv = 99
         
         # print(text, lv, anchor)
 
@@ -253,16 +284,21 @@ class JieBaDictionary():
     vocabularies = []
     none_tone_map = {}
 
-    def __init__(self):
+    def __init__(self, vocabulary=[]):
         jieba.re_eng = re.compile('[a-zA-Z0-9_]', re.U)
         jieba.initialize(dictionary=self.folder + '/assets/jieba.txt')
 
         if not os.path.isdir(self.pickle_folder):
             os.mkdir(self.pickle_folder)
+
+        if len(vocabulary) == 0:
+            self.load_vocabularies()
+            self.refresh_dictionary()
+        else:
+            self.load_vocabularies(vocabulary)
+            self.save_vocabularies()
         
-        self.load_vocabularies()
         
-        self.refresh_dictionary()
         print('JieBaDictionary Initial Done.')
 
 
@@ -273,7 +309,7 @@ class JieBaDictionary():
         _buf = ''
         
         for _ in _list:
-            # print('split_word _: ', _)
+            print('split_word single _: ', _)
             if not _:
                 continue
             elif  _[-1] == self.split_character:
@@ -282,6 +318,7 @@ class JieBaDictionary():
                     __ = _buf + _
                     _buf = ''
                     if __[:-1].isdigit():
+                        print('[split_word] number_character 111 __: ', __)
                         results.append(self.number_character)
                         continue
 
@@ -309,6 +346,7 @@ class JieBaDictionary():
 
                     if len(__) > 1:
                         if __[:-1].isdigit():
+                            print('[split_word] number_character 222 __: ', __)
                             results.append(self.number_character)
                         else:
                             results.append(__)
@@ -323,6 +361,10 @@ class JieBaDictionary():
             print('split_word [] text: ', text)
             unknowns.append(_buf)
         
+        print('[split_word] origin text: ', text)
+        
+        print('[split_word] results: ', results)
+        print('[split_word] unknowns: ', unknowns)
         return results, unknowns
 
 
@@ -349,7 +391,6 @@ class JieBaDictionary():
         _i = 0
         for sv in sound_vocabularies:
             self.add_word(sv)
-            self.add_none_tone_word(sv)
 
             if _i % 500 == 0:
                 _percent = _i / _total * 100
@@ -384,6 +425,7 @@ class JieBaDictionary():
         if self.is_allowed_word(word) and self.is_new_word(word):
             jieba.add_word(word)
             self.vocabularies.append(word)
+            self.add_none_tone_word(word)
             
             return True
         return False
@@ -391,13 +433,12 @@ class JieBaDictionary():
     
     def add_none_tone_word(self, word):
         # if word.count(self.split_character) <= 4 and word[-2].isdigit():
-        if word.count(self.split_character) <= 4 and re.match(r'.*[\d]', word) == None:
+        if word.count(self.split_character) <= 4 and re.match(r'[\d]', word) == None:
             _no_digit_word = re.sub(r'[\d]+', '', word)
-            # if self.is_single_word(_no_digit_word):
-            #     self.add_word(_no_digit_word)
             
             _key = _no_digit_word.replace(self.split_character, '')
-            # _key = re.sub(r'[\d]+', '', _key)
+            # _key = _no_digit_word
+
             words = self.none_tone_map.get(_key, [])
             if word not in words:
                 words += [word]
@@ -414,7 +455,8 @@ class JieBaDictionary():
             if self.add_word(w):
                 count += 1
                 # should_be_insertd.append(w)
-        self.save_vocabularies()
+        if count > 0:
+            self.save_vocabularies()
 
         return count
 
@@ -498,8 +540,11 @@ class JieBaDictionary():
             return None
 
 
-    def get_vocabulary(self):
-        return [self.pad_character, self.unknown_character, self.number_character, '#reserve#'] + self.vocabularies
+    def get_vocabulary(self, pure = False):
+        if pure:
+            return self.vocabularies
+        else:
+            return [self.pad_character, self.unknown_character, self.number_character, '#reserve#'] + self.vocabularies
 
     def get_unknown_position(self):
         return self.get_vocabulary().index(self.unknown_character)
@@ -511,22 +556,24 @@ class JieBaDictionary():
     def is_allowed_word(self, _word):
         return len(_word) > 1 and _word[-1] == self.split_character
 
-
-    def is_single_word(self, _word):
-        return _word.count('_') == 1
-
     
-    def load_vocabularies(self):
-        path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
-        if os.path.isfile(path):
-            with open(path, 'rb') as handle:
-                _list = pickle.load(handle)
-                if _list and len(_list) > 0:
-                    for _ in _list:
-                        jieba.add_word(_)
-                    self.vocabularies = _list
+    def load_vocabularies(self, vocabulary=None):
+        _list = []
+        if isinstance(vocabulary, list) and len(vocabulary) >0:
+            _list = vocabulary
         else:
-            self.save_vocabularies()
+            path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
+            if os.path.isfile(path):
+                with open(path, 'rb') as handle:
+                    _list = pickle.load(handle)
+            else:
+                self.save_vocabularies()
+
+        for _ in _list:
+            jieba.add_word(_)
+            self.add_none_tone_word(_)
+        
+        self.vocabularies = _list
 
 
     def save_vocabularies(self):
