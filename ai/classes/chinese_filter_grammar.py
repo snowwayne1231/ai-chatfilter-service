@@ -141,7 +141,8 @@ class GrammarFilter(BasicChineseFilter):
 
         try:
             _start = datetime.now()
-            _end = _start + timedelta(hours=stop_hours)
+            if stop_hours:
+                _end = _start + timedelta(hours=stop_hours)
             while True:
                 history = self.model.fit(
                     batch_train_data,
