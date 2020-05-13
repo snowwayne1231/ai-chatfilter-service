@@ -7,7 +7,7 @@ from .classes.prefilter import PreFilter
 from .classes.chatstore import ChatStore
 from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, Textbook
 import numpy as np
-import time
+import time, re
 from service.widgets import printt
 from ai.apps import pinyin_model_path, grammar_model_path
 from django.core.files.base import ContentFile
@@ -41,6 +41,8 @@ class MainService():
     STATUS_PREDICTION_WEHCAT_SUSPICION = 13
     STATUS_PREDICTION_BLOCK_WORD = 14
     STATUS_PREDICTION_SUSPECT_WATER_ARMY = 15
+
+    regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
 
 
     def __init__(self, is_admin_server = False):
@@ -115,6 +117,14 @@ class MainService():
                 return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
 
             if len(text) == 0:
+                return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
+
+            if len(text) == 0:
+                return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
+
+            _is_all_english_word = self.regex_all_english_word.match(text)
+            if _is_all_english_word and len(text) > 7:
+                print('[INFO] All English Allow Pass: [{}].'.format(text))
                 return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
             
             

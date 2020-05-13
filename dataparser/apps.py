@@ -150,8 +150,6 @@ class MessageParser():
     regex_bracket_lv = re.compile("\{viplv(.+?)\}", flags= re.IGNORECASE | re.DOTALL)
     regex_bracket_digits = re.compile("\{[a-zA-Z\d\s\:\-]*\}")
 
-    regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
-
     def __init__(self):
         print('MessageParser init done.')
 
@@ -217,11 +215,6 @@ class MessageParser():
 
         text = self.regex_bracket_digits.sub("", text)
         text = self.trim_only_general_and_chinese(text)
-
-        _is_all_english_word = self.regex_all_english_word.match(text)
-        if _is_all_english_word and len(text) > 7:
-            print('[INFO] All English Allow Pass: [{}].'.format(text))
-            lv = 99
         
         # print(text, lv, anchor)
 
