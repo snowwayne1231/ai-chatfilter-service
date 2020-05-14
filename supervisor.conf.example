@@ -6,7 +6,7 @@ logfile = /opt/logs/supervisord.log
 
 [program:tcpsocket]
 
-directory=/opt/chatfilter
+directory=/opt/chatfilter/main
 
 command=/opt/venv/bin/python manage.py tcpsocket -port 8026 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
 
@@ -24,7 +24,7 @@ redirect_stderr=true
 
 [program:tcpsocket-2]
 
-directory=/opt/chatfilter
+directory=/opt/chatfilter/main
 
 command=/opt/venv/bin/python manage.py tcpsocket -port 8027 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
 
@@ -43,7 +43,7 @@ redirect_stderr=true
 
 [program:django]
 
-directory=/opt/chatfilter
+directory=/opt/chatfilter/main
 
 command=/opt/venv/bin/python manage.py runserver 0.0.0.0:8000
 

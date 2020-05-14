@@ -52,7 +52,7 @@ class WebsocketThread (threading.Thread):
 
 
     def on_start(self):
-        # print('on start: ', self._url)
+        logging.info('[WebsocketThread] On Start Websocket URL: {}'.format(self._url))
         self.ws = websocket.WebSocketApp(self._url,
                                     on_message=self.on_message,
                                     on_error=self.on_error,
@@ -68,7 +68,7 @@ class WebsocketThread (threading.Thread):
 
     
     def on_open(self):
-        logging.info('Web Socket Connection opened.')
+        logging.info('[WebsocketThread] Web Socket Connection opened.')
         self.setting()
         self.is_active = True
 
