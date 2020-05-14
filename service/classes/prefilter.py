@@ -54,36 +54,40 @@ class PreFilter():
         _NE_size = number_size + eng_size
 
         _NE_ratio = _NE_size / length_char
-
-        # print('find_wechat_char _NE_size: ', _NE_size, eng_size, number_size)
         
         is_many_asci = (_NE_size >= 6 and number_size >= 2) or number_size > 5
 
         is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and number_size > 0 and eng_size > 0
 
+        # print('[find_wechat_char] _NE_ratio: ', _NE_ratio, ' | length_char: ', length_char, eng_size, number_size)
+
         if _NE_ratio == 1 and length_char >= 3 and length_char <= 8:
             _english = self.replace_only_left_english(text)
-            _buf = ''
-            _tmp_word = ''
-            _words = []
-            for _ in _english:
-                _buf += _
-                if _buf in self.single_words:
-                    _tmp_word = _buf
-                else:
-                    if _tmp_word:
-                        _words.append(_tmp_word)
-                        _tmp_word = ''
-                        _buf = _
+            # print('[find_wechat_chat] _english:', _english)
             
-            if _tmp_word == _buf:
-                _words.append(_tmp_word)
+            if _english in self.single_words:
+                pass
             else:
-                is_many_language = True
-                next_char += ' | Wrong English Words.'
+                _buf = ''
+                _tmp_word = ''
+                _words = []
+                for _ in _english:
+                    _buf += _
+                    if _buf in self.single_words:
+                        _tmp_word = _buf
+                    else:
+                        if _tmp_word:
+                            _words.append(_tmp_word)
+                            _tmp_word = ''
+                            _buf = _
+                
+                if _tmp_word == _buf:
+                    _words.append(_tmp_word)
+                else:
+                    is_many_language = True
+                    next_char += ' | Wrong English Words.'
 
-
-        # is_many_mixed = _NE_size >= 6 and (length_char - _NE_size) > 4
+        # print('[find_wechat_chat] _words:', _words)
 
         return next_char if is_many_asci or is_many_language else ''
 
