@@ -43,7 +43,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        print('== Consumer connected == channel_name: ', self.channel_name)
+        print('== Consumer connected == channel_name: ', self.channel_name, flush=True)
 
         await self.accept()
 

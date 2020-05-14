@@ -83,8 +83,8 @@ class LaunchTcpSocket():
             self.websocket.start()
 
             while not self.websocket.is_active:
-                time.sleep(0.1)
                 logging.debug('Watting For Connecting.. (Tcpsocket to Websocket).')
+                time.sleep(0.5)
 
             self.pinyin_data = self.websocket.get_remote_pinyin_data()
             self.service_instance = instance.get_main_service()
