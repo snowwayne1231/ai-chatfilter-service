@@ -138,6 +138,7 @@ class WebsocketThread (threading.Thread):
             if isinstance(_msg_id, int):
                 self._waitting_ids.append(_msg_id)
             elif _msg_id == self.key_tcp_poto:
+                logging.info('TCP Socket Setting Done.')
                 pass
             else:
                 # msgid is a string order
