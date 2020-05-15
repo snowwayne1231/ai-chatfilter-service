@@ -41,10 +41,10 @@ def traceback_by_stringcode(_code):
 
         if _query:
             _set = _query.vocabulary.values_list('context', flat=True)
-            _list = list(_set)
+            _list = list(_set)[:3]
             g_tmp_dictionary[_code] = _list
         else:
-            _list = []
+            _list = [_code]
 
     return '|'.join(_list)
 

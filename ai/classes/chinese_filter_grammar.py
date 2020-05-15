@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ai.models import DigitalVocabulary, NewVocabulary
 from .chinese_filter_basic import BasicChineseFilter
 
 import tensorflow as tf

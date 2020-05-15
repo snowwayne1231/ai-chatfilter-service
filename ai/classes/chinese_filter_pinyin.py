@@ -38,7 +38,7 @@ class PinYinFilter(BasicChineseFilter):
     def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[]):
 
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary)
-        self.unknown_position = self.jieba_dict.get_unknown_position()
+        self.unknown_position = self.jieba_dict.get_unknown_position() + 1
         if len(unknown_words) == 0:
             pass
         else:
@@ -269,8 +269,8 @@ class PinYinFilter(BasicChineseFilter):
             print('[predictText] | No result text: {},  words: {},  length: {}'.format(text, _words, len(text)))
             return 0
 
-        if len(self.tmp_encoded_text) > 3:
-            self.tmp_encoded_text = self.tmp_encoded_text[:3]
+        if len(self.tmp_encoded_text) >= 3:
+            self.tmp_encoded_text = self.tmp_encoded_text[-2:]
 
         self.tmp_encoded_text.append([text, _result_text])
 
