@@ -28,7 +28,6 @@ class MainService():
 
     timestamp_ymdh = [0, 0, 0, 0]
     service_avoid_filter_lv = 6
-    service_avoid_ai_lv = 15
 
     
     STATUS_PREDICTION_NO_MSG = 0
@@ -98,6 +97,7 @@ class MainService():
         
         text = ''
         reason_char = ''
+        prediction = 0
         # print('receive message :', message)
 
         if message:
@@ -116,14 +116,13 @@ class MainService():
             if anchor > 0:
                 return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
 
-            if len(text) == 0:
-                return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
+            _length_text = len(text)
 
-            if len(text) == 0:
+            if _length_text == 0:
                 return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
 
             _is_all_english_word = self.regex_all_english_word.match(text)
-            if _is_all_english_word and len(text) > 7:
+            if _is_all_english_word and len(self.pre_filter.replace_only_left_english(text)) > 8:
                 print('[INFO] All English Allow Pass: [{}].'.format(text))
                 return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
             
@@ -153,7 +152,7 @@ class MainService():
 
 
             #main ai
-            if lv < self.service_avoid_ai_lv:
+            if _length_text > 1:  # dont predict for one alphabet
                 prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
 
             if prediction == 0:

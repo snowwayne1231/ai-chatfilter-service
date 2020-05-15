@@ -337,7 +337,7 @@ class PinYinFilter(BasicChineseFilter):
 
                 if __code > _max_size:
                     # find the new word
-                    print('[get_encode_word] | unknown encode word: {},  _words: {}'.format(_, _words))
+                    print('[Pinyin filter][get_encode_word] | unknown encode word: {},  _words: {}'.format(_, _words))
                     _result_text.append(self.unknown_position)
                     
                 elif __code >= 0:

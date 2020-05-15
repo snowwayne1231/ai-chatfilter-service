@@ -31,7 +31,7 @@ def predict_by_ai(text = '', room = '', silence = False, detail=False):
 
 def predict_by_excel_file(file, silence=True, output_json=False, output_excel=False, status_human_delete=3, status_vendor_ai_delete=5, plus=False):
     status_water_army = 2
-    _basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息'], ['STATUS', '審核結果'], ['FIX']]
+    _basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息', '发言内容'], ['STATUS', '審核結果', '状态'], ['FIX']]
     _status_list = [0,1,2,3,4,5,10,11,12,13,14,15]
     _i = 0
 
@@ -72,7 +72,7 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
         for row in row_list:
             # room = row[0]
             fix = int(row[4]) if str(row[4]).isdigit() else None
-            ans = fix if fix is not None and fix >= 0 else int(row[3]) 
+            ans = fix if fix is not None and fix >= 0 else int(row[3])
             txt = row[2]
             room = row[0]
             should_be_deleted = ans > 0
