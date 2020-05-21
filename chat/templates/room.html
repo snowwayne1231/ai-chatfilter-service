@@ -75,6 +75,13 @@
     <div class="bottom range">
 
         <button id="train-remote">Train Remote</button>
+        <button id="refresh-custom-vocabulary">Custom Vocabulary</button>
+
+        <div id="custom-vocabulary-table">
+            <talbe>
+                
+            </talbe>
+        </div>
     </div>
 </body>
 <script>
@@ -86,7 +93,9 @@
         return Math.random().toString(16).substring(2,6);
     });
 
-    var key_send_train_remotely = '__remotetrain__'
+    var key_send_train_remotely = '__remotetrain__';
+    var key_get_model = '__getmodel__';
+    var key_is_admin_client = '__isadminclient__';
 
     var maxSocketRetry = 15;
 
@@ -113,7 +122,6 @@
             messageInputDom.value = '';
 
             document.querySelector('#chat-log').value += (message + '\n');
-
         }
     };
 
@@ -167,6 +175,12 @@
         );
 
         var _limit_chatbox = 100;
+
+        chatSocket.onopen = function() {
+            chatSocket.send(JSON.stringify({
+                'msgid': key_is_admin_client,
+            }));
+        }
 
         chatSocket.onmessage = function(e) {
             var data = JSON.parse(e.data);

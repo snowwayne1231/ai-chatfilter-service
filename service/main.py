@@ -106,7 +106,7 @@ class MainService():
 
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
-                return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence, st_time=st_time)
+                return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
             # elif not detail:   # temporary to use 
             #     return self.return_reslut(0, message=message)
 
@@ -114,14 +114,14 @@ class MainService():
             text, lv, anchor = self.parse_message(message)
 
             if anchor > 0:
-                return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
+                return self.return_reslut(0, message=message, room=room, text=text, silence=silence, st_time=st_time)
 
             _length_text = len(text)
 
             if _length_text == 0:
-                return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
+                return self.return_reslut(0, message=message, room=room, text=text, silence=silence, st_time=st_time)
 
-            _is_all_english_word = self.regex_all_english_word.match(text)
+            _is_all_english_word = self.regex_all_english_word.match(text)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
             if _is_all_english_word and len(self.pre_filter.replace_only_left_english(text)) > 8:
                 print('[INFO] All English Allow Pass: [{}].'.format(text))
                 return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
@@ -133,7 +133,7 @@ class MainService():
                 if reason_char:
 
                     prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
-                    return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence, st_time=st_time)
+                    return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, st_time=st_time)
 
                 
                 # reason_char = self.fuzzy_center.find_fuzzy_block_word(text, silence=silence)
@@ -148,12 +148,12 @@ class MainService():
                 if reason_char:
                     prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
                     # print('deleted by SUSPECT_WATER_ARMY: ', text)
-                    return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence, st_time=st_time)
+                    return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, st_time=st_time)
 
 
             #main ai
-            if _length_text > 1:  # dont predict for one alphabet
-                prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
+            # if _length_text > 0:  # dont predict for one alphabet
+            prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
 
             if prediction == 0:
                 self.store_temporary_text(
@@ -162,13 +162,13 @@ class MainService():
                     room=room,
                 )
 
-            return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+            return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
                 
         else:
 
             prediction = self.STATUS_PREDICTION_NO_MSG
 
-        return self.return_reslut(prediction, message=message, reason=reason_char, silence=silence, st_time=st_time)
+        return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
 
 
 
@@ -341,4 +341,13 @@ class MainService():
         print('=== fit_pinyin_model ===', _hours)
         self.ai_app.pinyin_model.fit_model(train_data=datalist, stop_hours=_hours)
         print('=== fit_pinyin_model end ===')
+
+
+    def get_pinyin_model_path(self):
+        self.open_mind()
+        return self.ai_app.pinyin_model.get_model_path()
+
+    def get_grammar_model_path(self):
+        self.open_mind()
+        return self.ai_app.grammar_model.get_model_path()
 

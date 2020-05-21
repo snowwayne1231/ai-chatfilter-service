@@ -30,10 +30,6 @@ class GrammarFilter(BasicChineseFilter):
     full_words_length = 64
 
     basic_num_dataset = 5000
-
-    # def __init__(self, data = [], load_folder=None):
-        
-    #     super().__init__(data=data, load_folder=load_folder)
     
 
     # override return list

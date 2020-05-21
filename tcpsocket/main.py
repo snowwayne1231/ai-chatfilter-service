@@ -70,7 +70,7 @@ class LaunchTcpSocket():
     def on_websocket_message(self, msgid, message):
         print('on_websocket_message msgid: ', msgid)
         if msgid == self.websocket.key_send_train_remotely:
-            print('message: ', len(message))
+            print('message lenth: ', len(message))
             print('self.server: ', self.server)
             print('service_instance: ', self.service_instance)
             self.service_instance.fit_pinyin_model()

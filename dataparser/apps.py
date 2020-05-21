@@ -364,17 +364,9 @@ class JieBaDictionary():
         print('JieBaDictionary: Start Refresh Dictionary.')
         _older_v_size = len(self.vocabularies)
         
-        # dictionary_list = CustomDictionaryWord.objects.all()
-        # for d in dictionary_list:
-        #     text = d.text
-        #     jieba.add_word(text)
-        #     jieba.add_word(translate_by_string(text))
-
-        # blockwords = Blockword.objects.all()
-        # for b in blockwords:
-        #     text = b.text 
-        #     jieba.add_word(text)
-        #     jieba.add_word(translate_by_string(text))
+        dictionary_list = CustomDictionaryWord.objects.values_list('pinyin', flat=True)
+        for d in dictionary_list:
+            self.add_word(d)
 
         _percent = 0
 

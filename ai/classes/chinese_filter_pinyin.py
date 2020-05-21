@@ -194,12 +194,8 @@ class PinYinFilter(BasicChineseFilter):
 
     # override
     def load(self, folder):
-        print('Starting load model: ', folder)
-        self.saved_folder = folder
-        self.load_model(folder + '/model.h5')
+        super().load(folder)
         self.load_tokenizer_vocabularies()
-        
-        print('Successful load model: ', folder)
 
     
     def load_tokenizer_vocabularies(self):
@@ -281,14 +277,19 @@ class PinYinFilter(BasicChineseFilter):
         # print('possible: ', possible)
 
         # should be delete and lv over power
-        if _lv_disparity > 0 and possible > 0:
-            
+        if possible > 0:
             _ratio_zero = predicted[0]
             _ratio_predict = predicted[possible]
-            _ratio_lv_plus = _lv_disparity * 0.15
+            if _lv_disparity > 0:
+                _ratio_lv_plus = _lv_disparity * 0.15
 
-            if (_ratio_zero + _ratio_lv_plus) > _ratio_predict:
-                possible = 0
+                if (_ratio_zero + _ratio_lv_plus) > _ratio_predict:
+                    possible = 0
+                
+            elif len(_words) < 2:
+                _ratio_plus = 0.25
+                if (_ratio_zero + _ratio_plus) > _ratio_predict:
+                    possible = 0
 
         return possible
 

@@ -131,6 +131,7 @@ class PreFilter():
             (u'\u0363', u'\u058f'), # suspect english
             (u'\u05d0', u'\u0dff'), # suspect english
             (u'\u0fff', u'\u1100'), # rare symbol
+            (u'\u13a0', u'\u1a1f'), # rare symbol 
             (u'\u1b7f', u'\u1fff'), # rare symbol
             (u'\u203d', u'\u23e8'), # rare symbol so many close to be suspect
             (u'\u23fb', u'\u2647'), # rare symbol so many close to be suspect

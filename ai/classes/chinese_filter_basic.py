@@ -95,11 +95,16 @@ class BasicChineseFilter():
 
 
     def load(self, folder):
-        print('Starting load model: ', folder)
-        self.saved_folder = folder
-        self.load_model(folder + '/model.h5')
+        if folder:
+            self.saved_folder = folder
+
+        model_path = self.get_model_path()
         
-        print('Successful load model. ', folder)
+        print('Starting load model: ', model_path)
+        
+        self.load_model(model_path)
+        
+        print('Successful load model. ', model_path)
         
 
     def save_model(self, path):
@@ -354,4 +359,8 @@ class BasicChineseFilter():
 
     def get_saved_folder(self):
         return self.saved_folder
+
+
+    def get_model_path(self):
+        return self.get_saved_folder() + '/model.h5'
 

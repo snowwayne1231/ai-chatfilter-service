@@ -15,16 +15,23 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from .views import ServiceAPIView
+from django.http import Http404, HttpResponse
+from django.views.static import serve
 from service import instance
-from django.http import FileResponse, HttpResponse
+from .views import ServiceAPIView
+import os
 
-# main_service = instance.get_main_service(is_admin=True)
+main_service = instance.get_main_service(is_admin=True)
 
-# def read_pinyin_file(request):
-#     _file = main_service.get_pinyin_model_file()
-#     print('_file: ', _file)
-#     return HttpResponse(_file, content_type='application/octet-stream')
+def read_model_path(request, name):
+    if name == 'pinyin':
+        _path = main_service.get_pinyin_model_path()
+    elif name == 'grammar':
+        _path = main_service.get_grammar_model_path()
+    else:
+        raise Http404('Model Not Found.')
+    
+    return serve(request, os.path.basename(_path), os.path.dirname(_path))
 
 
 urlpatterns = [
@@ -33,5 +40,5 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
     path('api/upload/', ServiceAPIView.as_view()),
-    # path('api/model/pinyin', read_pinyin_file),
+    path('api/model/<slug:name>', read_model_path),
 ]
