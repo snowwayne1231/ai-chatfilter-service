@@ -33,12 +33,14 @@ class PinYinFilter(BasicChineseFilter):
     unknown_words = []
     unknown_words_new_full_message = []
     unknown_position = 0
+    alphabet_position = 0
     
 
     def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[]):
 
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary)
         self.unknown_position = self.jieba_dict.get_unknown_position() + 1
+        self.alphabet_position = self.jieba_dict.get_reserve_position() + 1
         if len(unknown_words) == 0:
             pass
         else:
@@ -211,18 +213,10 @@ class PinYinFilter(BasicChineseFilter):
     def tokenize_data(self, datalist):
         print('Start Tokenize Data.')
         self.load_tokenizer_vocabularies()
-        encoder = self.encoder
         # unknowns = self.unknown_words
         _i = 0
         _total = len(datalist)
         tokenized = []
-
-        def get_encode(text):
-            encoded_list = encoder.encode(text)
-            if len(encoded_list) > 0:
-                return encoded_list[0]
-            else:
-                return 0
 
         # print(datalist[:10])
         
@@ -232,16 +226,9 @@ class PinYinFilter(BasicChineseFilter):
                 _percent = _i / _total * 100
                 print(" {:.2f}%".format(_percent), end="\r")
 
-            _list = []
-            for word in words:
-                _list.append(get_encode(word))
+            _list, _has_unknown = self.get_encode_word(words)
 
-            if _list and len(_list) >0:
-                tokenized.append(_list)
-            
-            # print('words: ', words)
-            # print('next list: ', _list)
-        
+            tokenized.append(_list)
         
         print('Tokenize Done.')
         
@@ -258,7 +245,9 @@ class PinYinFilter(BasicChineseFilter):
 
         _lv_disparity = lv - self.avoid_lv
         
-        _result_text = self.get_encode_word(_words)
+        _result_text, _has_unknown = self.get_encode_word(_words)
+        if _has_unknown:
+            print('[Pinyin filter][predictText] _has_unknown: ', text)
         
         
         if len(_result_text) == 0:
@@ -328,6 +317,7 @@ class PinYinFilter(BasicChineseFilter):
         _result_text = []
         _encoder = self.encoder
         _max_size = self.encoder_size
+        _found_other_unknown = False
 
         for _ in _words:
             
@@ -338,13 +328,20 @@ class PinYinFilter(BasicChineseFilter):
 
                 if __code > _max_size:
                     # find the new word
-                    print('[Pinyin filter][get_encode_word] | unknown encode word: {},  _words: {}'.format(_, _words))
-                    _result_text.append(self.unknown_position)
+                    if len(_) <= 2:
+
+                        _result_text.append(self.alphabet_position)
+                    
+                    else:
+
+                        print('[Pinyin filter][get_encode_word] | unknown encode word: {},  _words: {}'.format(_, _words))
+                        _found_other_unknown = True
+                        _result_text.append(self.unknown_position)
                     
                 elif __code >= 0:
                     _result_text.append(__code)
         
-        return _result_text
+        return _result_text, _found_other_unknown
 
 
     # override

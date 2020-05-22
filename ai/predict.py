@@ -70,10 +70,11 @@ def predict_by_excel_file(file, silence=True, output_json=False, output_excel=Fa
     try:
         
         for row in row_list:
-            # room = row[0]
+            txt = row[2]
+            if not txt:
+                continue
             fix = int(row[4]) if str(row[4]).isdigit() else None
             ans = fix if fix is not None and fix >= 0 else int(row[3])
-            txt = row[2]
             room = row[0]
             should_be_deleted = ans > 0
             # print(txt)

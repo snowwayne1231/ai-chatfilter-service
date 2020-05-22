@@ -272,6 +272,7 @@ class JieBaDictionary():
     unknown_character = '#UNKNOW#'
     pad_character = '#PAD#'
     number_character = '#NUM#'
+    reserve_character = '#RESERVE#'
     folder = os.path.dirname(__file__)
     pickle_folder = os.path.dirname(__file__) + '/_pickles'
     vocabularies = []
@@ -528,10 +529,13 @@ class JieBaDictionary():
         if pure:
             return self.vocabularies
         else:
-            return [self.pad_character, self.unknown_character, self.number_character, '#reserve#'] + self.vocabularies
+            return [self.pad_character, self.unknown_character, self.number_character, self.reserve_character] + self.vocabularies
 
     def get_unknown_position(self):
         return self.get_vocabulary().index(self.unknown_character)
+
+    def get_reserve_position(self):
+        return self.get_vocabulary().index(self.reserve_character)
 
     def is_new_word(self, _word):
         return _word not in self.vocabularies

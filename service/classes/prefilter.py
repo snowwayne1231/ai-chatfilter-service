@@ -38,6 +38,9 @@ class PreFilter():
         next_char = ''
         text = text.replace(' ', '')
         length_char = len(text)
+
+        if length_char == 0:
+            return ''
     
         for u in text:
             if self.is_number(u):
