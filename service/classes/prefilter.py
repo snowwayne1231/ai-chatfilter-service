@@ -36,7 +36,10 @@ class PreFilter():
         eng_size = 0
         qk_size = 0
         next_char = ''
-        text = text.replace(' ', '')
+        has_space = bool(' ' in text)
+        if has_space:
+            text = text.replace(' ', '')
+        
         length_char = len(text)
 
         if length_char == 0:
@@ -64,7 +67,7 @@ class PreFilter():
 
         # print('[find_wechat_char] _NE_ratio: ', _NE_ratio, ' | length_char: ', length_char, eng_size, number_size)
 
-        if _NE_ratio == 1 and length_char >= 3 and length_char <= 8:
+        if _NE_ratio == 1 and length_char >= 3 and length_char <= 9:
             _english = self.replace_only_left_english(text)
             # print('[find_wechat_chat] _english:', _english)
             

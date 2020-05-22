@@ -399,6 +399,7 @@ class JieBaDictionary():
 
         if len(self.vocabularies) > _older_v_size:
             self.save_vocabularies()
+            print('Refresh Vocabulary: ', self.vocabularies[-10:])
         
         print('FREQ length: ', len(jieba.dt.FREQ), ', Vocabulary: ', len(self.vocabularies))
         # print(len(self.none_tone_map))
