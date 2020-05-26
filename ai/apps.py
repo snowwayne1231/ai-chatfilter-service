@@ -18,6 +18,8 @@ class MainAiApp():
     pinyin_model = None
     grammar_model = None
 
+    code_grammar_delete = 21
+
     def __init__(self, jieba_vocabulary=[], pinyin_unknown_words=[]):
         print('=============  A.I Init  =============')
         print('using tensorflow version: ', tf.__version__)
@@ -44,6 +46,7 @@ class MainAiApp():
             prediction = grammar_prediction
             if grammar_prediction > 0 and with_reason:
                 reason = 'delted by grammar model'
+                prediction = self.code_grammar_delete
 
 
         return prediction, reason

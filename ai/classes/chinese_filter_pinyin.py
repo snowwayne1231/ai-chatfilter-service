@@ -19,6 +19,8 @@ class PinYinFilter(BasicChineseFilter):
     """
     """
 
+    widen_lv = 3
+
     digital_vocabulary_map = {}
     tokenizer_vocabularies = []
     num_status_classs = 8
@@ -40,7 +42,7 @@ class PinYinFilter(BasicChineseFilter):
 
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary)
         self.unknown_position = self.jieba_dict.get_unknown_position() + 1
-        self.alphabet_position = self.jieba_dict.get_reserve_position() + 1
+        self.alphabet_position = self.jieba_dict.get_alphabet_position() + 1
         if len(unknown_words) == 0:
             pass
         else:
@@ -91,7 +93,7 @@ class PinYinFilter(BasicChineseFilter):
         all_scs = self.num_status_classs
 
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs))
+        model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs, mask_zero=True))
         # model.add(tf.keras.layers.Flatten())
         model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs)))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
@@ -242,16 +244,14 @@ class PinYinFilter(BasicChineseFilter):
 
         if len(_words) == 0:
             return 0
-
-        _lv_disparity = lv - self.avoid_lv
         
         _result_text, _has_unknown = self.get_encode_word(_words)
         if _has_unknown:
-            print('[Pinyin filter][predictText] _has_unknown: ', text)
+            print('[Pinyin filter][predictText] _has_unknown: ', text, _words)
         
         
         if len(_result_text) == 0:
-            print('[predictText] | No result text: {},  words: {},  length: {}'.format(text, _words, len(text)))
+            print('[Pinyin filter][predictText] | No result text: {},  words: {},  length: {}'.format(text, _words, len(text)))
             return 0
 
         if len(self.tmp_encoded_text) >= 3:
@@ -267,6 +267,7 @@ class PinYinFilter(BasicChineseFilter):
 
         # should be delete and lv over power
         if possible > 0:
+            _lv_disparity = lv - self.widen_lv + 1
             _ratio_zero = predicted[0]
             _ratio_predict = predicted[possible]
             if _lv_disparity > 0:
@@ -275,10 +276,10 @@ class PinYinFilter(BasicChineseFilter):
                 if (_ratio_zero + _ratio_lv_plus) > _ratio_predict:
                     possible = 0
                 
-            elif len(_words) < 2:
-                _ratio_plus = 0.25
-                if (_ratio_zero + _ratio_plus) > _ratio_predict:
-                    possible = 0
+            # elif len(_words) < 2:
+            #     _ratio_plus = 0.25
+            #     if (_ratio_zero + _ratio_plus) > _ratio_predict:
+            #         possible = 0
 
         return possible
 
@@ -334,7 +335,7 @@ class PinYinFilter(BasicChineseFilter):
                     
                     else:
 
-                        print('[Pinyin filter][get_encode_word] | unknown encode word: {},  _words: {}'.format(_, _words))
+                        # print('[Pinyin filter][get_encode_word] | unknown encode word: {},  _words: {}'.format(_, _words))
                         _found_other_unknown = True
                         _result_text.append(self.unknown_position)
                     
@@ -345,11 +346,35 @@ class PinYinFilter(BasicChineseFilter):
 
 
     # override
-    def get_train_batchs(self):
+    def get_train_batchs(self, check_duplicate= True):
         
         x, y = self.get_xy_data()
 
         tokenized_list = self.tokenize_data(x)
+
+        if check_duplicate:
+
+            _i = 0
+            _check_map = {}
+            _all_idx = []
+
+            for _ in tokenized_list:
+                _zip_str = '|'.join(str(__) for __ in _)
+                _map_value = _check_map.get(_zip_str, None)
+                _y_value = 0 if y[_i] == 0 else 1 
+
+                if _map_value:
+                    if _map_value != _y_value and _zip_str not in _all_idx:
+                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', [self.transform_back_str(xx) for xx in x[_i]], ' | ', _zip_str, " i: ", _i, ' y: ', y[_i])
+                        _all_idx.append(_zip_str)
+                else:
+                    _check_map[_zip_str] = _y_value
+                
+                _i += 1
+
+            if len(_all_idx) > 0:
+                print('[Error] Failed To Start Train Because Data is Confusion.')
+                exit(2)
 
         _basic = int(self.basic_num_dataset / len(tokenized_list))
 

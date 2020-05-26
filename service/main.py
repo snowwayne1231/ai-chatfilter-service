@@ -27,7 +27,7 @@ class MainService():
     is_admin_server = False
 
     timestamp_ymdh = [0, 0, 0, 0]
-    service_avoid_filter_lv = 6
+    service_avoid_filter_lv = 5
 
     
     STATUS_PREDICTION_NO_MSG = 0
@@ -151,9 +151,9 @@ class MainService():
                     return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, st_time=st_time)
 
 
-            #main ai
-            # if _length_text > 0:  # dont predict for one alphabet
-            prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
+                #main ai
+                # if _length_text > 0:  # dont predict for one alphabet
+                prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
 
             if prediction == 0:
                 self.store_temporary_text(
@@ -330,7 +330,7 @@ class MainService():
 
     def get_train_textbook(self):
         _limit = 5000
-        queryset = Textbook.objects.filter(type=1).values_list('text', 'model', 'status').order_by('-id')[:_limit]
+        queryset = Textbook.objects.filter(type=1).values_list('model', 'type', 'text', 'status').order_by('-id')[:_limit]
         result = list(queryset)
         # print('get_train_textbook: ', result)
         return result

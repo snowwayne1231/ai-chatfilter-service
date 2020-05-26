@@ -24,7 +24,7 @@ class BasicChineseFilter():
     
     full_words_length = 64
     status_classsets = 8
-    avoid_lv = 6
+    avoid_lv = 3
     length_x = 0
 
     

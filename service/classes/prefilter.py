@@ -156,6 +156,7 @@ class PreFilter():
             (u'\uff41', u'\uff5a'), # full english
             (u'\uffa0', u'\uffe1'),
             (u'\uffe6', u'\uffff'),
+            (u'\U0001d400', u'\U0001d7ff'), # utf-16 special number and english
             (u'\U0001f000', u'\U0001f2ff'), # utf-16 special number and english
             (u'\U0001f519', u'\U0001f524'), # utf-16 suspect english
             (u'\U0001f5da', u'\U0001f5db'), # utf-16 suspect english

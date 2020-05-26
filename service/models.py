@@ -71,7 +71,7 @@ class UnknownWord(models.Model):
 class Textbook(models.Model):
     message = models.CharField(max_length=255)
     text = models.CharField(max_length=64)
-    type = models.IntegerField(default=1)  # 1= normal, 2=check right
+    type = models.IntegerField(default=1)  # 1= normal, 2= check right
     status = models.IntegerField(default=1)
     model = models.IntegerField(default=1)  # 0= all, 1= pinyin, 2= grammar
     date = models.DateTimeField(auto_now=True, blank=True)

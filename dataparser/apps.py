@@ -269,16 +269,19 @@ class JieBaDictionary():
         
     """
     split_character = '_'
-    unknown_character = '#UNKNOW#'
+    unknown_character = '#UNK#'
     pad_character = '#PAD#'
     number_character = '#NUM#'
-    reserve_character = '#RESERVE#'
+    alphabet_character = '#ALP#'
+    reserve_character = '#RES#'
     folder = os.path.dirname(__file__)
     pickle_folder = os.path.dirname(__file__) + '/_pickles'
+    origin_vocabulary = []
     vocabularies = []
     none_tone_map = {}
 
     def __init__(self, vocabulary=[]):
+        self.origin_vocabulary = [self.pad_character, self.unknown_character, self.number_character, self.alphabet_character, self.reserve_character]
         jieba.re_eng = re.compile('[a-zA-Z0-9_]', re.U)
         jieba.initialize(dictionary=self.folder + '/assets/jieba.txt')
 
@@ -530,13 +533,16 @@ class JieBaDictionary():
         if pure:
             return self.vocabularies
         else:
-            return [self.pad_character, self.unknown_character, self.number_character, self.reserve_character] + self.vocabularies
+            return self.origin_vocabulary + self.vocabularies
 
     def get_unknown_position(self):
-        return self.get_vocabulary().index(self.unknown_character)
+        return self.origin_vocabulary.index(self.unknown_character)
+
+    def get_alphabet_position(self):
+        return self.origin_vocabulary.index(self.alphabet_character)
 
     def get_reserve_position(self):
-        return self.get_vocabulary().index(self.reserve_character)
+        return self.origin_vocabulary.index(self.reserve_character)
 
     def is_new_word(self, _word):
         return _word not in self.vocabularies
