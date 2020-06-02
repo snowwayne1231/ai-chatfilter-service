@@ -29,13 +29,15 @@ class socketTcp(Tcp):
     on_client_open = None
     on_client_close = None
     service_instance = None
+    nickname_filter_instance = None
     
 
-    def __init__(self, callback, service_instance, on_client_open = None, on_client_close = None, *args, **keys):
+    def __init__(self, callback, service_instance, on_client_open = None, on_client_close = None, nickname_filter_instance = None, *args, **keys):
         self.callback = callback
         self.on_client_open = on_client_open
         self.on_client_close = on_client_close
         self.service_instance = service_instance
+        self.nickname_filter_instance = nickname_filter_instance
         
         super().__init__(*args, **keys)
     
@@ -123,6 +125,20 @@ class socketTcp(Tcp):
                 logging.debug('msgid: {}'.format(unpacked_data.msgid))
                 logging.debug('code: {}'.format(unpacked_data.code))
                 packed_res = pack(0x000001)
+
+            elif unpacked_data.cmd == 0x040007:
+                logging.debug('Recived Package is [ Nickname Change Request ] id: {} | name: {}'.format(unpacked_data.reqid, unpacked_data.nickname))
+
+                if self.nickname_filter_instance:
+
+                    ai_results = self.nickname_filter_instance.think(nickname=unpacked_data.nickname)
+                    code = ai_results.get('code', 0)
+
+                else:
+
+                    code = 0
+
+                packed_res = pack(0x040008, reqid=unpacked_data.reqid, code=code)
 
             else:
                 logging.debug('Recived Package Unknow.')

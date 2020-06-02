@@ -1,4 +1,5 @@
 from service.main import MainService
+from service.nickname import NicknameFilter
 
 
 
@@ -8,6 +9,7 @@ class MemoryController(object):
     """
 
     main_service = None
+    nickname_filter = None
 
     def __init__(self):
         pass
@@ -19,8 +21,15 @@ class MemoryController(object):
 
         return self.main_service
 
+    def get_nickname_filter(self, is_admin = False):
+        if self.nickname_filter is None:
+            self.nickname_filter = NicknameFilter(is_admin)
+
+        return self.nickname_filter
+
 
 
 mc = MemoryController()
 
 get_main_service = mc.get_main_service
+get_nickname_filter = mc.get_nickname_filter

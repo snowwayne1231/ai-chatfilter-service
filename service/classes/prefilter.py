@@ -141,6 +141,7 @@ class PreFilter():
             (u'\u1b7f', u'\u1fff'), # rare symbol
             (u'\u203d', u'\u23e8'), # rare symbol so many close to be suspect
             (u'\u23fb', u'\u2647'), # rare symbol so many close to be suspect
+            (u'\u2669', u'\u266f'), # musical note
             (u'\u26a2', u'\u26bc'), # rare symbol so many close to be suspect
             (u'\u2710', u'\u271f'), # rare symbol and suspect digits
             (u'\u2776', u'\u2b4f'), # rare symbol and suspect digits
@@ -156,6 +157,7 @@ class PreFilter():
             (u'\uff41', u'\uff5a'), # full english
             (u'\uffa0', u'\uffe1'),
             (u'\uffe6', u'\uffff'),
+            (u'\U00010900', u'\U0001107f'), # utf-16 special number
             (u'\U0001d400', u'\U0001d7ff'), # utf-16 special number and english
             (u'\U0001f000', u'\U0001f2ff'), # utf-16 special number and english
             (u'\U0001f519', u'\U0001f524'), # utf-16 suspect english

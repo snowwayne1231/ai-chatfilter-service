@@ -14,6 +14,7 @@ class LaunchTcpSocket():
     addr = (None, None)
     server = None
     service_instance = None
+    nickname_filter_instance = None
     websocket = None
     ws_url = ''
     remote_vocabulary = []
@@ -38,9 +39,10 @@ class LaunchTcpSocket():
         on_open = self.handle_tcp_open
         on_close = self.handle_tcp_close
         service_instance = self.service_instance
+        nickname_filter_instance = self.nickname_filter_instance
         
         def createHandler(*args, **keys):
-            return socketTcp(callback, service_instance, on_open, on_close, *args, **keys)
+            return socketTcp(callback, service_instance, on_open, on_close, nickname_filter_instance, *args, **keys)
         return createHandler
     
 
@@ -71,9 +73,21 @@ class LaunchTcpSocket():
         print('on_websocket_message msgid: ', msgid)
         if msgid == self.websocket.key_send_train_remotely:
             print('message lenth: ', len(message))
-            print('self.server: ', self.server)
-            print('service_instance: ', self.service_instance)
             self.service_instance.fit_pinyin_model()
+
+            if os.path.isdir(pinyin_saved_folder):
+
+                piny = PinYinFilter(load_folder=pinyin_saved_folder)
+
+                history = piny.fit_model(train_data=result_list, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
+
+            else:
+
+                piny = PinYinFilter(data=result_list)
+                # piny.transfrom_column('TEXT')
+                piny.build_model()
+
+                history = piny.fit_model(save_folder=pinyin_saved_folder, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
 
     
 
@@ -89,6 +103,8 @@ class LaunchTcpSocket():
             self.pinyin_data = self.websocket.get_remote_pinyin_data()
             self.service_instance = instance.get_main_service()
             self.service_instance.open_mind(pinyin_data=self.pinyin_data)
+
+            self.nickname_filter_instance = instance.get_nickname_filter()
 
             self.server = socketserver.ThreadingTCPServer(self.addr, self.handler_factory())
             logging.info('TCP Socket Server launched on port :: {}'.format(self.addr[1]))

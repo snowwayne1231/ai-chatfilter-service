@@ -50,8 +50,8 @@ def let_user_pick(options):
         pass
     return None
 
-cmd_options = ['hearting', 'login', 'login response', 'chatting', 'chatting json', 'chat response']
-cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x041003, 0x040004]
+cmd_options = ['hearting', 'login', 'login response', 'chatting', 'chatting json', 'chat response', 'nickname filter']
+cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x041003, 0x040004, 0x040007]
 
 is_keep_chatting = False
 msgid = 0
@@ -136,6 +136,13 @@ while True:
         print("Please enter code: ")
         code = input()
         packed = pack(command_hex, msgid=int(msgid), code=int(code))
+
+    elif command_hex == 0x040007:
+
+        print("Please enter nickname: ")
+
+        nickname = input()
+        packed = pack(command_hex, reqid=12345, nickname=nickname)
 
     
     # if not data or data=='exit':

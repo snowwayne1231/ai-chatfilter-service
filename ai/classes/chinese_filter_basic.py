@@ -283,6 +283,7 @@ class BasicChineseFilter():
 
         data_length = self.data_length
         _i = 0
+        _has_not_word_value = False
 
         for _d in self.data:
             _t = _d[x_idx]
@@ -293,9 +294,12 @@ class BasicChineseFilter():
                 else:
                     continue
                 _vip_lv = _d[vip_lv_idx]
-                if _vip_lv < self.avoid_lv or _status > 0:
-                    new_x.append(_t)
-                    new_y.append(_status if _status != '' else __auto_human_delete_if_not)
+                # if _vip_lv < self.avoid_lv or _status > 0:
+                new_x.append(_t)
+                new_y.append(_status if _status != '' else __auto_human_delete_if_not)
+            else:
+                _has_not_word_value = True
+                print('Not Found: ', _d)
 
             if _i % 1000 == 0:
                 _percent = _i / data_length
@@ -304,6 +308,8 @@ class BasicChineseFilter():
             _i += 1
         
         print("Getting XY data sets is done. Total count: ", len(new_x))
+        if _has_not_word_value:
+            exit(2)
         return new_x, new_y
 
 

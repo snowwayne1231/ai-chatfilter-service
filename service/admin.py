@@ -109,7 +109,7 @@ class BsExportForm(forms.Form):
 class GoodSentenceAdmin(admin.ModelAdmin):
     fields = ['message', 'text', 'type', 'status']
     list_display = ['message', 'text', 'type', 'status', 'date']
-    search_fields = ['text']
+    search_fields = ['message']
     empty_value_display = '---'
 
 class AnalyzingDataAdmin(admin.ModelAdmin):

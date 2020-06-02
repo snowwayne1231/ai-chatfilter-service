@@ -9,7 +9,7 @@ from service.models import Blockword
 from ai.models import SoundVocabulary, NewVocabulary, DigitalVocabulary
 from ai.classes.translator_pinyin import translate_by_string
 
-import xlrd
+import xlrd, openpyxl
 import os
 import re
 import jieba
@@ -132,6 +132,26 @@ class ExcelParser():
 
         return ary
 
+
+    def export_excel(self, file=None, data=[]):
+        _new_book = openpyxl.Workbook()
+        _newsheet = _new_book.create_sheet(index=0)
+
+        _r = 1
+        for _ in data:
+            _c = 1
+            for loc in _:
+                if loc.isdigit():
+                    _newsheet.cell(_r, _c).value = int(loc)
+                else:
+                    _newsheet.cell(_r, _c).value = loc
+                _c += 1
+            _r += 1
+
+        if file:
+            print('Save Trim File: ', file)
+            _new_book.save(file)
+        
 
 
 class MessageParser():

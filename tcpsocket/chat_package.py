@@ -61,6 +61,24 @@ def pack(cmd, **options):
 
         size = struct.calcsize(ChatFilterResponsePackage.fmt)
         package = struct.pack(ChatFilterResponsePackage.fmt, cmd, size, msgid, code)
+
+    elif cmd == NickNameFilterRequestPackage.m_cmd:
+
+        reqid = options.get('reqid', 0x000000)
+        nickname = options.get('nickname', '')
+        byte_nickname = bytes(nickname, 'utf-8')
+
+        size = struct.calcsize(NickNameFilterRequestPackage.fmt) + len(byte_nickname)
+
+        package = struct.pack(NickNameFilterRequestPackage.fmt, cmd, size, reqid) + byte_nickname
+
+    elif cmd == NickNameFilterResponsePackage.m_cmd:
+
+        reqid = options.get('reqid', 0x000000)
+        code = options.get('code', 0x000000)
+
+        size = struct.calcsize(NickNameFilterResponsePackage.fmt)
+        package = struct.pack(NickNameFilterResponsePackage.fmt, cmd, size, reqid, code)
     
 
     return package
@@ -94,6 +112,14 @@ def unpack(buffer):
     elif cmd == ChatFilterResponsePackage.m_cmd:
 
         return ChatFilterResponsePackage(buffer)
+
+    elif cmd == NickNameFilterRequestPackage.m_cmd:
+
+        return NickNameFilterRequestPackage(buffer)
+
+    elif cmd == NickNameFilterResponsePackage.m_cmd:
+
+        return NickNameFilterResponsePackage(buffer)
     
 
     return BasicStructPackage(buffer)
@@ -237,4 +263,43 @@ class ChatFilterResponsePackage(BasicStructPackage):
         self.cmd = cmd
         self.size = size
         self.msgid = msgid
+        self.code = code
+
+
+class NickNameFilterRequestPackage(BasicStructPackage):
+    m_cmd = 0x040007
+    fmt = '!3i'
+    reqid = 0x000000
+    nickname = ''
+
+    def parse(self, buffer):
+        buffer_size = struct.calcsize(self.fmt)
+        _fmt_buffer = buffer[:buffer_size]
+        _left_buffer = buffer[buffer_size:]
+
+        cmd, size, reqid = struct.unpack(self.fmt, _fmt_buffer)
+        _left_size = size - buffer_size
+        self.cmd = cmd
+        self.size = size
+        self.reqid = reqid
+
+        try:
+            self.nickname = _left_buffer[:_left_size].decode('utf-8')
+        except:
+            logging.error('Unpack NickNameFilterRequestPackage Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
+            self.nickname = _left_buffer[:_left_size].decode('utf-8', "ignore")
+
+
+class NickNameFilterResponsePackage(BasicStructPackage):
+    m_cmd = 0x040008
+    fmt = '!4i'
+    reqid = 0x000000
+    code = 0x000000 # 0:normal; 1:ads; 2:dirty words; 3:invalid pattern; 4:system failure
+
+    def parse(self, buffer):
+
+        cmd, size, reqid, code = struct.unpack(self.fmt, buffer)
+        self.cmd = cmd
+        self.size = size
+        self.reqid = reqid
         self.code = code

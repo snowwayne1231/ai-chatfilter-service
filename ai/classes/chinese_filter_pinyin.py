@@ -356,23 +356,29 @@ class PinYinFilter(BasicChineseFilter):
 
             _i = 0
             _check_map = {}
-            _all_idx = []
+            _check_map_idx = {}
+            _all_duplicate_zipstr = []
 
             for _ in tokenized_list:
                 _zip_str = '|'.join(str(__) for __ in _)
                 _map_value = _check_map.get(_zip_str, None)
-                _y_value = 0 if y[_i] == 0 else 1 
+                _y_value = 0 if y[_i] == 0 else 1
+                # print(_i, ': ', [self.transform_back_str(xx) for xx in x[_i]], _)
 
                 if _map_value:
-                    if _map_value != _y_value and _zip_str not in _all_idx:
-                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', [self.transform_back_str(xx) for xx in x[_i]], ' | ', _zip_str, " i: ", _i, ' y: ', y[_i])
-                        _all_idx.append(_zip_str)
+                    if _map_value != _y_value and _zip_str not in _all_duplicate_zipstr:
+                        _all_duplicate_zipstr.append(_zip_str)
+
+                    if _zip_str in _all_duplicate_zipstr:
+                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', [self.transform_back_str(xx) for xx in x[_i]], ' | ', " idx: ", _i, ' y: ', y[_i], ' against idx: ', _check_map_idx[_zip_str])
+                    
                 else:
                     _check_map[_zip_str] = _y_value
+                    _check_map_idx[_zip_str] = _i
                 
                 _i += 1
 
-            if len(_all_idx) > 0:
+            if len(_all_duplicate_zipstr) > 0:
                 print('[Error] Failed To Start Train Because Data is Confusion.')
                 exit(2)
 
