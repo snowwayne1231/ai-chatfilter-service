@@ -57,6 +57,7 @@ class LaunchTcpSocket():
                 _msg = data.msg
                 _room = data.roomid if hasattr(data, 'roomid') else ''
                 self.websocket.send_msg(msgid=_msgid, msg=_msg, room=_room, prediction=prediction)
+                
         else:
             logging.error('Websocket is Not Working. [txt: {}]'.format(data.msg))
 
@@ -124,8 +125,7 @@ class LaunchTcpSocket():
 
         self.server.shutdown()
         sys.exit(2)
-        
-        
+
 
 
 host = '0.0.0.0'

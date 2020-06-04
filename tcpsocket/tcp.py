@@ -141,6 +141,7 @@ class socketTcp(Tcp):
                 packed_res = pack(0x040008, reqid=unpacked_data.reqid, code=code)
 
             else:
+                
                 logging.debug('Recived Package Unknow.')
                 packed_res = pack(0x000001)
             

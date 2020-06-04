@@ -10,7 +10,10 @@ class NicknameFilter():
 
     """
 
-    CODE_TOO_MANY_ENGLISH_AND_DIGITAL = 1
+    CODE_SUSPECT_AD = 1
+    CODE_DIRTY_WORD = 2
+    CODE_INVALID_PATTERN = 3
+    CODE_SYSTEM_FAILURE = 4
     regex_is_eng = re.compile('[a-zA-Z]')
 
     def __init__(self, is_admin=True):
@@ -31,6 +34,6 @@ class NicknameFilter():
                 eng += 1
 
         if digits > 0 and digits + eng >= 3:
-            result['code'] = self.CODE_TOO_MANY_ENGLISH_AND_DIGITAL
+            result['code'] = self.CODE_INVALID_PATTERN
         
         return result
