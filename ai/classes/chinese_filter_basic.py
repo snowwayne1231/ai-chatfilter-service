@@ -299,7 +299,7 @@ class BasicChineseFilter():
                 new_y.append(_status if _status != '' else __auto_human_delete_if_not)
             else:
                 _has_not_word_value = True
-                print('Not Found: ', _d)
+                print('[get_xy_data] Not Found: ', _d)
 
             if _i % 1000 == 0:
                 _percent = _i / data_length
