@@ -1,11 +1,14 @@
 from tcpsocket.to_websocket import WebsocketThread
 from tcpsocket.tcp import socketTcp
 
+from http.client import HTTPConnection
 import socketserver, socket
 import os, sys, getopt
 import logging, time
 # sys.path.append("..")
 from service import instance
+from ai.helper import get_pinyin_path, get_grammar_path, get_pinyin_dictionary_path
+from dataparser.classes.store import ListPickle
 
 
 
@@ -16,6 +19,8 @@ class LaunchTcpSocket():
     service_instance = None
     nickname_filter_instance = None
     websocket = None
+    websocket_host = None
+    websocket_port = None
     ws_url = ''
     remote_vocabulary = []
     local_host = (None, None)
@@ -29,6 +34,8 @@ class LaunchTcpSocket():
 
         self.addr = (host, port)
         self.websocket = WebsocketThread("Websocket Thread-1", host=webhost, port=webport, local_host=self.local_host, on_message_callback=self.on_websocket_message)
+        self.websocket_host = webhost
+        self.websocket_port = webport
         self.ws_url = self.websocket.get_ws_url()
 
         self.start()
@@ -96,12 +103,56 @@ class LaunchTcpSocket():
         try:
 
             self.websocket.start()
-
+            _max_times = 50
             while not self.websocket.is_active:
                 logging.debug('Watting For Connecting.. (Tcpsocket to Websocket).')
                 time.sleep(0.5)
+                _max_times -= 1
+                if _max_times <= 0:
+                    break
 
-            self.pinyin_data = self.websocket.get_remote_pinyin_data()
+
+            if self.websocket_host != '127.0.0.1' and self.websocket.is_active:
+
+                _http_cnn = HTTPConnection(self.websocket_host, self.websocket_port)
+
+                _http_cnn.request('GET', '/api/model/pinyin')
+                _http_res = _http_cnn.getresponse()
+                if _http_res.status == 200:
+                    with open(get_pinyin_path()+'/model.h5', 'wb+') as f:
+                        while True:
+                            _buf = _http_res.read()
+                            if _buf:
+                                f.write(_buf)
+                            else:
+                                break
+                    logging.info('Download Remote Pinyin Model Done.')
+                else:
+                    logging.error('Download Remote Pinyin Model Failed.')
+
+                _http_cnn.request('GET', '/api/model/grammar')
+                _http_res = _http_cnn.getresponse()
+                if _http_res.status == 200:
+                    with open(get_grammar_path()+'/model.h5', 'wb+') as f:
+                        while True:
+                            _buf = _http_res.read()
+                            if _buf:
+                                f.write(_buf)
+                            else:
+                                break
+                    logging.info('Download Remote Grammar Model Done.')
+                else:
+                    logging.error('Download Remote Grammar Model Failed.')
+            
+
+            _pinyin_data_pk = ListPickle(get_pinyin_dictionary_path() + '/data')
+            
+            if self.websocket.is_active:
+                self.pinyin_data = self.websocket.get_remote_pinyin_data()
+                _pinyin_data_pk.save([self.pinyin_data])
+            else:
+                self.pinyin_data = _pinyin_data_pk.get_list()[0]
+
             self.service_instance = instance.get_main_service()
             self.service_instance.open_mind(pinyin_data=self.pinyin_data)
 
@@ -123,7 +174,8 @@ class LaunchTcpSocket():
 
             logging.error(err)
 
-        self.server.shutdown()
+        if self.server:
+            self.server.shutdown()
         sys.exit(2)
 
 

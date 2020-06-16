@@ -196,6 +196,7 @@ class WebsocketThread (threading.Thread):
         values = self.pool.apply(self.send_thread, [_data])
         return values
 
+
     
     
 

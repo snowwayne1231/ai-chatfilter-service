@@ -14,8 +14,20 @@ def print_spend_time(_st_time):
 
 
 def get_pinyin_path():
-    return os.path.dirname(os.path.abspath(__file__)) + '/_models/pinyin_model'
+    _path = os.path.dirname(os.path.abspath(__file__)) + '/_models/pinyin_model'
+    if not os.path.exists(_path):
+        os.makedirs(_path)
+    return _path
 
 def get_grammar_path():
-    return os.path.dirname(os.path.abspath(__file__)) + '/_models/grammar_model'
+    _path = os.path.dirname(os.path.abspath(__file__)) + '/_models/grammar_model'
+    if not os.path.exists(_path):
+        os.makedirs(_path)
+    return _path
+
+def get_pinyin_dictionary_path():
+    _path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/pinyin'
+    if not os.path.exists(_path):
+        os.makedirs(_path)
+    return _path
 

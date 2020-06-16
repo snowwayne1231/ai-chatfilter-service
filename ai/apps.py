@@ -23,6 +23,7 @@ class MainAiApp():
     def __init__(self, jieba_vocabulary=[], pinyin_unknown_words=[]):
         print('=============  A.I Init  =============')
         print('using tensorflow version: ', tf.__version__)
+        
         self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path, jieba_vocabulary=jieba_vocabulary, unknown_words=pinyin_unknown_words)
         self.grammar_model = GrammarFilter(load_folder=grammar_model_path)
     

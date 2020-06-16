@@ -54,7 +54,7 @@ class MainService():
         print('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
 
 
-    def open_mind(self, pinyin_data=None):
+    def open_mind(self, pinyin_data=None, url_pinyin_model=None, url_grammar_model=None):
         if self.is_open_mind:
             return True
 
@@ -64,6 +64,13 @@ class MainService():
             _vocabulary = pinyin_data.get('vocabulary', [])
             _unknowns = pinyin_data.get('unknowns', [])
             _unknown_words = [_[0] for _ in _unknowns]
+            _remote_models = []
+            # if url_pinyin_model:
+            #     _remote_models.append(('pinyin', url_pinyin_model))
+            
+            # if url_grammar_model:
+            #     _remote_models.append(('grammar', url_grammar_model))
+
             self.ai_app = MainAiApp(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words)
 
             

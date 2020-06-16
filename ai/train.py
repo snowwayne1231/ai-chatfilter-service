@@ -19,11 +19,11 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
 
     pinyin_saved_folder = get_pinyin_path()
     
-    tmp_saved_list_path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/list.pickle'
+    # tmp_saved_list_path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/list.pickle'
 
     _st_time = datetime.now() #
 
-    pk = ListPickle(tmp_saved_list_path)
+    # pk = ListPickle(tmp_saved_list_path)
     
     if excel_file_path is not None:
 
@@ -49,14 +49,14 @@ def train_pinyin(excel_file_path = None, is_append = False, final_accuracy = Non
     
 
 
-    if is_append or len(result_list) == 0:
-        result_list = result_list + pk.get_list()
+    # if is_append or len(result_list) == 0:
+    #     result_list = result_list + pk.get_list()
 
     if len(result_list) == 0:
         print('Wrong with no file path input.')
         return
      
-    pk.save(result_list)
+    # pk.save(result_list)
 
     print('The result list length: ', len(result_list))
 
