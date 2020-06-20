@@ -5,7 +5,7 @@ from dataparser.apps import MessageParser
 from .classes.prefilter import PreFilter
 # from .classes.fuzzycenter import FuzzyCenter
 from .classes.chatstore import ChatStore
-from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, Textbook
+from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, Textbook, ChangeNicknameRequest
 import numpy as np
 import time, re
 from service.widgets import printt
@@ -243,6 +243,20 @@ class MainService():
         else:
 
             print('Save Record Failed, Is Not Admin Server.')
+
+    
+    def saveNicknameRequestRecord(self, nickname, status):
+        if self.is_admin_server:
+            record = ChangeNicknameRequest(
+                nickname=nickname,
+                status=status,
+            )
+
+            record.save()
+
+        else:
+
+            print('Save NicknameRequestRecord Failed, Is Not Admin Server.')
 
 
     def check_analyzing(self):

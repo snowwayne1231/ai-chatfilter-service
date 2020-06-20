@@ -6,7 +6,7 @@ from django import forms
 from import_export.admin import ImportExportModelAdmin, ImportExportActionModelAdmin, ExportMixin
 from import_export.signals import post_export
 from service.resources import BlockedSentenceResource
-from service.models import Blockword, Whiteword, BlockUser, BlockedSentence, GoodSentence, AnalyzingData, UnknownWord, Textbook
+from service.models import Blockword, Whiteword, BlockUser, BlockedSentence, GoodSentence, AnalyzingData, UnknownWord, Textbook, ChangeNicknameRequest
 import datetime
 
 
@@ -128,6 +128,12 @@ class TextbookAdmin(admin.ModelAdmin):
     list_display = ['text', 'status', 'type', 'model', 'date']
     search_fields = ['text']
     empty_value_display = '---'
+
+class ChangeNicknameRequestAdmin(admin.ModelAdmin):
+    fields = ['nickname', 'status']
+    list_display = ['nickname', 'status', 'date']
+    search_fields = ['nickname']
+    empty_value_display = '---'
     
 
 admin.site.register(Blockword, BlockwordAdmin)
@@ -138,3 +144,4 @@ admin.site.register(GoodSentence, GoodSentenceAdmin)
 admin.site.register(AnalyzingData, AnalyzingDataAdmin)
 admin.site.register(UnknownWord, UnknownWordAdmin)
 admin.site.register(Textbook, TextbookAdmin)
+admin.site.register(ChangeNicknameRequest, ChangeNicknameRequestAdmin)

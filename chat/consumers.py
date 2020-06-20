@@ -31,6 +31,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     key_get_model = '__getmodel__'
     key_is_admin_client = '__isadminclient__'
     key_tcp_poto = '__tcp__'
+    key_change_nickname_request = '__changenicknamerequest__'
 
 
     async def connect(self):
@@ -179,7 +180,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 if Model:
                     return list(Model.objects.all()[:1000])
         
-        return None
+        return json
 
 
     async def do_something_by_order(self, order_key, message):
@@ -205,40 +206,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.is_standby = True
                 self.is_tcp = True
 
-        elif order_key == self.key_send_train_remotely:
-            print('[do_something_by_order] self.hostname: ', self.hostname, message[:5])
-
-
-            basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息', '禁言内容', '发言内容'], ['STATUS', '審核結果', '状态']]
-            result_list = []
-            for _ in message:
-                _model = _[0]
-                _type = _[1]
-                _text = _[2]
-                _status = _[3]
-                _list = ['', '', '', _status, _text, 0, 0]
-                
-                # _text, lv, anchor = self.main_service.parse_message(_msg)
-                # _list.append(text)
-                # _list.append(lv)
-                # _list.append(anchor)
-                result_list.append(_list)
-
-            print(result_list)
-            return 
-
-                
-            self.main_service.fit_pinyin_model(result_list)
-
-
-            await self.channel_layer.group_send(
-                self.group_name_standby,
-                {
-                    'type': 'send_cmd_start_train',
-                    'msgid': order_key,
-                    'message': message,
-                },
-            )
+        # elif order_key == self.key_send_train_remotely:
+        elif order_key == self.key_change_nickname_request:
+            _nickname = message.get('message', '')
+            _code = message.get('prediction', 0)
+            self.main_service.saveNicknameRequestRecord(nickname=_nickname, status=_code)
         
         await self.send(text_data=json.dumps({'msgid': order_key, 'message': message}))
 

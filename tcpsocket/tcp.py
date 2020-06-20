@@ -127,18 +127,22 @@ class socketTcp(Tcp):
                 packed_res = pack(0x000001)
 
             elif unpacked_data.cmd == 0x040007:
-                logging.debug('Recived Package is [ Nickname Change Request ] id: {} | name: {}'.format(unpacked_data.reqid, unpacked_data.nickname))
+                logging.debug('Recived Package is [ Nickname Change Request ] id: {} | name: {} | size: {}'.format(unpacked_data.reqid, unpacked_data.nickname, unpacked_data.size))
 
                 if self.nickname_filter_instance:
 
                     ai_results = self.nickname_filter_instance.think(nickname=unpacked_data.nickname)
                     code = ai_results.get('code', 0)
 
+                    if code and code > 0:
+                        logging.info('Nickname Change Request be blocked = reqid: {}.'.format(unpacked_data.reqid))
+
                 else:
 
                     code = 0
 
                 packed_res = pack(0x040008, reqid=unpacked_data.reqid, code=code)
+                prediction = code
 
             else:
                 

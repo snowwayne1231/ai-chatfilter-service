@@ -82,3 +82,14 @@ class Textbook(models.Model):
             models.Index(fields=['status',]),
             models.Index(fields=['model',]),
         ]
+
+
+class ChangeNicknameRequest(models.Model):
+    nickname = models.CharField(max_length=63)
+    status = models.IntegerField(default=1)
+    date = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['status',]),
+        ]

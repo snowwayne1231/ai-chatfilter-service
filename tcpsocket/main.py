@@ -64,6 +64,9 @@ class LaunchTcpSocket():
                 _msg = data.msg
                 _room = data.roomid if hasattr(data, 'roomid') else ''
                 self.websocket.send_msg(msgid=_msgid, msg=_msg, room=_room, prediction=prediction)
+            elif data.cmd == 0x040007:
+                _nickname = data.nickname
+                self.websocket.send_msg(msgid=self.websocket.key_change_nickname_request, msg=_nickname, prediction=prediction)
                 
         else:
             logging.error('Websocket is Not Working. [txt: {}]'.format(data.msg))
@@ -79,23 +82,7 @@ class LaunchTcpSocket():
 
     def on_websocket_message(self, msgid, message):
         print('on_websocket_message msgid: ', msgid)
-        if msgid == self.websocket.key_send_train_remotely:
-            print('message lenth: ', len(message))
-            self.service_instance.fit_pinyin_model()
-
-            if os.path.isdir(pinyin_saved_folder):
-
-                piny = PinYinFilter(load_folder=pinyin_saved_folder)
-
-                history = piny.fit_model(train_data=result_list, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
-
-            else:
-
-                piny = PinYinFilter(data=result_list)
-                # piny.transfrom_column('TEXT')
-                piny.build_model()
-
-                history = piny.fit_model(save_folder=pinyin_saved_folder, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
+        
 
     
 
