@@ -74,7 +74,7 @@
     </div>
     <div class="bottom range">
 
-        <button id="train-remote">Train Remote</button>
+        <!-- <button id="train-remote">Train Remote</button> -->
         <button id="refresh-custom-vocabulary">Custom Vocabulary</button>
 
         <div id="custom-vocabulary-table">
@@ -125,18 +125,18 @@
         }
     };
 
-    document.querySelector('#train-remote').onclick = function(e) {
-        if (window.confirm('Start Train The Service?')) {
-            if (window.conn) {
-                window.conn.send(JSON.stringify({
-                    'msgid': key_send_train_remotely,
-                    'hour': 2,
-                }));
-            } else {
-                window.alert('Wrong Connection.');
-            }
-        }
-    }
+    // document.querySelector('#train-remote').onclick = function(e) {
+    //     if (window.confirm('Start Train The Service?')) {
+    //         if (window.conn) {
+    //             window.conn.send(JSON.stringify({
+    //                 'msgid': key_send_train_remotely,
+    //                 'hour': 2,
+    //             }));
+    //         } else {
+    //             window.alert('Wrong Connection.');
+    //         }
+    //     }
+    // }
 
     function handleObjectToTd(ele, _object) {
         for (key in _object) {

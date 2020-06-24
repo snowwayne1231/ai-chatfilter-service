@@ -67,11 +67,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
 
-        if self.is_standby:
-            await self.channel_layer.group_discard(
-                self.group_name_standby,
-                self.channel_name
-            )
+        # if self.is_standby:
+        #     await self.channel_layer.group_discard(
+        #         self.group_name_standby,
+        #         self.channel_name
+        #     )
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -198,12 +198,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             _hostname = message
             if _hostname:
                 self.hostname = _hostname
-                await self.channel_layer.group_add(
-                    self.group_name_standby,
-                    self.channel_name
-                )
-                
-                self.is_standby = True
+                # await self.channel_layer.group_add(
+                #     self.group_name_standby,
+                #     self.channel_name
+                # )
+                # self.is_standby = True
+
                 self.is_tcp = True
 
         # elif order_key == self.key_send_train_remotely:

@@ -19,7 +19,7 @@ def pack(cmd, **options):
         sig = options.get('sig', '')
 
         size = struct.calcsize(LoginPackage.fmt)
-        package = struct.pack(LoginPackage.fmt, cmd, size, serverid.encode('utf-8'), sig.encode('utf-8'))
+        package = struct.pack(LoginPackage.fmt, cmd, size, serverid.encode('utf-16le'), sig.encode('utf-16le'))
 
     elif cmd == LoginResponsePackage.m_cmd:
 
@@ -32,14 +32,14 @@ def pack(cmd, **options):
 
         msgid = options.get('msgid', 0x000000)
         msgtxt = options.get('msgtxt', '')
-        msg_bytes = bytes(msgtxt, 'utf-8')
+        msg_bytes = bytes(msgtxt, 'utf-16le')
 
         msgsize = len(msg_bytes)
         
         size = struct.calcsize(ChatFilterPackage.fmt) + msgsize
 
         package = struct.pack(ChatFilterPackage.fmt, cmd, size, msgid, msgsize) + msg_bytes
-        # package = struct.pack('!4i100s', cmd, size, msgid, msgsize, msgtxt.encode('utf-8'))
+        # package = struct.pack('!4i100s', cmd, size, msgid, msgsize, msgtxt.encode('utf-16le'))
 
     elif cmd == ChatWithJSONPackage.m_cmd:
 
@@ -48,7 +48,7 @@ def pack(cmd, **options):
         msgtxt = json_data.get('msg', '')
         roomid = json_data.get('roomid', 'none')
 
-        json_byte = bytes(json.dumps({'msg': msgtxt, 'roomid': roomid}), 'utf-8')
+        json_byte = bytes(json.dumps({'msg': msgtxt, 'roomid': roomid}), 'utf-16le')
         jsonsize = len(json_byte)
 
         size = struct.calcsize(ChatWithJSONPackage.fmt) + jsonsize
@@ -66,7 +66,7 @@ def pack(cmd, **options):
 
         reqid = options.get('reqid', 0x000000)
         nickname = options.get('nickname', '')
-        byte_nickname = bytes(nickname, 'utf-8')
+        byte_nickname = bytes(nickname, 'utf-16le')
 
         size = struct.calcsize(NickNameFilterRequestPackage.fmt) + len(byte_nickname)
 
@@ -162,8 +162,8 @@ class LoginPackage(BasicStructPackage):
         cmd, size, serverid, sig = struct.unpack(self.fmt, buffer)
         self.cmd = cmd
         self.size = size
-        self.serverid = serverid.decode('utf-8').rstrip('\x00')
-        self.sig = sig.decode('utf-8').rstrip('\x00')
+        self.serverid = serverid.decode('utf-16le').rstrip('\x00')
+        self.sig = sig.decode('utf-16le').rstrip('\x00')
         # print('LoginPackage serverid: ', serverid)
 
 
@@ -205,10 +205,10 @@ class ChatFilterPackage(BasicStructPackage):
             self.msgbuffer = _left_buffer
         
         try:
-            self.msg = self.msgbuffer.decode('utf-8')
+            self.msg = self.msgbuffer.decode('utf-16le')
         except:
             logging.error('Unpack Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
-            self.msg = self.msgbuffer.decode('utf-8', "ignore")
+            self.msg = self.msgbuffer.decode('utf-16le', "ignore")
 
 
         if len(self.msg) > 255:
@@ -242,13 +242,13 @@ class ChatWithJSONPackage(BasicStructPackage):
             self.jsonbuffer = _left_buffer
         
         try:
-            self.jsonstr = self.jsonbuffer.decode('utf-8')
+            self.jsonstr = self.jsonbuffer.decode('utf-16le')
             self.json = json.loads(self.jsonstr)
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
         except:
             logging.error('Unpack Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
-            self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
+            self.jsonstr = self.jsonbuffer.decode('utf-16le', "ignore")
             self.json = {}
 
 
@@ -284,10 +284,10 @@ class NickNameFilterRequestPackage(BasicStructPackage):
         self.reqid = reqid
 
         try:
-            self.nickname = _left_buffer[:_left_size].decode('utf-8')
+            self.nickname = _left_buffer[:_left_size].decode('utf-16le')
         except:
             logging.error('Unpack NickNameFilterRequestPackage Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
-            self.nickname = _left_buffer[:_left_size].decode('utf-8', "ignore")
+            self.nickname = _left_buffer[:_left_size].decode('utf-16le', "ignore")
 
 
 class NickNameFilterResponsePackage(BasicStructPackage):
