@@ -205,10 +205,10 @@ class ChatFilterPackage(BasicStructPackage):
             self.msgbuffer = _left_buffer
         
         try:
-            self.msg = self.msgbuffer.decode('utf-16le')
+            self.msg = self.msgbuffer.decode('utf-8')
         except:
             logging.error('Unpack Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
-            self.msg = self.msgbuffer.decode('utf-16le', "ignore")
+            self.msg = self.msgbuffer.decode('utf-8', "ignore")
 
 
         if len(self.msg) > 255:
@@ -242,13 +242,15 @@ class ChatWithJSONPackage(BasicStructPackage):
             self.jsonbuffer = _left_buffer
         
         try:
-            self.jsonstr = self.jsonbuffer.decode('utf-16le')
+            self.jsonstr = self.jsonbuffer.decode('utf-8')
             self.json = json.loads(self.jsonstr)
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
         except:
-            logging.error('Unpack Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
-            self.jsonstr = self.jsonbuffer.decode('utf-16le', "ignore")
+            self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
+            logging.error('Unpack Failed :: CMD= {}, Buffer= {}, JSON= {}'.format(cmd, _left_buffer, self.jsonstr))
+            # _utf8str = self.jsonbuffer.decode('utf-8', "ignore")
+            # logging.debug('  Origin UTF-8 decode: {}'.format(_utf8str))
             self.json = {}
 
 
@@ -284,10 +286,10 @@ class NickNameFilterRequestPackage(BasicStructPackage):
         self.reqid = reqid
 
         try:
-            self.nickname = _left_buffer[:_left_size].decode('utf-16le')
+            self.nickname = _left_buffer[:_left_size].decode('utf-8')
         except:
             logging.error('Unpack NickNameFilterRequestPackage Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
-            self.nickname = _left_buffer[:_left_size].decode('utf-16le', "ignore")
+            self.nickname = _left_buffer[:_left_size].decode('utf-8', "ignore")
 
 
 class NickNameFilterResponsePackage(BasicStructPackage):
