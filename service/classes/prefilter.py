@@ -2,10 +2,9 @@ import re
 
 
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
-single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞']
+single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '']
 rare_symbol_regexies = [
-    (u'\u0083', u'\u0083'), # suspect english
-    (u'\u008a', u'\u00a3'), # suspect english
+    (u'\u00a1', u'\u00a3'), # suspect english
     (u'\u00a9', u'\u00b6'), # suspect english
     (u'\u00b9', u'\u02b8'), # suspect english
     (u'\u0363', u'\u058f'), # suspect english
@@ -59,12 +58,15 @@ class PreFilter():
             if _ in text:
                 next_char += _
 
+        _i = 0
         if len(next_char) == 0:
             for u in text:
                 if self.is_rare_character(u):
+                    print('is_rare_character found: next_char ', next_char, _i)
                     next_char += u
                 elif self.is_question_mark(u):
                     size_qk += 1
+                _i += 1
 
         is_too_many_question_marks = size_qk >= 3
         # if next_char:
