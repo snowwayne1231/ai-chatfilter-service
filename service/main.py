@@ -128,11 +128,30 @@ class MainService():
             if _length_text == 0:
                 return self.return_reslut(0, message=message, room=room, text=text, silence=silence, st_time=st_time)
 
+            # check if english allow to pass
             _is_all_english_word = self.regex_all_english_word.match(text)
-            if _is_all_english_word and len(self.pre_filter.replace_only_left_english(text)) > 9:
-                print('[INFO] All English Allow Pass: [{}].'.format(text))
-                return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
-            
+            if _is_all_english_word:
+                _english_list = re.split('\s+', text)
+                _english_map = {}
+                for _eng in _english_list:
+                    if _eng in _english_map:
+                        _english_map[_eng] += 1
+                    else:
+                        _english_map[_eng] = 1
+
+                _total = 0
+                _double_eng = 0
+                for _num_eng in _english_map.values():
+                    _total += 1
+                    if _num_eng > 1:
+                        _double_eng += 1
+
+                _double_rate = _double_eng / _total
+                if _double_rate < 0.25:
+                    if len(self.pre_filter.replace_only_left_english(text)) > 9:
+                        print('[INFO] All English Allow Pass: [{}].'.format(text))
+                        return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
+            #
             
             if lv < self.service_avoid_filter_lv:
 

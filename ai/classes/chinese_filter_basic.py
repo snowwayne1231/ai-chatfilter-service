@@ -112,9 +112,12 @@ class BasicChineseFilter():
 
 
     def load_model(self, path):
-        _model = tf.keras.models.load_model(path)
-        self.model = _model
-        return _model
+        if os.path.exists(path):
+            self.model = tf.keras.models.load_model(path)
+        else:
+            self.build_model()
+
+        return self.model
 
 
 

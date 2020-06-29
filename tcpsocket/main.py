@@ -66,7 +66,7 @@ class LaunchTcpSocket():
                 self.websocket.send_msg(msgid=_msgid, msg=_msg, room=_room, prediction=prediction)
             elif data.cmd == 0x040007:
                 _nickname = data.nickname
-                self.websocket.send_msg(msgid=self.websocket.key_change_nickname_request, msg=_nickname, prediction=prediction)
+                # self.websocket.send_msg(msgid=self.websocket.key_change_nickname_request, msg=_nickname, prediction=prediction)
                 
         else:
             logging.error('Websocket is Not Working. [txt: {}]'.format(data.msg))
