@@ -2,7 +2,7 @@ import re
 
 
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
-single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '']
+single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ']
 rare_symbol_regexies = [
     (u'\u00a1', u'\u00a3'), # suspect english
     (u'\u00a9', u'\u00b6'), # suspect english
@@ -62,7 +62,7 @@ class PreFilter():
         if len(next_char) == 0:
             for u in text:
                 if self.is_rare_character(u):
-                    print('is_rare_character found: next_char ', next_char, _i)
+                    # print('is_rare_character found: next_char ', next_char, _i)
                     next_char += u
                 elif self.is_question_mark(u):
                     size_qk += 1
@@ -80,16 +80,14 @@ class PreFilter():
         eng_size = 0
         qk_size = 0
         next_char = ''
-        has_space = bool(' ' in text)
-        if has_space:
-            text = text.replace(' ', '')
+        _text_ = text.replace(' ', '')
         
-        length_char = len(text)
+        length_char = len(_text_)
 
         if length_char == 0:
             return ''
     
-        for u in text:
+        for u in _text_:
             if self.is_number(u):
                 if '0' not in next_char:
                     number_size += 1
@@ -110,32 +108,48 @@ class PreFilter():
         is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and number_size > 0 and eng_size > 0
 
         # print('[find_wechat_char] _NE_ratio: ', _NE_ratio, ' | length_char: ', length_char, eng_size, number_size)
-
+        
+        # all is english and digits
         if _NE_ratio == 1 and length_char >= 3 and length_char <= 9:
-            _english = self.replace_only_left_english(text)
-            # print('[find_wechat_chat] _english:', _english)
+            __origin_text_list = re.split('\s+', text)
+            __is_not_right_vocabulary = False
+
+            for __otl in __origin_text_list:
+                if __otl not in self.single_words:
+                    __is_not_right_vocabulary = True
+                    break
+
+            if __is_not_right_vocabulary:
             
-            if _english in self.single_words:
-                pass
-            else:
-                _buf = ''
-                _tmp_word = ''
-                _words = []
-                for _ in _english:
-                    _buf += _
-                    if _buf in self.single_words:
-                        _tmp_word = _buf
-                    else:
-                        if _tmp_word:
-                            _words.append(_tmp_word)
-                            _tmp_word = ''
-                            _buf = _
+                _english = self.replace_only_left_english(_text_)
+                # print('[find_wechat_chat] _english:', _english)
                 
-                if _tmp_word == _buf:
-                    _words.append(_tmp_word)
+                _diversity_sentense_suffix = ['s', 'es', 'ies', 'ing', 'ed']
+                _escape_length = 0
+
+                if _english in self.single_words:
+                    pass
                 else:
-                    is_many_language = True
-                    next_char += ' | Wrong English Words.'
+                    _buf = ''
+                    _tmp_word = ''
+                    _words = []
+                    for _ in _english:
+                        _buf += _
+                        # print('buf: ', _buf)
+                        # print('_tmp_word: ', _tmp_word)
+                        if _buf in self.single_words:
+                            _tmp_word = _buf
+                        else:
+                            if _tmp_word:
+                                _words.append(_tmp_word)
+                                _tmp_word = _ if _ in self.single_words else ''
+                                _buf = _
+                    
+                    if _tmp_word == _buf:
+                        _words.append(_tmp_word)
+                    else:
+                        is_many_language = True
+                        next_char += 'Wrong English Words. tmp: {}, buf: {}'.format(_tmp_word, _buf)
 
         # print('[find_wechat_chat] _words:', _words)
 
@@ -209,7 +223,7 @@ class PreFilter():
 
 
     def set_single_words(self, words):
-        _word_list = [self.replace_only_left_english(_) for _ in words]
+        _word_list = [self.replace_only_left_english(_).lower() for _ in words]
         self.single_words = [_ for _ in _word_list if _]
 
 

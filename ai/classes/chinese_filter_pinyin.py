@@ -205,8 +205,10 @@ class PinYinFilter(BasicChineseFilter):
     def load_tokenizer_vocabularies(self):
         _vocabularies = self.jieba_dict.get_vocabulary()
         vocabulary_length = len(_vocabularies)
+        # print('[load_tokenizer_vocabularies] vocabulary_length: ', vocabulary_length)
         assert vocabulary_length > 0
         assert vocabulary_length < self.full_vocab_size
+        # print('[load_tokenizer_vocabularies] _vocabularies: ', _vocabularies)
         self.tokenizer_vocabularies = _vocabularies
         self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)
         self.encoder_size = vocabulary_length
@@ -246,12 +248,12 @@ class PinYinFilter(BasicChineseFilter):
             return 0
         
         _result_text, _has_unknown = self.get_encode_word(_words)
-        if _has_unknown:
-            print('[Pinyin filter][predictText] _has_unknown: ', text, _words)
+        # if _has_unknown:
+        #     print('[Pinyin filter][predictText] _has_unknown: ', text, _words)
         
         
         if len(_result_text) == 0:
-            print('[Pinyin filter][predictText] | No result text: {},  words: {},  length: {}'.format(text, _words, len(text)))
+            # print('[Pinyin filter][predictText] | No result text: {},  words: {},  length: {}'.format(text, _words, len(text)))
             return 0
 
         if len(self.tmp_encoded_text) >= 3:
@@ -286,7 +288,7 @@ class PinYinFilter(BasicChineseFilter):
 
     def bathchs_labeler(self, x, y):
         assert len(x) == len(y)
-        encoder = self.encoder
+        # encoder = self.encoder
         full_words_length = self.full_words_length
 
         def gen():
@@ -321,7 +323,7 @@ class PinYinFilter(BasicChineseFilter):
         _found_other_unknown = False
 
         for _ in _words:
-            
+            # print('[get_encode_word] _: ', _)
             _loc = _encoder.encode(_)
             
             if len(_loc) > 0:
@@ -358,6 +360,7 @@ class PinYinFilter(BasicChineseFilter):
             _check_map = {}
             _check_map_idx = {}
             _all_duplicate_zipstr = []
+            _num_all_duplicated = 0
 
             for _ in tokenized_list:
                 _zip_str = '|'.join(str(__) for __ in _)
@@ -370,7 +373,12 @@ class PinYinFilter(BasicChineseFilter):
                         _all_duplicate_zipstr.append(_zip_str)
 
                     if _zip_str in _all_duplicate_zipstr:
-                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', [self.transform_back_str(xx) for xx in x[_i]], ' | ', " idx: ", _i, ' y: ', y[_i], ' against idx: ', _check_map_idx[_zip_str])
+                        _origin = self.data[_i][2]
+                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', _origin, " idx: ", _i, [self.transform_back_str(xx) for xx in x[_i]], ' | ', ' y: ', y[_i], ' against idx: ', _check_map_idx[_zip_str])
+                        _num_all_duplicated += 1
+                        # if _num_all_duplicated > 100:
+                        #     exit(2)
+                        #     print('STOP!! Too Much Duplicate In Excel Data.')
                     
                 else:
                     _check_map[_zip_str] = _y_value

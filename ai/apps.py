@@ -57,7 +57,7 @@ class MainAiApp():
         if txt:
             _pinyin_detail = self.pinyin_model.get_details(txt)
             _grammer_detail = self.grammar_model.get_details(txt)
-            print('_grammer_detail: ', _grammer_detail)
+            # print('_grammer_detail: ', _grammer_detail)
             
         else:
             _pinyin_detail = {}

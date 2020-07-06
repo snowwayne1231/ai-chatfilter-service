@@ -51,7 +51,7 @@ class MainService():
         if is_admin_server:
             self.is_admin_server = True
             self.check_analyzing()
-        print('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
+        printt('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
 
 
     def open_mind(self, pinyin_data=None, url_pinyin_model=None, url_grammar_model=None):
@@ -99,7 +99,7 @@ class MainService():
     def think(self, message, user = '', room = '', silence=False, detail=False):
         st_time = time.time()
         if not self.is_open_mind:
-            print('AI Is Not Ready..')
+            printt('AI Is Not Ready..')
             return self.return_reslut(0, message=message, st_time=st_time)
         
         text = ''
@@ -114,44 +114,18 @@ class MainService():
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
                 return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
-            # elif not detail:   # temporary to use 
-            #     return self.return_reslut(0, message=message)
-
 
             text, lv, anchor = self.parse_message(message)
 
-            if anchor > 0:
-                return self.return_reslut(0, message=message, room=room, text=text, silence=silence, st_time=st_time)
-
-            _length_text = len(text)
-
-            if _length_text == 0:
+            # none sense text by be parsed message.
+            if anchor > 0 or len(text) == 0:
                 return self.return_reslut(0, message=message, room=room, text=text, silence=silence, st_time=st_time)
 
             # check if english allow to pass
-            _is_all_english_word = self.regex_all_english_word.match(text)
-            if _is_all_english_word:
-                _english_list = re.split('\s+', text)
-                _english_map = {}
-                for _eng in _english_list:
-                    if _eng in _english_map:
-                        _english_map[_eng] += 1
-                    else:
-                        _english_map[_eng] = 1
+            if self.is_allowed_english_sentense(text):
+                printt('[INFO] All English Allow Pass: [{}].'.format(text))
+                return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
 
-                _total = 0
-                _double_eng = 0
-                for _num_eng in _english_map.values():
-                    _total += 1
-                    if _num_eng > 1:
-                        _double_eng += 1
-
-                _double_rate = _double_eng / _total
-                if _double_rate < 0.25:
-                    if len(self.pre_filter.replace_only_left_english(text)) > 9:
-                        print('[INFO] All English Allow Pass: [{}].'.format(text))
-                        return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
-            #
             
             if lv < self.service_avoid_filter_lv:
 
@@ -261,7 +235,7 @@ class MainService():
 
         else:
 
-            print('Save Record Failed, Is Not Admin Server.')
+            printt('Save Record Failed, Is Not Admin Server.')
 
     
     def saveNicknameRequestRecord(self, nickname, status):
@@ -275,7 +249,7 @@ class MainService():
 
         else:
 
-            print('Save NicknameRequestRecord Failed, Is Not Admin Server.')
+            printt('Save NicknameRequestRecord Failed, Is Not Admin Server.')
 
 
     def check_analyzing(self):
@@ -350,6 +324,36 @@ class MainService():
             self.timestamp_ymdh = _ymdh
 
 
+    def is_allowed_english_sentense(self, text):
+        _is_all_english_word = self.regex_all_english_word.match(text)
+        if _is_all_english_word:
+            _english_list = re.split('\s+', text)
+            if len(_english_list) <= 3:
+                if len(_english_list) == 1:
+                    return _english_list[0] in ['banker', 'player']
+                else:
+                    return False
+            
+            _english_map = {}
+            for _eng in _english_list:
+                if _eng in _english_map:
+                    _english_map[_eng] += 1
+                else:
+                    _english_map[_eng] = 1
+
+            _total = 0
+            _double_eng = 0
+            for _num_eng in _english_map.values():
+                _total += 1
+                if _num_eng > 1:
+                    _double_eng += 1
+
+            _double_rate = _double_eng / _total
+            if _double_rate < 0.25:
+                return True
+
+        return False
+
     def get_pinyin_data(self):
         if self.ai_app:
             return {
@@ -374,14 +378,6 @@ class MainService():
         result = list(queryset)
         # print('get_train_textbook: ', result)
         return result
-
-
-    def fit_pinyin_model(self, datalist):
-        _hours = 2
-        print('=== fit_pinyin_model ===', _hours)
-        self.ai_app.pinyin_model.fit_model(train_data=datalist, stop_hours=_hours)
-        print('=== fit_pinyin_model end ===')
-
 
     def get_pinyin_model_path(self):
         self.open_mind()

@@ -324,9 +324,9 @@ class JieBaDictionary():
         results = []
         unknowns = []
         _buf = ''
-        
+
         for _ in _list:
-            # print('split_word single _: ', _)
+            # print('[split_word] _: ', _)
             if not _:
                 continue
             elif  _[-1] == self.split_character:
@@ -335,11 +335,18 @@ class JieBaDictionary():
                     __ = _buf + _
                     _buf = ''
                     if __[:-1].isdigit():
-                        # print('[split_word] number_character 111 __: ', __)
-                        results.append(self.number_character)
+                        # print('[split_word] [isdigit] number_character __: ', __)
+                        _none_tone_words = self.get_none_tone_word(__)
+                        # print('[split_word] [isdigit] _none_tone_words: ', _none_tone_words)
+                        if _none_tone_words:
+                            results += _none_tone_words 
+                        else:
+                            results.append(self.number_character)
+                        
                         continue
 
                     _none_tone_words = self.get_none_tone_word(__)
+                    # print('[split_word] _none_tone_words: ', _none_tone_words)
                     if _none_tone_words:
                         # print('_none_tone_words: {},  origin: {}'.format(_none_tone_words, __))
                         results += _none_tone_words
@@ -363,8 +370,14 @@ class JieBaDictionary():
 
                     if len(__) > 1:
                         if __[:-1].isdigit():
-                            # print('[split_word] number_character 222 __: ', __)
-                            results.append(self.number_character)
+                            # print('[split_word] number_character __: ', __)
+                            _none_tone_words = self.get_none_tone_word(__)
+                            # print('[split_word] [isdigit] _none_tone_words: ', _none_tone_words)
+                            if _none_tone_words:
+                                results += _none_tone_words 
+                            else:
+                                results.append(self.number_character)
+                            
                         else:
                             results.append(__)
 
@@ -385,7 +398,7 @@ class JieBaDictionary():
 
 
     def refresh_dictionary(self):
-        print('JieBaDictionary: Start Refresh Dictionary.')
+        print('JieBaDictionary: Start Refresh Dictionary Observed Data Source By Database.')
         _older_v_size = len(self.vocabularies)
         
         dictionary_list = CustomDictionaryWord.objects.values_list('pinyin', flat=True)
@@ -422,9 +435,9 @@ class JieBaDictionary():
 
         if len(self.vocabularies) > _older_v_size:
             self.save_vocabularies()
-            print('Refresh Vocabulary: ', self.vocabularies[-10:])
+            print('Refreshed Vocabulary Last 10: ', self.vocabularies[-10:])
         
-        print('FREQ length: ', len(jieba.dt.FREQ), ', Vocabulary: ', len(self.vocabularies))
+        print('FREQ Length: ', len(jieba.dt.FREQ), ', Vocabulary Length: ', len(self.vocabularies))
         # print(len(self.none_tone_map))
 
         return self
@@ -442,11 +455,11 @@ class JieBaDictionary():
     
     def add_none_tone_word(self, word):
         # if word.count(self.split_character) <= 4 and word[-2].isdigit():
-        if word.count(self.split_character) <= 4 and re.match(r'[\d]', word) == None:
-            _no_digit_word = re.sub(r'[\d]+', '', word)
-            
-            _key = _no_digit_word.replace(self.split_character, '')
-            # _key = _no_digit_word
+        # if word.count(self.split_character) <= 4 and re.match(r'[\d]', word) == None:
+        if word.count(self.split_character) <= 4:
+            # _no_digit_word = re.sub(r'[\d]+', '', word)
+            # _key = _no_digit_word.replace(self.split_character, '')
+            _key = word.replace(self.split_character, '')
 
             words = self.none_tone_map.get(_key, [])
             if word not in words:
@@ -575,7 +588,7 @@ class JieBaDictionary():
     def load_vocabularies(self, vocabulary=None):
         _list = []
         if isinstance(vocabulary, list) and len(vocabulary) >0:
-            print('===========load_vocabularies by vocabulary: ', vocabulary[-10:], len(vocabulary), flush=True)
+            print('===========[load_vocabularies] by Vocabulary Data: ', vocabulary[-10:], len(vocabulary), flush=True)
             _list = vocabulary
         else:
             path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
@@ -585,7 +598,7 @@ class JieBaDictionary():
             else:
                 self.save_vocabularies()
 
-            print('===========load_vocabularies by local file: ', _list[-10:], len(_list), flush=True)
+            print('===========[load_vocabularies] by Local File: ', _list[-10:], len(_list), flush=True)
 
         for _ in _list:
             jieba.add_word(_)
