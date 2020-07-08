@@ -76,18 +76,22 @@ class ExcelParser():
 
     def get_row_list(self, column=[], limit=0, just_first_sheet=True):
         total_rows = []
+        _book_idx = 1
         for book in self.books:
 
             if just_first_sheet:
                 sheet = book.sheet_by_index(0)
                 rows = self.get_row_list_by_sheet(sheet, column=column, limit=limit)
                 total_rows += rows
+                print('Excel Get Row List: Book Index[{}] Row Length: {}'.format(_book_idx, len(rows)))
+
+            _book_idx += 1
 
         return total_rows
     
     def get_row_list_by_sheet(self, sheet, column=[], limit=0):
         sh = sheet
-        print("==Getting Data in Sheet name: {0}, rows: {1}, cols:{2}".format(sh.name, sh.nrows, sh.ncols))
+        # print("==Getting Data in Sheet name: {0}, rows: {1}, cols:{2}".format(sh.name, sh.nrows, sh.ncols))
         ary = []
         _columns = []
 

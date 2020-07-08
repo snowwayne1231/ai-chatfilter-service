@@ -360,7 +360,6 @@ class PinYinFilter(BasicChineseFilter):
             _check_map = {}
             _check_map_idx = {}
             _all_duplicate_zipstr = []
-            _num_all_duplicated = 0
 
             for _ in tokenized_list:
                 _zip_str = '|'.join(str(__) for __ in _)
@@ -369,16 +368,14 @@ class PinYinFilter(BasicChineseFilter):
                 # print(_i, ': ', [self.transform_back_str(xx) for xx in x[_i]], _)
 
                 if _map_value:
-                    if _map_value != _y_value and _zip_str not in _all_duplicate_zipstr:
-                        _all_duplicate_zipstr.append(_zip_str)
+                    if _map_value != _y_value:
+                        if _zip_str not in _all_duplicate_zipstr:
+                            _all_duplicate_zipstr.append(_zip_str)
 
-                    if _zip_str in _all_duplicate_zipstr:
                         _origin = self.data[_i][2]
-                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', _origin, " idx: ", _i, [self.transform_back_str(xx) for xx in x[_i]], ' | ', ' y: ', y[_i], ' against idx: ', _check_map_idx[_zip_str])
-                        _num_all_duplicated += 1
-                        # if _num_all_duplicated > 100:
-                        #     exit(2)
-                        #     print('STOP!! Too Much Duplicate In Excel Data.')
+                        _against_idx = _check_map_idx[_zip_str]
+                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', _origin, " idx: ", _i,  ' | ', 'against idx: ', _against_idx)
+                        
                     
                 else:
                     _check_map[_zip_str] = _y_value
