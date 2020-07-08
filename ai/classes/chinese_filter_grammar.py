@@ -171,28 +171,65 @@ class GrammarFilter(BasicChineseFilter):
 
     
 
-    def get_train_batchs(self):
+    def get_train_batchs(self, check_duplicate= True):
         
         x, y = self.get_xy_data()
 
+        _parsed_x_list = [ self.parse_texts(_) for _ in x ]
+
+        if check_duplicate:
+
+            _i = 0
+            _check_map = {}
+            _check_map_idx = {}
+            _all_duplicate_zipstr = []
+
+            for _ in _parsed_x_list:
+                _zip_str = '|'.join(str(__) for __ in _)
+                _map_value = _check_map.get(_zip_str, None)
+                _y_value = 0 if y[_i] == 0 else 1
+                # print(_i, ': ', [self.transform_back_str(xx) for xx in x[_i]], _)
+
+                if _map_value:
+                    if _map_value != _y_value:
+                        if _zip_str not in _all_duplicate_zipstr:
+                            _all_duplicate_zipstr.append(_zip_str)
+
+                        _origin = self.data[_i][2]
+                        _transformed = x[_i]
+                        _against_idx = _check_map_idx[_zip_str]
+                        _against = self.data[_against_idx][2]
+                        print('[Grammarly Filter][get_train_batchs] Duplicate Data: {} | Idx: {} | against: {} | {}'.format(_origin, _i, _against_idx, _against))
+                        
+                    
+                else:
+                    _check_map[_zip_str] = _y_value
+                    _check_map_idx[_zip_str] = _i
+                
+                _i += 1
+
+            if len(_all_duplicate_zipstr) > 0:
+                print('[Error] Failed To Start Train Because Data is Confusion.')
+                exit(2)
+        
         _basic = int(self.basic_num_dataset / len(x))
 
         if _basic >= 1:
-            x = x * (_basic+1)
+            _parsed_x_list = _parsed_x_list * (_basic+1)
             y = y * (_basic+1)
 
-        self.length_x = len(x)
+        self.length_x = len(_parsed_x_list)
 
         _full_wl = self.full_words_length
 
         def gen():
-            for idx, texts in enumerate(x):
+            for idx, texts in enumerate(_parsed_x_list):
                 if len(texts) == 0:
                     continue
 
                 st = 1 if y[idx] and int(y[idx]) > 0 else 0
                 
-                yield self.parse_texts(texts), st
+                yield texts, st
 
         dataset = tf.data.Dataset.from_generator(
             gen,
