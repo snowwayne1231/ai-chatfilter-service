@@ -49,6 +49,20 @@
         table dl {
             margin: 0px;
         }
+
+        input[type=checkbox] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .filter-btn {
+            line-height: 22px;
+        }
+
+        .filter-btn dd {
+            display: inline-block;
+            border: 1px solid #333;
+        }
     </style>
 </head>
 <body>
@@ -58,6 +72,12 @@
         <input id="chat-message-submit" type="button" value="Send"/>
     </div>
     <div class="right range">
+        <div class="filter-btn">
+            <dd>
+                <label>只顯示刪除</label>
+                <input type="checkbox" id="checkbox-show-delete"></input>
+            </dd>
+        </div>
         <table>
             <thead>
                 <th style="width: 10%;">房號</th>
@@ -98,6 +118,7 @@
     var key_is_admin_client = '__isadminclient__';
 
     var maxSocketRetry = 15;
+    var is_show_only_deleted = false;
 
     window.conn = ConnWebSocket();
 
@@ -137,6 +158,11 @@
     //         }
     //     }
     // }
+
+    document.querySelector('#checkbox-show-delete').onclick = function(e) {
+        var checked = this.checked;
+        is_show_only_deleted = checked;
+    }
 
     function handleObjectToTd(ele, _object) {
         for (key in _object) {
@@ -193,6 +219,10 @@
             var detail = data['detail'];
 
             if (Number.isInteger(msgid)) {
+
+                if (is_show_only_deleted && prediction == 0) {
+                    return;
+                }
                 
                 var tbody = document.querySelector('#table-body');
                 var _tr = document.createElement('tr');
