@@ -330,7 +330,7 @@ class MainService():
             _english_list = re.split('\s+', text)
             if len(_english_list) <= 3:
                 if len(_english_list) == 1:
-                    return _english_list[0] in ['banker', 'player']
+                    return self.pre_filter.is_single_word(_english_list[0])
                 else:
                     return False
             

@@ -226,6 +226,10 @@ class PreFilter():
         _word_list = [self.replace_only_left_english(_).lower() for _ in words]
         self.single_words = [_ for _ in _word_list if _]
 
+    
+    def is_single_word(self, word):
+        return word.lower() in self.single_words
+
 
     def check_same_room_conversation(self, _text, _before_room_texts):
         _num_matched = 0
