@@ -84,7 +84,7 @@ class MainService():
             return False
         
         _single_words = [_ for _ in _vocabulary if _.count('_') == 1]
-        self.pre_filter.set_single_words(_single_words)
+        self.pre_filter.set_single_english_words(_single_words)
 
         self.is_open_mind = True
         # self.fuzzy_center = FuzzyCenter()
@@ -120,10 +120,11 @@ class MainService():
             # none sense text by be parsed message.
             if anchor > 0 or len(text) == 0:
                 return self.return_reslut(0, message=message, room=room, text=text, silence=silence, st_time=st_time)
-
+            
             # check if english allow to pass
             if self.is_allowed_english_sentense(text):
-                printt('[INFO] All English Allow Pass: [{}].'.format(text))
+                printt('[INFO] All Right English Allow Pass: [{}].'.format(text))
+                
                 return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
 
             
@@ -326,16 +327,16 @@ class MainService():
 
     def is_allowed_english_sentense(self, text):
         _is_all_english_word = self.regex_all_english_word.match(text)
-        if _is_all_english_word:
-            _english_list = re.split('\s+', text)
-            if len(_english_list) <= 3:
-                if len(_english_list) == 1:
-                    return self.pre_filter.is_single_word(_english_list[0])
-                else:
-                    return False
+        _parsed_english_list = self.pre_filter.parse_split_english(text)
+
+        if _is_all_english_word and _parsed_english_list:
+            
+            if len(_parsed_english_list) == 1:
+                _eng_word = _parsed_english_list[0]
+                return len(_eng_word) > 4
             
             _english_map = {}
-            for _eng in _english_list:
+            for _eng in _parsed_english_list:
                 if _eng in _english_map:
                     _english_map[_eng] += 1
                 else:

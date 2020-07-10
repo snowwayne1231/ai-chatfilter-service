@@ -9,16 +9,16 @@ rare_symbol_regexies = [
     (u'\u00b9', u'\u02b8'), # suspect english
     (u'\u0363', u'\u058f'), # suspect english
     (u'\u05d0', u'\u0dff'), # suspect english
-    (u'\u0fff', u'\u1100'), # rare symbol
-    (u'\u13a0', u'\u1a1f'), # rare symbol 
-    (u'\u1b7f', u'\u1fff'), # rare symbol
-    (u'\u203d', u'\u23e8'), # rare symbol so many close to be suspect
-    (u'\u23fb', u'\u2647'), # rare symbol so many close to be suspect
-    (u'\u2669', u'\u266f'), # musical note
-    (u'\u26a2', u'\u26bc'), # rare symbol so many close to be suspect
-    (u'\u2710', u'\u271f'), # rare symbol and suspect digits
-    (u'\u2776', u'\u2b4f'), # rare symbol and suspect digits
-    (u'\u2bd0', u'\u2e7f'), # rare symbol and suspect digits
+    (u'\u0f00', u'\u2e7f'), # rare symbol
+    # (u'\u13a0', u'\u1a1f'), # rare symbol 
+    # (u'\u1b7f', u'\u1fff'), # rare symbol
+    # (u'\u203d', u'\u23e8'), # rare symbol so many close to be suspect
+    # (u'\u23fb', u'\u2647'), # rare symbol so many close to be suspect
+    # (u'\u2669', u'\u266f'), # musical note
+    # (u'\u26a2', u'\u26bc'), # rare symbol so many close to be suspect
+    # (u'\u2710', u'\u271f'), # rare symbol and suspect digits
+    # (u'\u2776', u'\u2b4f'), # rare symbol and suspect digits
+    # (u'\u2bd0', u'\u2e7f'), # rare symbol and suspect digits
     (u'\u3190', u'\u31bf'), # special zuyin
     (u'\u3200', u'\u33ff'), # special number
     (u'\u4db0', u'\u4dff'), # none sense
@@ -42,7 +42,7 @@ rare_symbol_regexies = [
 class PreFilter():
     temporary_messages = []
     max_same_room_word = 2
-    single_words = []
+    single_english_words = []
 
     def __init__(self):
         self.temporary_messages = []
@@ -111,49 +111,87 @@ class PreFilter():
         
         # all is english and digits
         if _NE_ratio == 1 and length_char >= 3 and length_char <= 9:
-            __origin_text_list = re.split('\s+', text)
-            __is_not_right_vocabulary = False
-
-            for __otl in __origin_text_list:
-                if __otl not in self.single_words:
-                    __is_not_right_vocabulary = True
-                    break
-
-            if __is_not_right_vocabulary:
-            
-                _english = self.replace_only_left_english(_text_)
-                # print('[find_wechat_chat] _english:', _english)
-                
-                _diversity_sentense_suffix = ['s', 'es', 'ies', 'ing', 'ed']
-                _escape_length = 0
-
-                if _english in self.single_words:
-                    pass
-                else:
-                    _buf = ''
-                    _tmp_word = ''
-                    _words = []
-                    for _ in _english:
-                        _buf += _
-                        # print('buf: ', _buf)
-                        # print('_tmp_word: ', _tmp_word)
-                        if _buf in self.single_words:
-                            _tmp_word = _buf
-                        else:
-                            if _tmp_word:
-                                _words.append(_tmp_word)
-                                _tmp_word = _ if _ in self.single_words else ''
-                                _buf = _
-                    
-                    if _tmp_word == _buf:
-                        _words.append(_tmp_word)
-                    else:
-                        is_many_language = True
-                        next_char += 'Wrong English Words. tmp: {}, buf: {}'.format(_tmp_word, _buf)
+            _english_word_list = self.parse_split_english(text)
+            if _english_word_list:
+                pass
+            else:
+                is_many_language = True
+                # print('[Prefilter][find_wechat_char] Wrong English {}'.format(text))
 
         # print('[find_wechat_chat] _words:', _words)
 
         return next_char if is_many_asci or is_many_language else ''
+
+    
+    def parse_split_english(self, text):
+        
+        __origin_text_list = re.split('\s+', text)
+        __is_not_right_vocabulary = False
+
+        _diversity_sentense_suffix = ['ies', 'es', 's', 'ing', 'ed']
+
+        _fixed_text_list = []
+
+        for __ot in __origin_text_list:
+            if __ot in self.single_english_words:
+
+                _fixed_text_list.append(__ot)
+
+            else:
+
+                _is_diversity = False
+                _fixed_ot = __ot
+                for _dss in _diversity_sentense_suffix:
+                    _suffix = '{}$'.format(_dss)
+                    if re.findall(_suffix, __ot):
+                        _fixed_ot = re.sub(_suffix, '', __ot)
+                        if _dss == 'ies':
+                            _fixed_ot += 'y'
+                        
+                        if _dss == 'ing' or _fixed_ot in self.single_english_words:
+                            _is_diversity = True
+                            break
+
+                if _is_diversity:
+                    _fixed_text_list.append(_fixed_ot)
+                else:
+                    __is_not_right_vocabulary = True
+                    break
+            
+
+
+        if __is_not_right_vocabulary:
+        
+            _english = self.replace_only_left_english(text)
+            
+
+            if _english in self.single_english_words:
+                return [_english]
+            else:
+                _buf = ''
+                _tmp_word = ''
+                _words = []
+                for _ in _english:
+                    _buf += _
+                    # print('buf: ', _buf)
+                    # print('_tmp_word: ', _tmp_word)
+                    if _buf in self.single_english_words:
+                        _tmp_word = _buf
+                    else:
+                        if _tmp_word:
+                            _words.append(_tmp_word)
+                            _tmp_word = _ if _ in self.single_english_words else ''
+                            _buf = _
+                
+                if _tmp_word == _buf:
+                    _words.append(_tmp_word)
+                    return _words
+                else:
+                    return []
+    
+        else:
+
+            return _fixed_text_list
 
 
     def is_chinese(self, uchar):
@@ -222,13 +260,13 @@ class PreFilter():
         return _text
 
 
-    def set_single_words(self, words):
+    def set_single_english_words(self, words):
         _word_list = [self.replace_only_left_english(_).lower() for _ in words]
-        self.single_words = [_ for _ in _word_list if _]
+        self.single_english_words = [_ for _ in _word_list if _]
 
     
-    def is_single_word(self, word):
-        return word.lower() in self.single_words
+    def is_single_english(self, word):
+        return word.lower() in self.single_english_words
 
 
     def check_same_room_conversation(self, _text, _before_room_texts):
