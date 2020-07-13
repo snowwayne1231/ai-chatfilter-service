@@ -41,8 +41,8 @@ class Command(BaseCommand):
         print("New Table Name: ", _new_table_name)
         _sql_rename_table = 'ALTER TABLE {} RENAME TO {};'.format(_table_name, _new_table_name)
         _sql_rename_table_2 = 'ALTER TABLE {} RENAME TO {};'.format(_table_name_blocked, _new_table_name_blocked)
-        _sql_create_new_table = 'CREATE TABLE {} AS SELECT * FROM {} WHERE 0;'.format(_table_name, _new_table_name)
-        _sql_create_new_table_2 = 'CREATE TABLE {} AS SELECT * FROM {} WHERE 0;'.format(_table_name_blocked, _new_table_name_blocked)
+        _sql_create_new_table = 'CREATE TABLE {} AS SELECT * FROM {} WHERE FALSE;'.format(_table_name, _new_table_name)
+        _sql_create_new_table_2 = 'CREATE TABLE {} AS SELECT * FROM {} WHERE FALSE;'.format(_table_name_blocked, _new_table_name_blocked)
         
         # print('SQL1 : {}'.format(_sql_rename_table))
         # print('SQL2 : {}'.format(_sql_create_new_table))
@@ -50,6 +50,10 @@ class Command(BaseCommand):
         connection = connections[DEFAULT_DB_ALIAS]
         
         with connection.cursor() as cursor:
+            if _st_date == _end_date:
+                cursor.execute('DROP TABLE IF EXISTS {};'.format(_new_table_name))
+                cursor.execute('DROP TABLE IF EXISTS {};'.format(_new_table_name_blocked))
+            
             cursor.execute(_sql_rename_table)
             cursor.execute(_sql_create_new_table)
             cursor.execute(_sql_rename_table_2)
