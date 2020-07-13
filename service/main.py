@@ -335,6 +335,9 @@ class MainService():
                 _eng_word = _parsed_english_list[0]
                 return len(_eng_word) > 4
             
+            if len(''.join(_parsed_english_list)) <= 6:
+                return False
+            
             _english_map = {}
             for _eng in _parsed_english_list:
                 if _eng in _english_map:
