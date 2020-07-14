@@ -102,6 +102,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
                 result_next['prediction'] = prediction
                 result_next['message'] = message
+                result_next['room'] = room
 
             else:
                 

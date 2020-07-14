@@ -135,7 +135,7 @@ class socketTcp(Tcp):
                     code = ai_results.get('code', 0)
 
                     if code and code > 0:
-                        logging.info('Nickname Change Request be blocked = reqid: {}.'.format(unpacked_data.reqid))
+                        logging.info('Nickname Change Request be blocked = reqid: {} | code: {}'.format(unpacked_data.reqid, code))
 
                 else:
 

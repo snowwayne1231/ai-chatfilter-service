@@ -53,20 +53,24 @@ class LaunchTcpSocket():
         return createHandler
     
 
-    def handle_tcp_callback(self, data, prediction, status_code):
+    def handle_tcp_callback(self, data, prediction, status_code = 0):
         if prediction is None:
             return
         
         if self.websocket and self.websocket.is_active:
 
             if data.cmd == 0x040003 or data.cmd == 0x041003:
+                #
                 _msgid = data.msgid
                 _msg = data.msg
                 _room = data.roomid if hasattr(data, 'roomid') else ''
                 self.websocket.send_msg(msgid=_msgid, msg=_msg, room=_room, prediction=prediction)
             elif data.cmd == 0x040007:
+                # nickname change
                 _nickname = data.nickname
-                # self.websocket.send_msg(msgid=self.websocket.key_change_nickname_request, msg=_nickname, prediction=prediction)
+                logging.debug('[handle_tcp_callback][Send To Websocket Nickname] prediction: {} | type: {}'.format(prediction, type(prediction)))
+                logging.debug('_nickname: {} | type: {}'.format(_nickname, type(_nickname)))
+                self.websocket.send_msg(msgid=self.websocket.key_change_nickname_request, msg=_nickname, prediction=prediction)
                 
         else:
             logging.error('Websocket is Not Working. [txt: {}]'.format(data.msg))

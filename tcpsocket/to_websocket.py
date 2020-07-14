@@ -139,6 +139,8 @@ class WebsocketThread (threading.Thread):
             elif _msg_id == self.key_tcp_poto:
                 logging.info('TCP Socket Setting Done.')
                 pass
+            elif _msg_id == self.key_change_nickname_request:
+                pass
             else:
                 # msgid is a string order
                 self.cache_map[_msg_id] = None

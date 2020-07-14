@@ -332,10 +332,10 @@ class MainService():
         if _is_all_english_word and _parsed_english_list:
             
             if len(_parsed_english_list) == 1:
-                _eng_word = _parsed_english_list[0]
-                return len(_eng_word) > 4
+                _num_eng_word = len(_parsed_english_list[0])
+                return _num_eng_word > 6
             
-            if len(''.join(_parsed_english_list)) <= 6:
+            if len(''.join(_parsed_english_list)) <= 8:
                 return False
             
             _english_map = {}
