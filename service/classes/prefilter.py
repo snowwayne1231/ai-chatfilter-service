@@ -2,7 +2,7 @@ import re
 
 
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
-single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ']
+single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ', '〇']
 rare_symbol_regexies = [
     (u'\u00a1', u'\u00a3'), # suspect english
     (u'\u00a9', u'\u00b6'), # suspect english
@@ -19,7 +19,9 @@ rare_symbol_regexies = [
     # (u'\u2710', u'\u271f'), # rare symbol and suspect digits
     # (u'\u2776', u'\u2b4f'), # rare symbol and suspect digits
     # (u'\u2bd0', u'\u2e7f'), # rare symbol and suspect digits
-    (u'\u3190', u'\u31bf'), # special zuyin
+    (u'\u3020', u'\u3029'), # special zuyin
+    (u'\u3030', u'\u3040'), # special zuyin
+    (u'\u312a', u'\u31bf'), # special zuyin
     (u'\u3200', u'\u33ff'), # special number
     (u'\u4db0', u'\u4dff'), # none sense
     (u'\ua000', u'\uabff'), # roma special
@@ -27,8 +29,8 @@ rare_symbol_regexies = [
     (u'\ufe70', u'\uff00'),
     (u'\uff10', u'\uff19'), # full digits
     (u'\uff21', u'\uff3a'), # full english
-    (u'\uff41', u'\uff5a'), # full english
-    (u'\uffa0', u'\uffe1'),
+    # (u'\uff41', u'\uff5a'), # full english
+    (u'\uff41', u'\uffe4'),
     (u'\uffe6', u'\uffff'),
     (u'\U00010280', u'\U0001107f'), # utf-16 special number
     (u'\U0001d400', u'\U0001d7ff'), # utf-16 special number and english
@@ -49,6 +51,33 @@ class PreFilter():
 
 
     def find_special_char(self, text):
+        next_char = ''
+        size_qk = 0
+
+        text = self.replace_face_symbol(text)
+
+        for _ in single_blocked_words:
+            if _ in text:
+                next_char += _
+
+        _i = 0
+        if len(next_char) == 0:
+            for u in text:
+                if self.is_rare_character(u):
+                    # print('is_rare_character found: next_char ', next_char, _i)
+                    next_char += u
+                elif self.is_question_mark(u):
+                    size_qk += 1
+                _i += 1
+
+        is_too_many_question_marks = size_qk >= 3
+        # if next_char:
+        #     return next_char
+
+        return '?' if is_too_many_question_marks else next_char
+
+    
+    def find_not_allowed_chat(self, text):
         next_char = ''
         size_qk = 0
 
