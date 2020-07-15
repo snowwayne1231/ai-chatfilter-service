@@ -3,6 +3,22 @@ import re
 
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
 single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ', '〇']
+allowed_character_regexies = [
+    (u'\u0020', u'\u0082'), # general english, digits and symbol
+    (u'\u23e9', u'\u23fa'), # symbol
+    (u'\u26bd', u'\u270d'), # symbol
+    # (u'\u3105', u'\u3129'), # zuyin
+    (u'\u4e00', u'\u9fa5'), # chinese
+    (u'\u3041', u'\u30ff'), # japanese
+    # (u'\u1100', u'\u11f9'), # korea yin
+    # (u'\u3131', u'\u318e'), # korea yin 2
+    (u'\uac00', u'\ud7a3'), # korea
+    (u'\ufe30', u'\uff65'), # full type of english, digits and symbol
+]
+
+suspect_english_or_digits = [
+    '!', '$', '&', '()', 
+]
 rare_symbol_regexies = [
     (u'\u00a1', u'\u00a3'), # suspect english
     (u'\u00a9', u'\u00b6'), # suspect english
@@ -79,29 +95,13 @@ class PreFilter():
     
     def find_not_allowed_chat(self, text):
         next_char = ''
-        size_qk = 0
 
         text = self.replace_face_symbol(text)
+        for u in text:
+            if not self.is_allowed_character(u):
+                next_char += u
 
-        for _ in single_blocked_words:
-            if _ in text:
-                next_char += _
-
-        _i = 0
-        if len(next_char) == 0:
-            for u in text:
-                if self.is_rare_character(u):
-                    # print('is_rare_character found: next_char ', next_char, _i)
-                    next_char += u
-                elif self.is_question_mark(u):
-                    size_qk += 1
-                _i += 1
-
-        is_too_many_question_marks = size_qk >= 3
-        # if next_char:
-        #     return next_char
-
-        return '?' if is_too_many_question_marks else next_char
+        return next_char
 
     
     def find_wechat_char(self, text, lowercase_only = True):
@@ -265,6 +265,17 @@ class PreFilter():
                     return True
                 break
 
+        return False
+
+
+    def is_allowed_character(self, uchar):
+        for _ in allowed_character_regexies:
+            _st = _[0]
+            _ed = _[1]
+            if uchar <= _ed:
+                if uchar >= _st:
+                    return True
+                break
         return False
 
 

@@ -109,7 +109,8 @@ class MainService():
 
         if message:
             
-            reason_char = self.pre_filter.find_special_char(message)
+            # reason_char = self.pre_filter.find_special_char(message)
+            reason_char = self.pre_filter.find_not_allowed_chat(message)
 
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SPECIAL_CHAR

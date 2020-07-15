@@ -374,7 +374,8 @@ class PinYinFilter(BasicChineseFilter):
 
                         _origin = self.data[_i][2]
                         _against_idx = _check_map_idx[_zip_str]
-                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', _origin, " idx: ", _i,  ' | ', 'against idx: ', _against_idx)
+                        _against_data = self.data[_against_idx][2]
+                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', _origin, " idx: ", _i,  ' | ', 'against data: ', _against_data, 'idx: ', _against_idx)
                         
                     
                 else:
