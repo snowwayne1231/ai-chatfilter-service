@@ -40,6 +40,7 @@ class MainService():
     STATUS_PREDICTION_WEHCAT_SUSPICION = 13
     STATUS_PREDICTION_BLOCK_WORD = 14
     STATUS_PREDICTION_SUSPECT_WATER_ARMY = 15
+    STATUS_PREDICTION_NOT_ALLOW = 16
 
     regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
 
@@ -109,8 +110,7 @@ class MainService():
 
         if message:
             
-            # reason_char = self.pre_filter.find_special_char(message)
-            reason_char = self.pre_filter.find_not_allowed_chat(message)
+            reason_char = self.pre_filter.find_special_char(message)
 
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
@@ -121,19 +121,24 @@ class MainService():
             # none sense text by be parsed message.
             if anchor > 0 or len(text) == 0:
                 return self.return_reslut(0, message=message, room=room, text=text, silence=silence, st_time=st_time)
-            
-            # check if english allow to pass
-            if self.is_allowed_english_sentense(text):
-                printt('[INFO] All Right English Allow Pass: [{}].'.format(text))
-                
-                return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
 
             
             if lv < self.service_avoid_filter_lv:
 
+                # check if english allow to pass
+                reason_char = self.pre_filter.find_not_allowed_chat(message)
+                if reason_char:
+                    prediction = self.STATUS_PREDICTION_NOT_ALLOW
+                    return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
+
+
+                if self.is_allowed_english_sentense(text):
+                    printt('[INFO] All Right English Allow Pass: [{}].'.format(text))
+                    return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
+
+                
                 reason_char = self.pre_filter.find_wechat_char(text)
                 if reason_char:
-
                     prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
                     return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, st_time=st_time)
 
