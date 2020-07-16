@@ -375,13 +375,9 @@ class PinYinFilter(BasicChineseFilter):
                         _origin = self.data[_i][2]
                         _against_idx = _check_map_idx[_zip_str]
                         _against_data = self.data[_against_idx][2]
-                        _before_against_data = self.data[_against_idx-1][2]
-                        _after_against_data = self.data[_against_idx+1][2]
+                        _before_against_data = self.data[_against_idx-1][2] if _against_idx > 0 else 'None'
                         print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', _origin, " idx: ", _i,  ' | ', 'against data: ', _against_data, 'idx: ', _against_idx)
-                        print('_before_against_data: ', _before_against_data)
-                        print('_after_against_data: ', _after_against_data)
-                        exit(2)
-                        
+                        print('      _before_against_data: ', _before_against_data)
                     
                 else:
                     _check_map[_zip_str] = _y_value
