@@ -131,24 +131,20 @@ class MainService():
                     prediction = self.STATUS_PREDICTION_NOT_ALLOW
                     return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
 
-
-                if self.is_allowed_english_sentense(text):
-                    printt('[INFO] All Right English Allow Pass: [{}].'.format(text))
+                _is_allowed = self.is_allowed_english_sentense(text)
+                if _is_allowed:
+                    printt('[INFO] All Right English Allow Pass Grammar AI: [{}].'.format(text))
                     return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
-
-                
+                    
                 reason_char = self.pre_filter.find_wechat_char(text)
                 if reason_char:
                     prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
                     return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, st_time=st_time)
-
                 
                 # reason_char = self.fuzzy_center.find_fuzzy_block_word(text, silence=silence)
                 # if reason_char:
-
                 #     prediction = self.STATUS_PREDICTION_BLOCK_WORD
                 #     return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence, st_time=st_time)
-
 
                 room_texts = self.chat_store.get_texts_by_room(room)
                 reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
@@ -156,11 +152,10 @@ class MainService():
                     prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
                     # print('deleted by SUSPECT_WATER_ARMY: ', text)
                     return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, st_time=st_time)
-
-
+                
                 #main ai
                 # if _length_text > 0:  # dont predict for one alphabet
-                prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
+                prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server, no_grammar=_is_allowed)
 
             if prediction == 0:
                 self.store_temporary_text(
@@ -334,6 +329,8 @@ class MainService():
     def is_allowed_english_sentense(self, text):
         _is_all_english_word = self.regex_all_english_word.match(text)
         _parsed_english_list = self.pre_filter.parse_split_english(text)
+
+        print('_parsed_english_list: ', _parsed_english_list)
 
         if _is_all_english_word and _parsed_english_list:
             

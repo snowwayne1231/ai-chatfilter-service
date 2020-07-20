@@ -28,7 +28,7 @@ class MainAiApp():
         self.grammar_model = GrammarFilter(load_folder=grammar_model_path)
     
 
-    def predict(self, txt, lv=0, with_reason=False):
+    def predict(self, txt, lv=0, with_reason=False, no_grammar=False):
         prediction = 0
         reason = ''
         # return 0, ''
@@ -42,7 +42,7 @@ class MainAiApp():
                 if not reason:
                     reason = txt
         
-        else:
+        elif not no_grammar:
             grammar_prediction = self.grammar_model.predictText(txt, lv)
             prediction = grammar_prediction
             if grammar_prediction > 0 and with_reason:
