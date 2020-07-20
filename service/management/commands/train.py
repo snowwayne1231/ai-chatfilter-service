@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from ai.train import train_pinyin, train_grammar
+from ai.train import train_pinyin_by_json_path, train_grammar_by_json_path
 import os
 
 class Command(BaseCommand):
@@ -9,10 +9,6 @@ class Command(BaseCommand):
         parser.add_argument(
             '-i', dest='input_excel_path', required=False,
             help='the path of excel file.',
-        )
-        parser.add_argument(
-            '-a', dest='is_append_mode', required=False, action='store_true',
-            help='is append to older data.',
         )
         parser.add_argument(
             '-f', dest='final_accuracy', required=False, type=float,
@@ -29,7 +25,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         path = options.get('input_excel_path', None)
-        is_append_mode = options.get('is_append_mode', False)
         final_accuracy = options.get('final_accuracy', None)
         grammar_mode = options.get('grammar_mode', False)
         max_spend_time = options.get('time', 0)
@@ -40,11 +35,11 @@ class Command(BaseCommand):
             full_file_path = os.getcwd() + '/' + path
             self.stdout.write('Full input excel path: ' + full_file_path)
             if grammar_mode:
-                train_grammar(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
+                train_grammar_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
             else:
-                train_pinyin(full_file_path, is_append=is_append_mode, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
+                train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
         else:
-            train_pinyin(None, final_accuracy=final_accuracy)
+            print('No File Path Input.')
         
 
         
