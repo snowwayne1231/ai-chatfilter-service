@@ -630,16 +630,25 @@ class EnglishParser():
     def __init__(self, vocabularies = []):
 
         if vocabularies:
+            self.set_vocabulary(vocabularies)
+
+
+    def set_vocabulary(self, vocabularies = []):
+        if vocabularies:
+
             self._vocabularies = vocabularies
+
         else:
-            _vocabularies = []
-            _language = Language.objects.get(code='EN')
-            # print('_language: ', _language)
-            _vocabulary = Vocabulary.objects.filter(language=_language).values_list('context', flat=True)
-            for _v in _vocabulary:
-                _vocabularies.append(_v)
+
+            self._vocabularies = self.get_vocabulary_by_database()
             
-            print('[EnglishParser] _vocabularies Length: ', len(_vocabularies))
+        print('[EnglishParser][set_vocabulary] _vocabularies Length: ', len(self._vocabularies))
+
+
+    def get_vocabulary_by_database(self):
+        _language = Language.objects.get(code='EN')
+        _vocabulary = list(Vocabulary.objects.filter(language=_language).values_list('context', flat=True))
+        return _vocabulary
 
 
     def replace_to_origin_english(self, text):
@@ -661,6 +670,7 @@ class EnglishParser():
                 _suffix = '{}$'.format(_dss)
                 if re.findall(_suffix, match_str):
                     _fixed_str = re.sub(_suffix, '', match_str)
+                    # print('_fixed_str: ', _fixed_str)
 
                     if _dss == 'ves':
                         _fixed_str_example = _fixed_str + 'f'

@@ -54,6 +54,7 @@ class MainService():
         if is_admin_server:
             self.is_admin_server = True
             self.check_analyzing()
+        
         printt('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
 
 
@@ -62,6 +63,7 @@ class MainService():
             return True
 
         self.pre_filter = PreFilter()
+        self.english_parser.set_vocabulary()
         
         if pinyin_data:
             _vocabulary = pinyin_data.get('vocabulary', [])
