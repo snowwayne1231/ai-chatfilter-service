@@ -212,7 +212,7 @@ class PreFilter():
                             _tmp_word = _ if _ in self.single_english_words else ''
                             _buf = _
                 
-                if _tmp_word == _buf:
+                if _tmp_word and _tmp_word == _buf:
                     _words.append(_tmp_word)
                     return _words
                 else:

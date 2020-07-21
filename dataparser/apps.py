@@ -6,7 +6,7 @@ from datetime import datetime
 from .classes.map_hex import mapHexes
 from .models import CustomDictionaryWord
 from service.models import Blockword
-from ai.models import SoundVocabulary, NewVocabulary, DigitalVocabulary
+from ai.models import SoundVocabulary, NewVocabulary, DigitalVocabulary, Vocabulary, Language
 from ai.classes.translator_pinyin import translate_by_string
 
 import xlrd, openpyxl
@@ -617,4 +617,67 @@ class JieBaDictionary():
         
         with open(self.pickle_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
             pickle.dump(self.vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+
+
+class EnglishParser():
+    """
+
+    """
+    _vocabularies = []
+
+    def __init__(self, vocabularies = []):
+
+        if vocabularies:
+            self._vocabularies = vocabularies
+        else:
+            _vocabularies = []
+            _language = Language.objects.get(code='EN')
+            # print('_language: ', _language)
+            _vocabulary = Vocabulary.objects.filter(language=_language).values_list('context', flat=True)
+            for _v in _vocabulary:
+                _vocabularies.append(_v)
+            
+            print('[EnglishParser] _vocabularies Length: ', len(_vocabularies))
+
+
+    def replace_to_origin_english(self, text):
+
+        _regex_english = r'[a-zA-Z]+'
+        
+        new_text = re.sub(_regex_english, self._sub_match_fn, text)
+            
+        # print('new_text: ', new_text)
+
+        return new_text
+
+    def _sub_match_fn(self, match):
+        _diversity_suffix = ['ves', 'ies', 'es', 's', 'ing', 'ed']
+        match_str = match.group()
+        # print('match_str: ', match_str)
+        if match_str not in self._vocabularies:
+            for _dss in _diversity_suffix:
+                _suffix = '{}$'.format(_dss)
+                if re.findall(_suffix, match_str):
+                    _fixed_str = re.sub(_suffix, '', match_str)
+
+                    if _dss == 'ves':
+                        _fixed_str_example = _fixed_str + 'f'
+                        if _fixed_str_example in self._vocabularies:
+                            return _fixed_str_example
+                        _fixed_str_example = _fixed_str + 'fe'
+                        if _fixed_str_example in self._vocabularies:
+                            return _fixed_str_example
+
+                    elif _dss == 'ies':
+                        _fixed_str_example = _fixed_str + 'y'
+                        if _fixed_str_example in self._vocabularies:
+                            return _fixed_str_example
+
+                    if _fixed_str in self._vocabularies:
+                        return _fixed_str
+
+        return match_str
+        
 

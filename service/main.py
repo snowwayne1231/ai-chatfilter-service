@@ -1,7 +1,7 @@
 from django.utils import timezone
 from django.conf import settings
 from ai.apps import MainAiApp
-from dataparser.apps import MessageParser
+from dataparser.apps import MessageParser, EnglishParser
 from .classes.prefilter import PreFilter
 # from .classes.fuzzycenter import FuzzyCenter
 from .classes.chatstore import ChatStore
@@ -21,6 +21,7 @@ class MainService():
     pre_filter = None
     ai_app = None
     message_parser = None
+    english_parser = None
     fuzzy_center = None
     chat_store = None
     is_open_mind = False
@@ -48,6 +49,7 @@ class MainService():
     def __init__(self, is_admin_server = False):
 
         self.message_parser = MessageParser()
+        self.english_parser = EnglishParser()
         self.chat_store = ChatStore()
         if is_admin_server:
             self.is_admin_server = True
@@ -94,7 +96,9 @@ class MainService():
     
 
     def parse_message(self, string):
-        return self.message_parser.parse(string)
+        _, lv, ac = self.message_parser.parse(string)
+        _ = self.english_parser.replace_to_origin_english(_)
+        return _, lv, ac
 
 
     def think(self, message, user = '', room = '', silence=False, detail=False):
@@ -177,10 +181,6 @@ class MainService():
     def return_reslut(self, prediction, message, user='', room='', text='', reason='', silence=True, detail=False, st_time=0):
         result = {}
         detail_data = {}
-        # if not silence:
-
-        #     self.saveRecord(prediction, message=message, text=text, reason=reason)
-        #     self.check_analyzing()
         
         if detail:
 
@@ -220,9 +220,9 @@ class MainService():
             else:
                 # save to blocked
                 if text:
-                    _text, lv, anchor = self.parse_message(message)
+                    _text = text
                 else:
-                    _text = ''
+                    _text, lv, anchor = self.parse_message(message)
                 
                 record = BlockedSentence(
                     message=message[:95],
@@ -330,7 +330,7 @@ class MainService():
         _is_all_english_word = self.regex_all_english_word.match(text)
         _parsed_english_list = self.pre_filter.parse_split_english(text)
 
-        print('_parsed_english_list: ', _parsed_english_list)
+        # print('_parsed_english_list: ', _parsed_english_list)
 
         if _is_all_english_word and _parsed_english_list:
             

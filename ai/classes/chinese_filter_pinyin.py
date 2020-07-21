@@ -1,9 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
+import re
 from .translator_pinyin import translate_by_string, traceback_by_stringcode
 from .chinese_filter_basic import BasicChineseFilter
-from dataparser.apps import JieBaDictionary
+from dataparser.apps import JieBaDictionary, EnglishParser
 # from ai.models import NewVocabulary
 
 import tensorflow as tf
@@ -23,9 +24,11 @@ class PinYinFilter(BasicChineseFilter):
 
     digital_vocabulary_map = {}
     tokenizer_vocabularies = []
+    english_vocabularies = []
     num_status_classs = 8
     full_vocab_size = 65536
     jieba_dict = None
+    english_parser = None
     basic_num_dataset = 5000
 
     encoder = None
@@ -41,6 +44,7 @@ class PinYinFilter(BasicChineseFilter):
     def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[]):
 
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary)
+        # self.english_parser = EnglishParser()
         self.unknown_position = self.jieba_dict.get_unknown_position() + 1
         self.alphabet_position = self.jieba_dict.get_alphabet_position() + 1
         if len(unknown_words) == 0:
