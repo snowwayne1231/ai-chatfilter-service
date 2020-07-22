@@ -641,8 +641,13 @@ class EnglishParser():
         else:
 
             self._vocabularies = self.get_vocabulary_by_database()
+            print('[EnglishParser] Get Vocabulary On Database.')
             
         print('[EnglishParser][set_vocabulary] _vocabularies Length: ', len(self._vocabularies))
+
+    
+    def get_vocabulary(self):
+        return self._vocabularies
 
 
     def get_vocabulary_by_database(self):

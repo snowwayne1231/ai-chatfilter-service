@@ -63,10 +63,11 @@ class MainService():
             return True
 
         self.pre_filter = PreFilter()
-        self.english_parser.set_vocabulary()
+        
         
         if pinyin_data:
             _vocabulary = pinyin_data.get('vocabulary', [])
+            _vocabulary_english = pinyin_data.get('vocabulary_english', [])
             _unknowns = pinyin_data.get('unknowns', [])
             _unknown_words = [_[0] for _ in _unknowns]
             _remote_models = []
@@ -76,12 +77,15 @@ class MainService():
             # if url_grammar_model:
             #     _remote_models.append(('grammar', url_grammar_model))
 
+            print('_vocabulary_english: ', _vocabulary_english)
+            self.english_parser.set_vocabulary(_vocabulary_english)
             self.ai_app = MainAiApp(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words)
 
             
         elif self.is_admin_server:
 
             self.ai_app = MainAiApp()
+            self.english_parser.set_vocabulary()
             _vocabulary = self.ai_app.get_pinyin_vocabulary()
         
         else:
@@ -367,6 +371,7 @@ class MainService():
         if self.ai_app:
             return {
                 'vocabulary': self.ai_app.get_pinyin_vocabulary(),
+                'vocabulary_english': self.english_parser.get_vocabulary(),
                 'unknowns': self.get_pinyin_unknowns(),
             }
         else:
