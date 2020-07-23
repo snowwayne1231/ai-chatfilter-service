@@ -102,8 +102,11 @@ class MainService():
     
 
     def parse_message(self, string):
+        print('string: ', string)
         _, lv, ac = self.message_parser.parse(string)
+        print('_: ', _)
         _ = self.english_parser.replace_to_origin_english(_)
+        print('_: ', _)
         return _, lv, ac
 
 
@@ -126,6 +129,12 @@ class MainService():
             #     prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
             #     return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
 
+            # check if english allow to pass
+            reason_char = self.pre_filter.find_not_allowed_chat(message)
+            if reason_char:
+                prediction = self.STATUS_PREDICTION_NOT_ALLOW
+                return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
+
             text, lv, anchor = self.parse_message(message)
 
             # none sense text by be parsed message.
@@ -134,12 +143,6 @@ class MainService():
 
             
             if lv < self.service_avoid_filter_lv:
-
-                # check if english allow to pass
-                reason_char = self.pre_filter.find_not_allowed_chat(message)
-                if reason_char:
-                    prediction = self.STATUS_PREDICTION_NOT_ALLOW
-                    return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
 
                 _is_allowed = self.is_allowed_english_sentense(text)
                 if _is_allowed:
