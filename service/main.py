@@ -77,7 +77,7 @@ class MainService():
             # if url_grammar_model:
             #     _remote_models.append(('grammar', url_grammar_model))
 
-            print('_vocabulary_english: ', _vocabulary_english)
+            
             self.english_parser.set_vocabulary(_vocabulary_english)
             self.ai_app = MainAiApp(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words)
 
@@ -120,11 +120,11 @@ class MainService():
 
         if message:
             
-            reason_char = self.pre_filter.find_special_char(message)
+            # reason_char = self.pre_filter.find_special_char(message)
 
-            if reason_char:
-                prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
-                return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
+            # if reason_char:
+            #     prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
+            #     return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
 
             text, lv, anchor = self.parse_message(message)
 

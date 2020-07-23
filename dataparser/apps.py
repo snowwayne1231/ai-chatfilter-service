@@ -262,7 +262,6 @@ class MessageParser():
                 # full char to half
                 _code -= 0xfee0
             
-            
             # 【2000-206F】 General Punctuation 一般標點符號 # 8216
             # if _code >= 0x2000 and _code <= 0x206f: continue
             # 【3000-303F】 CJK Symbols and Punctuation 中日韓符號和標點  # 12290

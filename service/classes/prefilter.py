@@ -2,23 +2,27 @@ import re
 
 
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
-single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ', '〇']
+# single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ', '〇']
 allowed_character_regexies = [
     (u'\u0020', u'\u0082'), # general english, digits and symbol
     (u'\u23e9', u'\u23fa'), # symbol
     (u'\u26bd', u'\u270d'), # symbol
+    (u'\u3001', u'\u3002'), # dot symbol
     # (u'\u3105', u'\u3129'), # zuyin
     (u'\u4e00', u'\u9fa5'), # chinese
     (u'\u3041', u'\u30ff'), # japanese
     # (u'\u1100', u'\u11f9'), # korea yin
     # (u'\u3131', u'\u318e'), # korea yin 2
     (u'\uac00', u'\ud7a3'), # korea
-    (u'\ufe30', u'\uff65'), # full type of english, digits and symbol
+    (u'\uff01', u'\uff65'), # full type of english, digits and symbol
+    (u'\U0001f600', u'\U0001f64f'), # faces
+    (u'\U0001f910', u'\U0001f9ff'), # faces
 ]
 
 suspect_english_or_digits = [
     '!', '$', '&', '()', 
 ]
+
 rare_symbol_regexies = [
     (u'\u00a1', u'\u00a3'), # suspect english
     (u'\u00a9', u'\u00b6'), # suspect english
@@ -44,7 +48,7 @@ rare_symbol_regexies = [
     (u'\ud7b0', u'\uf8ff'), # unknown
     (u'\ufe70', u'\uff00'),
     (u'\uff10', u'\uff19'), # full digits
-    (u'\uff21', u'\uff3a'), # full english
+    (u'\uff21', u'\uff5a'), # full english
     # (u'\uff41', u'\uff5a'), # full english
     (u'\uff41', u'\uffe4'),
     (u'\uffe6', u'\uffff'),
@@ -72,9 +76,9 @@ class PreFilter():
 
         text = self.replace_face_symbol(text)
 
-        for _ in single_blocked_words:
-            if _ in text:
-                next_char += _
+        # for _ in single_blocked_words:
+        #     if _ in text:
+        #         next_char += _
 
         _i = 0
         if len(next_char) == 0:
