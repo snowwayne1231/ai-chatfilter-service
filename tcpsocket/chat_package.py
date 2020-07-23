@@ -286,10 +286,10 @@ class NickNameFilterRequestPackage(BasicStructPackage):
         self.reqid = reqid
 
         try:
-            self.nickname = _left_buffer[:_left_size].decode('utf-8')
+            self.nickname = _left_buffer[:_left_size].decode('utf-8').replace("\x00", "")
         except:
             logging.error('Unpack NickNameFilterRequestPackage Failed :: CMD= {}, Buffer= {}'.format(cmd, _left_buffer))
-            self.nickname = _left_buffer[:_left_size].decode('utf-8', "ignore")
+            self.nickname = _left_buffer[:_left_size].decode('utf-8', "ignore").replace("\x00", "")
 
 
 class NickNameFilterResponsePackage(BasicStructPackage):

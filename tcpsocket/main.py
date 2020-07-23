@@ -69,7 +69,7 @@ class LaunchTcpSocket():
                 # nickname change
                 _nickname = data.nickname
                 logging.debug('[handle_tcp_callback][Send To Websocket Nickname] prediction: {} | type: {}'.format(prediction, type(prediction)))
-                logging.debug('_nickname: {} | type: {}'.format(_nickname, type(_nickname)))
+                logging.debug('_nickname: [{}] | type: {}'.format(_nickname, type(_nickname)))
                 self.websocket.send_msg(msgid=self.websocket.key_change_nickname_request, msg=_nickname, prediction=prediction)
                 
         else:

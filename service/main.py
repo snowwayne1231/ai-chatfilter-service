@@ -217,29 +217,37 @@ class MainService():
 
     def saveRecord(self, prediction, message, text='', reason=''):
         if self.is_admin_server:
-            if prediction == 0:
-                # save to good sentence
-                record = GoodSentence(
-                    message=message[:95],
-                    text=text[:63],
-                )
-            else:
-                # save to blocked
-                if text:
-                    _text = text
-                else:
-                    _text, lv, anchor = self.parse_message(message)
-                
-                record = BlockedSentence(
-                    message=message[:95],
-                    text=_text[:63],
-                    reason=reason[:63] if reason else '',
-                    status=int(prediction),
-                )
 
-            record.save()
-        
-            self.check_analyzing()
+            try:
+
+                if prediction == 0:
+                    # save to good sentence
+                    record = GoodSentence(
+                        message=message[:95],
+                        text=text[:63],
+                    )
+                else:
+                    # save to blocked
+                    if text:
+                        _text = text
+                    else:
+                        _text, lv, anchor = self.parse_message(message)
+                    
+                    record = BlockedSentence(
+                        message=message[:95],
+                        text=_text[:63],
+                        reason=reason[:63] if reason else '',
+                        status=int(prediction),
+                    )
+
+                record.save()
+            
+                self.check_analyzing()
+
+            except Exception as ex:
+
+                printt('Save Record Failed')
+                print(ex)
 
         else:
 
@@ -248,12 +256,15 @@ class MainService():
     
     def saveNicknameRequestRecord(self, nickname, status):
         if self.is_admin_server:
-            record = ChangeNicknameRequest(
-                nickname=nickname,
-                status=status,
-            )
 
-            record.save()
+            try:
+                record = ChangeNicknameRequest(
+                    nickname=nickname,
+                    status=status,
+                )
+                record.save()
+            except Exception as ex:
+                printt('Save NicknameRequestRecord Failed, nickname: [{}].'.format(nickname))
 
         else:
 
