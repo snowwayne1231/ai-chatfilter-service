@@ -63,6 +63,11 @@ class JsonParser():
     def get_data(self):
         return self.data
 
+    
+    def get_data_only_text(self):
+        # general json text position at 4
+        return [_[4] for _ in self.data]
+
 
     def load(self, path = None):
         _file = self.file if path is None else path

@@ -91,9 +91,6 @@ class MainService():
         else:
             printt('Open Mind Failed. It is Not Admin Server.')
             return False
-        
-        _single_words = [_ for _ in _vocabulary if _.count('_') == 1]
-        self.pre_filter.set_single_english_words(_single_words)
 
         self.is_open_mind = True
         # self.fuzzy_center = FuzzyCenter()
@@ -102,11 +99,8 @@ class MainService():
     
 
     def parse_message(self, string):
-        print('string: ', string)
         _, lv, ac = self.message_parser.parse(string)
-        print('_: ', _)
         _ = self.english_parser.replace_to_origin_english(_)
-        print('_: ', _)
         return _, lv, ac
 
 
@@ -348,17 +342,15 @@ class MainService():
 
     def is_allowed_english_sentense(self, text):
         _is_all_english_word = self.regex_all_english_word.match(text)
-        _parsed_english_list = self.pre_filter.parse_split_english(text)
-
-        # print('_parsed_english_list: ', _parsed_english_list)
+        _parsed_english_list = self.english_parser.parse_right_vocabulary_list(text)
 
         if _is_all_english_word and _parsed_english_list:
             
             if len(_parsed_english_list) == 1:
                 _num_eng_word = len(_parsed_english_list[0])
-                return _num_eng_word > 6
+                return _num_eng_word > 3
             
-            if len(''.join(_parsed_english_list)) <= 8:
+            if len(''.join(_parsed_english_list)) < 10:
                 return False
             
             _english_map = {}
@@ -380,6 +372,7 @@ class MainService():
                 return True
 
         return False
+    
 
     def get_pinyin_data(self):
         if self.ai_app:

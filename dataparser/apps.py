@@ -5,6 +5,7 @@ from django.apps import AppConfig
 from datetime import datetime
 from .classes.map_hex import mapHexes
 from .models import CustomDictionaryWord
+from .jsonparser import JsonParser
 from service.models import Blockword
 from ai.models import SoundVocabulary, NewVocabulary, DigitalVocabulary, Vocabulary, Language
 from ai.classes.translator_pinyin import translate_by_string
@@ -299,23 +300,29 @@ class JieBaDictionary():
     reserve_character = '#RES#'
     folder = os.path.dirname(__file__)
     pickle_folder = os.path.dirname(__file__) + '/_pickles'
+    freq_json_file = os.path.dirname(__file__) + '/assets/freq.json'
     origin_vocabulary = []
     vocabularies = []
+    vocabulary_freqs = []
     none_tone_map = {}
+    re_eng = re.compile('[a-zA-Z0-9_]', re.U)
+
+    _jsonparser = None
 
     def __init__(self, vocabulary=[]):
         self.origin_vocabulary = [self.pad_character, self.unknown_character, self.number_character, self.alphabet_character, self.reserve_character]
-        jieba.re_eng = re.compile('[a-zA-Z0-9_]', re.U)
+        jieba.re_eng = self.re_eng
         jieba.initialize(dictionary=self.folder + '/assets/jieba.txt')
+        self._jsonparser = JsonParser(file=self.freq_json_file)
 
         if not os.path.isdir(self.pickle_folder):
             os.mkdir(self.pickle_folder)
 
         if len(vocabulary) == 0:
-            self.load_vocabularies()
+            # self.load_vocabularies()
             self.refresh_dictionary()
         else:
-            self.load_vocabularies(vocabulary)
+            self.load_vocabularies(vocabulary=vocabulary)
             self.save_vocabularies()
         
         
@@ -323,10 +330,12 @@ class JieBaDictionary():
 
 
     def split_word(self, text=''):
-        _list = jieba.cut(text, HMM=False, cut_all=False) if text else []
+        # _list = jieba.cut(text, HMM=False, cut_all=False) if text else []
         results = []
         unknowns = []
         _buf = ''
+
+        _list = self.__cut_DAG_NO_HMM(text)
 
         for _ in _list:
             # print('[split_word] _: ', _)
@@ -342,7 +351,7 @@ class JieBaDictionary():
                         _none_tone_words = self.get_none_tone_word(__)
                         # print('[split_word] [isdigit] _none_tone_words: ', _none_tone_words)
                         if _none_tone_words:
-                            results += _none_tone_words 
+                            results += _none_tone_words
                         else:
                             results.append(self.number_character)
                         
@@ -400,29 +409,72 @@ class JieBaDictionary():
         return results, unknowns
 
 
+    def __cut_DAG_NO_HMM(self, sentence):
+        _DAG = jieba.get_DAG(sentence)
+        # print('[__cut_DAG_NO_HMM] sentence: ', sentence)
+        # print('[__cut_DAG_NO_HMM] DAG: ', _DAG)
+        route = {}
+
+        _FREQ = jieba.dt.FREQ
+        _split_char = self.split_character
+        _list_splited_idx = []
+
+        # N = len(sentence)
+        # route[N] = (0, 0)
+        # for _idx in range(N - 2, -1, -1):
+        #     if _idx == 0 or sentence[_idx-1] == _split_char:
+        #         for _x in _DAG[_idx]:
+        #             _sen = sentence[_idx:_x + 1]
+        #             _freq_ = _FREQ.get(_sen)
+
+
+        jieba.calc(sentence, _DAG, route)
+        x = 0
+        N = len(sentence)
+        buf = ''
+        while x < N:
+            y = route[x][1] + 1
+            l_word = sentence[x:y]
+            if self.re_eng.match(l_word) and len(l_word) == 1:
+                buf += l_word
+                x = y
+            else:
+                if buf:
+                    yield buf
+                    buf = ''
+                yield l_word
+                x = y
+        if buf:
+            yield buf
+            buf = ''
+
+
     def refresh_dictionary(self):
         print('JieBaDictionary: Start Refresh Dictionary Observed Data Source By Database.')
         _older_v_size = len(self.vocabularies)
         
-        dictionary_list = CustomDictionaryWord.objects.values_list('pinyin', flat=True)
-        for d in dictionary_list:
-            self.add_word(d)
+        # dictionary_list = CustomDictionaryWord.objects.values_list('pinyin', flat=True)
+        # for d in dictionary_list:
+        #     self.add_word(d)
+
+        _freq_map = self.get_freq_map()
 
         _percent = 0
 
-        sound_vocabularies = SoundVocabulary.objects.values_list('pinyin', flat=True)
+        sound_vocabularies = SoundVocabulary.objects.filter(status=1)
         _total = len(sound_vocabularies)
         _i = 0
         for sv in sound_vocabularies:
-            self.add_word(sv)
+            _pinyin = sv.pinyin
+            # _type = int(sv.type)
+            _freq = _freq_map.get(_pinyin, 1)
+            self.add_word(_pinyin, freq=_freq)
 
             if _i % 500 == 0:
                 _percent = _i / _total * 100
                 print(' {:.2f}%'.format(_percent), end="\r")
             _i += 1
-        
-        # print([_[1] for _ in self.none_tone_map.items()if len(_[1]) > 1])
-        # exit(2)
+
         
         # new_vocabularies = NewVocabulary.objects.values_list('pinyin', flat=True)
         # for nv in new_vocabularies:
@@ -446,11 +498,16 @@ class JieBaDictionary():
         return self
 
 
-    def add_word(self, word):
-        if self.is_allowed_word(word) and self.is_new_word(word):
-            jieba.add_word(word)
-            self.vocabularies.append(word)
-            self.add_none_tone_word(word)
+    def add_word(self, word, freq = None):
+        if self.is_allowed_word(word):
+            _is_new_word = self.is_new_word(word)
+            _freq = int(freq) if freq else 1
+            jieba.add_word(word, freq=_freq)
+
+            if _is_new_word:
+                self.vocabularies.append(word)
+                self.vocabulary_freqs.append(_freq)
+                self.add_none_tone_word(word)
             
             return True
         return False
@@ -471,19 +528,6 @@ class JieBaDictionary():
                 return True
         
         return False
-
-
-    def add_vocabulary(self, words):
-        count = 0
-        # should_be_insertd = []
-        for w in words:
-            if self.add_word(w):
-                count += 1
-                # should_be_insertd.append(w)
-        if count > 0:
-            self.save_vocabularies()
-
-        return count
 
 
     def get_none_tone_word(self, pinyin):
@@ -580,6 +624,42 @@ class JieBaDictionary():
     def get_reserve_position(self):
         return self.origin_vocabulary.index(self.reserve_character)
 
+    
+    def get_cut_for_search(self, sentence):
+        return jieba.cut_for_search(sentence, HMM=False)
+
+
+    def get_cut_all(self, sentence, min_length = 1):
+        _dag = jieba.get_DAG(sentence)
+        _n = len(sentence)
+        result = []
+        
+        for _idx in range(_n):
+            if _idx == 0 or sentence[_idx-1] == self.split_character:
+                _dag_list = _dag[_idx]
+                for __x in _dag_list:
+                    _word = sentence[_idx:__x+1]
+                    if _word.count(self.split_character) >= min_length:
+                        result.append(_word)
+            
+        return result
+
+
+    def get_DAG(self, sentence):
+        return jieba.get_DAG(sentence)
+
+
+    def get_freq_map(self):
+        _json_data = self._jsonparser.load()
+        res_map = {}
+        for _ in _json_data:
+            _pinyin = _[0]
+            _freq_times = _[1]
+            res_map[_pinyin] = _freq_times
+        
+        return res_map
+    
+
     def is_new_word(self, _word):
         return _word not in self.vocabularies
 
@@ -591,31 +671,42 @@ class JieBaDictionary():
     def load_vocabularies(self, vocabulary=None):
         _list = []
         if isinstance(vocabulary, list) and len(vocabulary) >0:
-            print('===========[load_vocabularies] by Vocabulary Data: ', vocabulary[-10:], len(vocabulary), flush=True)
             _list = vocabulary
+
+            print('===========[load_vocabularies] by Vocabulary Data: ', vocabulary[-10:], len(vocabulary), flush=True)
+
         else:
             path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
             if os.path.isfile(path):
                 with open(path, 'rb') as handle:
-                    _list = pickle.load(handle)
+                    _full_data = pickle.load(handle)
+                    _list = _full_data[0]
+                    _voca_freqs = _full_data[1]
+                
             else:
                 self.save_vocabularies()
 
             print('===========[load_vocabularies] by Local File: ', _list[-10:], len(_list), flush=True)
 
-        for _ in _list:
-            jieba.add_word(_)
-            self.add_none_tone_word(_)
+
+        if len(_list) != len(_voca_freqs):
+            print('[ERROR] Vocabulary and Freqs Legnths Can Not Be Different', flush=True)
+            exit(2)
         
-        self.vocabularies = _list
+
+        for _idx, _ in enumerate(_list):
+            self.add_word(_, freq=_freq)
+        
+        # self.vocabularies = _list
 
 
     def save_vocabularies(self):
+        _full_data = [self.vocabularies, self.vocabulary_freqs]
         with open(self.pickle_folder + '/tokenizer_vocabularies.bak', 'wb+') as handle:
-            pickle.dump(self.vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(_full_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         with open(self.pickle_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
-            pickle.dump(self.vocabularies, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(_full_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 
@@ -625,6 +716,7 @@ class EnglishParser():
 
     """
     _vocabularies = []
+    _regex_english = r'[a-zA-Z]+'
 
     def __init__(self, vocabularies = []):
 
@@ -657,9 +749,9 @@ class EnglishParser():
 
     def replace_to_origin_english(self, text):
 
-        _regex_english = r'[a-zA-Z]+'
         
-        new_text = re.sub(_regex_english, self._sub_match_fn, text)
+        
+        new_text = re.sub(self._regex_english, self._sub_match_fn, text)
             
         # print('new_text: ', new_text)
 
@@ -693,5 +785,21 @@ class EnglishParser():
                         return _fixed_str
 
         return match_str
-        
+
+
+    def parse_right_vocabulary_list(self, eng_str):
+        result_list = []
+        _eng_string = eng_str.strip()
+        _eng_list = re.split(r'\s+', _eng_string)
+
+        for _ in _eng_list:
+            if re.match(self._regex_english, _):
+                if _ not in self._vocabularies:
+                    return []
+                else:
+                    result_list.append(_)
+            else:
+                return []
+
+        return result_list
 

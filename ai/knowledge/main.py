@@ -8,6 +8,12 @@ class KnowledgeCenter():
     dot_pattern = re.compile("[\u3002|\u002c|\u300a|\u3008]")
     vocabulary_map = {}
     sound_vocabulary_map = {}
+    SoundVocabulary_LV_map = {
+        'NONE': 1,
+        'TW': 2,
+        'EN': 3,
+        'CN': 4,
+    }
 
     def __init__(self):
         pass
@@ -59,6 +65,9 @@ class KnowledgeCenter():
         for v in vocabularies:
             vocabulary_set.update({str(v)})
         
+        _type_lv = self.SoundVocabulary_LV_map.get(language_code, None)
+        if _type_lv is None:
+            _type_lv = self.SoundVocabulary_LV_map.get('NONE')
 
         # print('upsert_into_dictionary row_data: ', row_data)
         length_rows = len(row_data)
@@ -79,9 +88,9 @@ class KnowledgeCenter():
             if i % 100 == 0:
                 print('Upsert Vocabularies.. process: {:.2f} % '.format( i / length_rows * 100 ), end='\r')
             
-            length_word = len(word)
-            if length_word > 12:
-                continue # strange length
+            # length_word = len(word)
+            # if length_word > 12:
+            #     continue # strange length
 
             # if word[0] < '\u4e00' or word[-1] < '\u4e00':
                 # continue # is not chinese word
@@ -143,7 +152,7 @@ class KnowledgeCenter():
 
             else:
 
-                new_sv = SoundVocabulary(pinyin=word_pinyin)
+                new_sv = SoundVocabulary(pinyin=word_pinyin, type=_type_lv)
                 new_sv.save()
                 new_sv.vocabulary.add(_v)
                 sv_map[word_pinyin] = new_sv

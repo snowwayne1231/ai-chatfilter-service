@@ -5,8 +5,8 @@ regex_chinese = re.compile('[\u4e00-\u9fa5]+')
 # single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ', '〇']
 allowed_character_regexies = [
     (u'\u0020', u'\u0082'), # general english, digits and symbol
-    (u'\u23e9', u'\u23fa'), # symbol
-    (u'\u26bd', u'\u270d'), # symbol
+    (u'\u23e9', u'\u23f9'), # symbol
+    # (u'\u26bd', u'\u270d'), # symbol
     (u'\u3001', u'\u3002'), # dot symbol
     # (u'\u3105', u'\u3129'), # zuyin
     (u'\u4e00', u'\u9fa5'), # chinese
@@ -64,7 +64,6 @@ rare_symbol_regexies = [
 class PreFilter():
     temporary_messages = []
     max_same_room_word = 2
-    single_english_words = []
 
     def __init__(self):
         self.temporary_messages = []
@@ -140,91 +139,32 @@ class PreFilter():
 
         is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and number_size > 0 and eng_size > 0
 
+        has_double_eng = False
+        if _NE_ratio > 0.8:
+            __first_char = text[0]
+            __next_same_char = 0
+            for __idx in range(len(text)):
+                if __idx > 1 and text[__idx] == __first_char:
+                    __next_same_char = __idx
+                    break
+            
+            __first_sentence = text[:__next_same_char]
+            
+            if len(__first_sentence) < 12:
+                __left_text = text[__next_same_char:]
+
+                if __first_sentence in __left_text:
+                    has_double_eng = True
+
         # print('[find_wechat_char] _NE_ratio: ', _NE_ratio, ' | length_char: ', length_char, eng_size, number_size)
         
         # all is english and digits
-        if _NE_ratio == 1 and length_char >= 3 and length_char <= 9:
-            _english_word_list = self.parse_split_english(text)
-            if _english_word_list:
-                pass
-            else:
-                is_many_language = True
-                # print('[Prefilter][find_wechat_char] Wrong English {}'.format(text))
+        if _NE_ratio == 1 and number_size > 0 and length_char >= 3 and length_char <= 12:
+           return next_char
 
         # print('[find_wechat_chat] _words:', _words)
 
-        return next_char if is_many_asci or is_many_language else ''
-
-    
-    def parse_split_english(self, text):
-        
-        __origin_text_list = re.split('\s+', text)
-        __is_not_right_vocabulary = False
-
-        _diversity_sentense_suffix = ['ies', 'es', 's', 'ing', 'ed']
-
-        _fixed_text_list = []
-
-        for __ot in __origin_text_list:
-            if __ot in self.single_english_words:
-
-                _fixed_text_list.append(__ot)
-
-            else:
-
-                _is_diversity = False
-                _fixed_ot = __ot
-                for _dss in _diversity_sentense_suffix:
-                    _suffix = '{}$'.format(_dss)
-                    if re.findall(_suffix, __ot):
-                        _fixed_ot = re.sub(_suffix, '', __ot)
-                        if _dss == 'ies':
-                            _fixed_ot += 'y'
-                        
-                        if _dss == 'ing' or _fixed_ot in self.single_english_words:
-                            _is_diversity = True
-                            break
-
-                if _is_diversity:
-                    _fixed_text_list.append(_fixed_ot)
-                else:
-                    __is_not_right_vocabulary = True
-                    break
-            
-
-
-        if __is_not_right_vocabulary:
-        
-            _english = self.replace_only_left_english(text)
-            
-
-            if _english in self.single_english_words:
-                return [_english]
-            else:
-                _buf = ''
-                _tmp_word = ''
-                _words = []
-                for _ in _english:
-                    _buf += _
-                    # print('buf: ', _buf)
-                    # print('_tmp_word: ', _tmp_word)
-                    if _buf in self.single_english_words:
-                        _tmp_word = _buf
-                    else:
-                        if _tmp_word:
-                            _words.append(_tmp_word)
-                            _tmp_word = _ if _ in self.single_english_words else ''
-                            _buf = _
-                
-                if _tmp_word and _tmp_word == _buf:
-                    _words.append(_tmp_word)
-                    return _words
-                else:
-                    return []
-    
-        else:
-
-            return _fixed_text_list
+        return next_char if is_many_asci or is_many_language or has_double_eng else ''
 
 
     def is_chinese(self, uchar):
@@ -304,15 +244,6 @@ class PreFilter():
         return _text
 
 
-    def set_single_english_words(self, words):
-        _word_list = [self.replace_only_left_english(_).lower() for _ in words]
-        self.single_english_words = [_ for _ in _word_list if _]
-
-    
-    def is_single_english(self, word):
-        return word.lower() in self.single_english_words
-
-
     def check_same_room_conversation(self, _text, _before_room_texts):
         _num_matched = 0
 
@@ -322,13 +253,18 @@ class PreFilter():
                 for _rt in _before_room_texts:
                     if self.replace_only_left_english(_rt) == english_text:
                         return 'not allow same English keep typing'
-                        # _num_matched += 1
-                        # if _num_matched >= self.max_same_room_word:
-                        #     return 'too many same English'
+
+        
+        digital_text = self.replace_only_left_digital(_text)
+        if digital_text and len(digital_text) >= 3:
+            for _rt in _before_room_texts:
+                if len(_rt) < 12:
+                    _before_digital_text = self.replace_only_left_digital(_rt)
+                    if len(_before_digital_text) >= 3:
+                        return 'suspect digital merged wechat number'
                         
 
         bankerplayer_text = self.replace_only_left_bankerplayer(_text)
-
         if bankerplayer_text:
             for _rt in _before_room_texts:
                 # if len(_rt) >= 10:
@@ -346,3 +282,6 @@ class PreFilter():
 
     def replace_only_left_bankerplayer(self, _text):
         return re.sub(r'[^(莊庄装閒閑闲贤)]+', '', _text)
+
+    def replace_only_left_digital(self, _text):
+        return re.sub(r'[^(0-9)]+', '', _text)

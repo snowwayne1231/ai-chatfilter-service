@@ -395,12 +395,20 @@ python manage.py testsocket -i ai/assets/.. -p 8025 -h 127.0.0.1
 > some commod tips
 > dump and restore blockword data
 ```Shell
-python manage.py clear blockedsentence
-python manage.py clear goodsentence
+python manage.py clear -a service -m blockedsentence
+python manage.py clear -a service -m goodsentence
 python manage.py dumpdata service > service/seed/initial.json
 
 python manage.py loaddata service/seed/initial.json
 
 python manage.py upsert -i ../excel file -model textbook
+
+python manage.py upsert -i ../excel file -model textbook
+
+python manage.py parsexcel -i ai/assets/textbook/pinyin
+python manage.py parsexcel -i ai/assets/textbook/grammar
+
+python manage.py freq -i ai/assets/textbook/json/pinyin
+
 ```
 
