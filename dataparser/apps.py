@@ -681,7 +681,7 @@ class JieBaDictionary():
                 with open(path, 'rb') as handle:
                     _full_data = pickle.load(handle)
                     _list = _full_data[0]
-                    _voca_freqs = _full_data[1]
+                    # _voca_freqs = _full_data[1]
                 
             else:
                 self.save_vocabularies()
@@ -689,9 +689,9 @@ class JieBaDictionary():
             print('===========[load_vocabularies] by Local File: ', _list[-10:], len(_list), flush=True)
 
 
-        if len(_list) != len(_voca_freqs):
-            print('[ERROR] Vocabulary and Freqs Legnths Can Not Be Different', flush=True)
-            exit(2)
+        # if len(_list) != len(_voca_freqs):
+        #     print('[ERROR] Vocabulary and Freqs Legnths Can Not Be Different', flush=True)
+        #     exit(2)
         
 
         for _idx, _ in enumerate(_list):
