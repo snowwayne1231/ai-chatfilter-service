@@ -695,7 +695,8 @@ class JieBaDictionary():
         
 
         for _idx, _ in enumerate(_list):
-            self.add_word(_, freq=_freq)
+            # self.add_word(_, freq=_freq)
+            self.add_word(_)
         
         # self.vocabularies = _list
 
