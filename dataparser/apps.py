@@ -195,9 +195,11 @@ class MessageParser():
             text = repres_msg.group(1)
             # print('string: ', string)
             # print('text: ', text)
-            repres_xml_lv = self.regex_xml_lv.search(text)
-            if repres_xml_lv:
-                lv = int(repres_xml_lv.group(1))
+
+            # Live Romm format do not need to parse lv
+            # repres_xml_lv = self.regex_xml_lv.search(text)
+            # if repres_xml_lv:
+            #     lv = int(repres_xml_lv.group(1))
 
             repres_xml_anchor = self.regex_xml_anchor.search(text)
             if repres_xml_anchor:
@@ -232,7 +234,7 @@ class MessageParser():
                 repres_xml_lv = self.regex_xml_lv.search(text)
                 if repres_xml_lv:
                     # broke message..
-                    lv = int(repres_xml_lv.group(1))
+                    # lv = int(repres_xml_lv.group(1))
                     text = self.regex_xml_tag.sub("", text)
                     text = self.regex_xml_broke_start.sub("", text)
                     text = self.regex_xml_broke_end.sub("", text)
