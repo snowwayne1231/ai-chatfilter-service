@@ -84,8 +84,8 @@ class MainService():
             
         elif self.is_admin_server:
 
-            self.ai_app = MainAiApp()
             self.english_parser.set_vocabulary()
+            self.ai_app = MainAiApp()
             _vocabulary = self.ai_app.get_pinyin_vocabulary()
         
         else:
