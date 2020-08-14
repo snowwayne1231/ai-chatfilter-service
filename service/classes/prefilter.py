@@ -137,12 +137,12 @@ class PreFilter():
         
         is_many_asci = (_NE_size >= 6 and number_size >= 2) or number_size > 5
 
-        is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and number_size > 0 and eng_size > 0
+        is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and (number_size > 0 or eng_size > 0)
 
         has_double_eng = False
         if _NE_ratio > 0.8 and eng_size > 5:
             __first_char = text[:2]
-            print('[find_wechat_char]__first_char: ', __first_char)
+            # print('[find_wechat_char]__first_char: ', __first_char)
             __next_same_char = 0
             for __idx in range(len(text)):
                 if __idx > 1 and text[__idx: __idx+2] == __first_char:
@@ -150,11 +150,11 @@ class PreFilter():
                     break
             
             __first_sentence = text[:__next_same_char]
-            print('[find_wechat_char]__first_sentence: ', __first_sentence)
+            # print('[find_wechat_char]__first_sentence: ', __first_sentence)
             
             if __next_same_char > 0 and len(__first_sentence) < 12:
                 __left_text = text[__next_same_char:]
-                print('[find_wechat_char]__left_text: ', __left_text)
+                # print('[find_wechat_char]__left_text: ', __left_text)
 
                 if __first_sentence in __left_text:
                     has_double_eng = True

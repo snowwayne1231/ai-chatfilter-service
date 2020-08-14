@@ -175,6 +175,8 @@ class MessageParser():
     regex_bracket_lv = re.compile("\{viplv(.+?)\}", flags= re.IGNORECASE | re.DOTALL)
     regex_bracket_digits = re.compile("\{[a-zA-Z\d\s\:\-]*\}")
 
+    regex_xml_clean_at = re.compile("<.?at>", flags= re.IGNORECASE | re.DOTALL)
+
     def __init__(self):
         print('MessageParser init done.')
 
@@ -193,13 +195,13 @@ class MessageParser():
         if repres_msg:
 
             text = repres_msg.group(1)
+            text = self.regex_xml_clean_at.sub("", text)
             # print('string: ', string)
             # print('text: ', text)
 
-            # Live Romm format do not need to parse lv
-            # repres_xml_lv = self.regex_xml_lv.search(text)
-            # if repres_xml_lv:
-            #     lv = int(repres_xml_lv.group(1))
+            repres_xml_lv = self.regex_xml_lv.search(text)
+            if repres_xml_lv:
+                lv = int(repres_xml_lv.group(1))
 
             repres_xml_anchor = self.regex_xml_anchor.search(text)
             if repres_xml_anchor:
@@ -234,7 +236,8 @@ class MessageParser():
                 repres_xml_lv = self.regex_xml_lv.search(text)
                 if repres_xml_lv:
                     # broke message..
-                    # lv = int(repres_xml_lv.group(1))
+                    lv = int(repres_xml_lv.group(1))
+                    text = self.regex_xml_clean_at.sub("", text)
                     text = self.regex_xml_tag.sub("", text)
                     text = self.regex_xml_broke_start.sub("", text)
                     text = self.regex_xml_broke_end.sub("", text)
@@ -415,40 +418,143 @@ class JieBaDictionary():
         _DAG = jieba.get_DAG(sentence)
         # print('[__cut_DAG_NO_HMM] sentence: ', sentence)
         # print('[__cut_DAG_NO_HMM] DAG: ', _DAG)
-        route = {}
 
+        my_route = self.get_route(sentence, _DAG)
+        # print('[__cut_DAG_NO_HMM] my_route: ', my_route)
+
+        if len(my_route) > 1:
+            _tmp_freq = 0
+            _list = []
+
+            for _ in my_route:
+                if _['freq'] > _tmp_freq:
+                    _tmp_freq = _['freq']
+                    _list = _['list']
+
+            # print('[__cut_DAG_NO_HMM] max freq list: ', _list)
+            if _list:
+                for __ in _list:
+                    yield __
+            else:
+                print('[__cut_DAG_NO_HMM] sentence: ', sentence)
+                print('[__cut_DAG_NO_HMM] my_route: ', my_route)
+
+        else:
+            route = {}
+            jieba.calc(sentence, _DAG, route)
+
+            x = 0
+            N = len(sentence)
+            buf = ''
+            while x < N:
+                y = route[x][1] + 1
+                l_word = sentence[x:y]
+                if self.re_eng.match(l_word) and len(l_word) == 1:
+                    buf += l_word
+                    x = y
+                else:
+                    if buf:
+                        yield buf
+                        buf = ''
+                    yield l_word
+                    x = y
+            if buf:
+                yield buf
+                buf = ''
+
+
+    def get_route(self, sentence, dag):
+        _DAG = dag
         _FREQ = jieba.dt.FREQ
         _split_char = self.split_character
-        _list_splited_idx = []
 
-        # N = len(sentence)
-        # route[N] = (0, 0)
-        # for _idx in range(N - 2, -1, -1):
-        #     if _idx == 0 or sentence[_idx-1] == _split_char:
-        #         for _x in _DAG[_idx]:
-        #             _sen = sentence[_idx:_x + 1]
-        #             _freq_ = _FREQ.get(_sen)
-
-
-        jieba.calc(sentence, _DAG, route)
-        x = 0
         N = len(sentence)
-        buf = ''
-        while x < N:
-            y = route[x][1] + 1
-            l_word = sentence[x:y]
-            if self.re_eng.match(l_word) and len(l_word) == 1:
-                buf += l_word
-                x = y
-            else:
-                if buf:
-                    yield buf
-                    buf = ''
-                yield l_word
-                x = y
-        if buf:
-            yield buf
-            buf = ''
+
+        def new_route():
+            return {
+                'end': -1,
+                'list': [],
+                'freq': 0,
+            }
+
+        def adj_route(route_list, start_idx):
+            dag_list = _DAG[start_idx]
+            next_r_list = []
+            # print('sentence: {},  start_idx: {},  dag_list: {}'.format(sentence, start_idx, dag_list))
+
+            for _ in route_list:
+                _is_route_first = True
+                _cloned_list = [__ for __ in _['list']]
+                _route_end = _['end']
+                _route_next_start = _route_end + 1
+
+                if _route_next_start == start_idx:
+
+                    for _end_idx in dag_list:
+                        _end_idx_warped = _end_idx
+                        while sentence[_end_idx_warped] != _split_char and _end_idx_warped < N:
+                            _end_idx_warped += 1
+
+                        _end_idx_warped += 1
+                        
+                        _sen = sentence[start_idx:_end_idx_warped]
+                        _freq_ = _FREQ.get(_sen, 0)
+                        _num_splited = _sen.count(_split_char)
+                        if _num_splited > 1:
+                            _freq_ = pow(_freq_, _num_splited)
+
+                        __next_end = _end_idx_warped - 1
+
+                        if _is_route_first:
+
+                            _['list'].append(_sen)
+                            _['end'] = __next_end
+                            _['freq'] += _freq_
+
+                            _is_route_first = False
+
+                        else:
+
+                            _new_route = {
+                                'end': __next_end,
+                                'list': _cloned_list + [_sen],
+                                'freq': _['freq'] + _freq_,
+                            }
+                            
+                            next_r_list.append(_new_route)
+                            # print('[next_r_list]: ', next_r_list)
+
+                elif _route_next_start < start_idx:
+                    print('[WARNING][JiebaDictionary][__cut_DAG_NO_HMM] has gap  : {} ,  start_idx: {}'.format(_, start_idx))
+                    print('          sentence: ', sentence)
+                    return []
+
+                # else:
+                #     print('[WARNING][JiebaDictionary][__cut_DAG_NO_HMM] sentence: ', sentence)
+                #     print('start_idx: ', start_idx)
+                #     print('_route_next_start: ', _route_next_start)
+                #     print('_end_idx_warped: ', _end_idx_warped)
+            
+            if next_r_list:
+                route_list += next_r_list
+
+            return route_list
+
+
+
+        route_list = []
+        route_list.append(new_route())
+
+        for _idx in range(N):
+            if _idx == 0:
+                route_list = adj_route(route_list, _idx)
+                continue
+            
+            _last_idx = _idx-1
+            if sentence[_last_idx] == _split_char:  # if this idx is the first character
+                route_list = adj_route(route_list, _idx)
+        
+        return route_list
 
 
     def refresh_dictionary(self):

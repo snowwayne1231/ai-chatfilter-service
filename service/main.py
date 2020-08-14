@@ -343,14 +343,15 @@ class MainService():
     def is_allowed_english_sentense(self, text):
         _is_all_english_word = self.regex_all_english_word.match(text)
         _parsed_english_list = self.english_parser.parse_right_vocabulary_list(text)
+        _length_eng = len(_parsed_english_list)
 
         if _is_all_english_word and _parsed_english_list:
             
-            if len(_parsed_english_list) == 1:
+            if _length_eng == 1:
                 _num_eng_word = len(_parsed_english_list[0])
-                return _num_eng_word > 3
+                return _num_eng_word <= 4 or _num_eng_word > 9
             
-            if len(''.join(_parsed_english_list)) < 10:
+            if len(''.join(_parsed_english_list)) < 15:
                 return False
             
             _english_map = {}
@@ -368,7 +369,7 @@ class MainService():
                     _double_eng += 1
 
             _double_rate = _double_eng / _total
-            if _double_rate < 0.25:
+            if _double_rate < 0.25 and _length_eng > 3:
                 return True
 
         return False

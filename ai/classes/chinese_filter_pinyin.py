@@ -425,6 +425,7 @@ class PinYinFilter(BasicChineseFilter):
             'decodes': [self.get_decode_str(_) for _ in encoded_words],
             'encoded_words': encoded_words,
             'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
+            'transformed_words': self.transform(text)
         }
     
 

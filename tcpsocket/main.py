@@ -28,7 +28,7 @@ class LaunchTcpSocket():
 
     def __init__(self, host, port, webhost, webport):
         # print('LaunchTcpSocket: ', host, port)
-        host_name = socket.gethostname() 
+        host_name = socket.gethostname()
         host_ip = socket.gethostbyname(host_name)
         self.local_host = (host_name, host_ip)
 

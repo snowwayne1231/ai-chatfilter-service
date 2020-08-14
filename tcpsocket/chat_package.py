@@ -242,16 +242,15 @@ class ChatWithJSONPackage(BasicStructPackage):
             self.jsonbuffer = _left_buffer
         
         try:
-            self.jsonstr = self.jsonbuffer.decode('utf-8')
+            self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
             self.json = json.loads(self.jsonstr)
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
         except:
             self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
             logging.error('Unpack Failed :: CMD= {}, Buffer= {}, JSON= {}'.format(cmd, _left_buffer, self.jsonstr))
-            # _utf8str = self.jsonbuffer.decode('utf-8', "ignore")
-            # logging.debug('  Origin UTF-8 decode: {}'.format(_utf8str))
             self.json = {}
+            self.msg = '[Parsing Byte Failed]'
 
 
 class ChatFilterResponsePackage(BasicStructPackage):
