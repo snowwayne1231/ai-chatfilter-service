@@ -41,9 +41,9 @@ class PinYinFilter(BasicChineseFilter):
     alphabet_position = 0
     
 
-    def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[]):
+    def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[], jieba_freqs=[]):
 
-        self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary)
+        self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs)
         # self.english_parser = EnglishParser()
         self.unknown_position = self.jieba_dict.get_unknown_position() + 1
         self.alphabet_position = self.jieba_dict.get_alphabet_position() + 1
@@ -468,3 +468,5 @@ class PinYinFilter(BasicChineseFilter):
     def get_unknown_words_and_message(self):
         return self.unknown_words_new_full_message
         
+    def get_vocabulary_freq(self):
+        return self.jieba_dict.get_vocabulary_freq_list()

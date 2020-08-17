@@ -20,11 +20,11 @@ class MainAiApp():
 
     code_grammar_delete = 21
 
-    def __init__(self, jieba_vocabulary=[], pinyin_unknown_words=[]):
+    def __init__(self, jieba_vocabulary=[], pinyin_unknown_words=[], jieba_freqs=[]):
         print('=============  A.I Init  =============')
         print('using tensorflow version: ', tf.__version__)
         
-        self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path, jieba_vocabulary=jieba_vocabulary, unknown_words=pinyin_unknown_words)
+        self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path, jieba_vocabulary=jieba_vocabulary, unknown_words=pinyin_unknown_words, jieba_freqs=jieba_freqs)
         self.grammar_model = GrammarFilter(load_folder=grammar_model_path)
     
 
@@ -71,6 +71,9 @@ class MainAiApp():
 
     def get_pinyin_vocabulary(self):
         return self.pinyin_model.get_pure_vocabulary()
+
+    def get_pinyin_freqs(self):
+        return self.pinyin_model.get_vocabulary_freq()
 
     def get_pinyin_unknowns(self):
         return self.pinyin_model.get_unknown_words_and_message()

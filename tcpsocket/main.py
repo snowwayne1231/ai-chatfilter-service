@@ -92,7 +92,7 @@ class LaunchTcpSocket():
 
 
     def on_websocket_message(self, msgid, message):
-        print('on_websocket_message msgid: ', msgid)
+        logging.debug('on_websocket_message msgid: {}'.format(msgid))
         
 
     

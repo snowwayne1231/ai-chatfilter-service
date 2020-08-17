@@ -67,6 +67,7 @@ class MainService():
         
         if pinyin_data:
             _vocabulary = pinyin_data.get('vocabulary', [])
+            _vocabulary_freqs = pinyin_data.get('vocabulary_freqs', [])
             _vocabulary_english = pinyin_data.get('vocabulary_english', [])
             _unknowns = pinyin_data.get('unknowns', [])
             _unknown_words = [_[0] for _ in _unknowns]
@@ -79,7 +80,7 @@ class MainService():
 
             
             self.english_parser.set_vocabulary(_vocabulary_english)
-            self.ai_app = MainAiApp(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words)
+            self.ai_app = MainAiApp(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words, jieba_freqs=_vocabulary_freqs)
 
             
         elif self.is_admin_server:
@@ -379,6 +380,7 @@ class MainService():
         if self.ai_app:
             return {
                 'vocabulary': self.ai_app.get_pinyin_vocabulary(),
+                'vocabulary_freqs': self.ai_app.get_pinyin_freqs(),
                 'vocabulary_english': self.english_parser.get_vocabulary(),
                 'unknowns': self.get_pinyin_unknowns(),
             }

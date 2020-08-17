@@ -1,6 +1,7 @@
 import struct
 import json
 import logging
+import traceback
 
 
 def pack(cmd, **options):
@@ -243,12 +244,13 @@ class ChatWithJSONPackage(BasicStructPackage):
         
         try:
             self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
-            self.json = json.loads(self.jsonstr)
+            self.json = json.loads(self.jsonstr.strip())
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
-        except:
+        except Exception as e:
             self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
-            logging.error('Unpack Failed :: CMD= {}, Buffer= {}, JSON= {}'.format(cmd, _left_buffer, self.jsonstr))
+            logging.error('Unpack Failed :: CMD= {}, Buffer= {}, JSON= {},  jsonsize= {}'.format(cmd, _left_buffer, self.jsonstr, jsonsize))
+            logging.error(traceback.format_exc())
             self.json = {}
             self.msg = '[Parsing Byte Failed]'
 
