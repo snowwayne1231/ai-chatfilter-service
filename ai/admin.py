@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ai.models import AbstractMeaning, Language, PartOfSpeech, Vocabulary, SoundVocabulary, DigitalVocabulary, NewVocabulary
+from ai.models import AbstractMeaning, Language, PartOfSpeech, Vocabulary, SoundVocabulary, DigitalVocabulary, NewVocabulary, TextbookSentense
 
 
 class AbstractMeaningAdmin(admin.ModelAdmin):
@@ -57,6 +57,14 @@ class NewVocabularyAdmin(admin.ModelAdmin):
 
     search_fields = ('pinyin', )
 
+
+class TextbookSentenseAdmin(admin.ModelAdmin):
+    fields = ['origin', 'text', 'weight', 'status']
+    list_display = ['origin', 'text']
+    empty_value_display = '---'
+
+    search_fields = ('origin', )
+
     
 
 
@@ -67,3 +75,4 @@ admin.site.register(Vocabulary, VocabularyAdmin)
 admin.site.register(SoundVocabulary, SoundVocabularyAdmin)
 admin.site.register(DigitalVocabulary, DigitalVocabularyAdmin)
 admin.site.register(NewVocabulary, NewVocabularyAdmin)
+admin.site.register(TextbookSentense, TextbookSentenseAdmin)

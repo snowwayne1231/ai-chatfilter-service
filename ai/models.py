@@ -90,3 +90,15 @@ class NewVocabulary(models.Model):
     def __str__(self):
         return self.pinyin
 
+
+class TextbookSentense(models.Model):
+    origin = models.CharField(max_length=512, default='')
+    text = models.CharField(max_length=255, default='')
+    weight = models.IntegerField(default=1)
+    status = models.IntegerField(default=0)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['status',]),
+        ]
+
