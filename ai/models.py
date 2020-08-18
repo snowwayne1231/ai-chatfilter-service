@@ -94,11 +94,15 @@ class NewVocabulary(models.Model):
 class TextbookSentense(models.Model):
     origin = models.CharField(max_length=512, default='')
     text = models.CharField(max_length=255, default='')
+    keypoint = models.CharField(max_length=255, default='')
     weight = models.IntegerField(default=1)
     status = models.IntegerField(default=0)
+    reason = models.IntegerField(default=0)
 
     class Meta:
         indexes = [
             models.Index(fields=['status',]),
+            models.Index(fields=['reason',]),
+            models.Index(fields=['weight',]),
         ]
 

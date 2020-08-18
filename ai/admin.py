@@ -59,7 +59,7 @@ class NewVocabularyAdmin(admin.ModelAdmin):
 
 
 class TextbookSentenseAdmin(admin.ModelAdmin):
-    fields = ['origin', 'text', 'weight', 'status']
+    fields = ['origin', 'text', 'keypoint', 'weight', 'status', 'reason']
     list_display = ['origin', 'text']
     empty_value_display = '---'
 

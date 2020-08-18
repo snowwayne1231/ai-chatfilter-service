@@ -18,6 +18,7 @@ class BasicChineseFilter():
     columns = ['ROOM', 'ACCOUNT', 'MESSAGE', 'STATUS', 'TEXT', 'LV', 'ANCHOR']
     appended_columns = ['TRANSFORMED_WORD']
     data = []
+    data_length = 0
     model = None
 
     saved_folder = None

@@ -410,5 +410,7 @@ python manage.py parsexcel -i ai/assets/textbook/grammar
 
 python manage.py freq -i ai/assets/textbook/json/pinyin
 
+python manage.py backupdatabase
+
 ```
 
