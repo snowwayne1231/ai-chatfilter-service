@@ -2,6 +2,7 @@ import re
 
 
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
+regex_korea = re.compile('[\uac00-\ud7a3]+')
 # single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ', '〇']
 allowed_character_regexies = [
     (u'\u0020', u'\u0082'), # general english, digits and symbol
@@ -105,6 +106,36 @@ class PreFilter():
                 next_char += u
 
         return next_char
+
+    
+    def find_korea_mixed(self, text):
+        _korea_words = ''
+        _korea_map = {}
+        for u in text:
+            if regex_korea.match(u):
+                _korea_words += u
+                if _korea_map.get(u):
+                    _korea_map[u] += 1
+                else:
+                    _korea_map[u] = 1
+        
+        _length_korea = len(_korea_words)
+        _length_text = len(text)
+        _ratio = _length_korea / _length_text
+        if _ratio == 1:
+            _counting_double = 0
+            for _kchar in _korea_map:
+                if _korea_map[_kchar] > 1:
+                    _counting_double += _korea_map[_kchar]
+
+            _ratio_double = _counting_double / _length_korea
+            if _ratio_double > 0.25:
+                return _korea_words
+
+        elif _length_korea >= 3:
+            return _korea_words
+
+        return ''
 
     
     def find_wechat_char(self, text, lowercase_only = True):

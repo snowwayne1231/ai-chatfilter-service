@@ -44,6 +44,7 @@ class MainService():
     STATUS_PREDICTION_NOT_ALLOW = 16
 
     regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
+    regex_has_gap = re.compile("[a-zA-Z]+\s+[a-zA-Z]+")
 
 
     def __init__(self, is_admin_server = False):
@@ -101,7 +102,7 @@ class MainService():
 
     def parse_message(self, string):
         _, lv, ac = self.message_parser.parse(string)
-        _ = self.english_parser.replace_to_origin_english(_)
+        # _ = self.english_parser.replace_to_origin_english(_)
         return _, lv, ac
 
 
@@ -125,10 +126,11 @@ class MainService():
             #     return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
 
             # check if english allow to pass
-            reason_char = self.pre_filter.find_not_allowed_chat(message)
+            reason_char = self.find_reject_reason_with_nonparsed_msg(message)
             if reason_char:
                 prediction = self.STATUS_PREDICTION_NOT_ALLOW
                 return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
+                
 
             text, lv, anchor = self.parse_message(message)
 
@@ -138,11 +140,19 @@ class MainService():
 
             
             if lv < self.service_avoid_filter_lv:
+                
+                _is_all_english_word = self.regex_all_english_word.match(text)
 
-                _is_allowed = self.is_allowed_english_sentense(text)
-                if _is_allowed:
-                    printt('[INFO] All Right English Allow Pass Grammar AI: [{}].'.format(text))
-                    return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
+                if _is_all_english_word:
+
+                    if self.regex_has_gap.match(text):
+
+                        text = self.english_parser.replace_to_origin_english(text)
+
+                    _is_allowed = self.is_allowed_english_sentense(text)
+                    if _is_allowed:
+                        printt('[INFO] All Right English Allow Pass Grammar AI: [{}].'.format(text))
+                        return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
                     
                 reason_char = self.pre_filter.find_wechat_char(text)
                 if reason_char:
@@ -163,7 +173,7 @@ class MainService():
                 
                 #main ai
                 # if _length_text > 0:  # dont predict for one alphabet
-                prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server, no_grammar=_is_allowed)
+                prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
 
             if prediction == 0:
                 self.store_temporary_text(
@@ -208,6 +218,16 @@ class MainService():
 
         return result
 
+
+    def find_reject_reason_with_nonparsed_msg(self, msg):
+        reason_char = self.pre_filter.find_not_allowed_chat(msg)
+        if reason_char:
+            return reason_char
+        reason_char = self.pre_filter.find_korea_mixed(msg)
+        if reason_char:
+            return reason_char
+
+        return False
     
     def store_temporary_text(self, text, user, room):
         self.chat_store.upsert_text(text, user, room)
@@ -342,15 +362,21 @@ class MainService():
 
 
     def is_allowed_english_sentense(self, text):
-        _is_all_english_word = self.regex_all_english_word.match(text)
+        
         _parsed_english_list = self.english_parser.parse_right_vocabulary_list(text)
         _length_eng = len(_parsed_english_list)
 
-        if _is_all_english_word and _parsed_english_list:
+        if _parsed_english_list:
             
             if _length_eng == 1:
-                _num_eng_word = len(_parsed_english_list[0])
-                return _num_eng_word <= 4 or _num_eng_word > 9
+                _single_word = _parsed_english_list[0]
+                _num_eng_word = len(_single_word)
+                # print('[is_allowed_english_sentense] _single_word: ', _single_word)
+                return _num_eng_word > 9 or _num_eng_word < 3
+                # _is_origin_english_word = _num_eng_word == len(text)
+                # return _is_origin_english_word or _num_eng_word > 9
+                # print('_is_origin_english_word: text = {}, _single_word = {}'.format(text, _single_word) )
+                # return _is_origin_english_word
             
             if len(''.join(_parsed_english_list)) < 15:
                 return False

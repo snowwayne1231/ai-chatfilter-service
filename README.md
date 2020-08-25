@@ -155,10 +155,10 @@ sudo pip install uwsgi
 
 + 0.1. Clone the project
 ```Shell
-mkdir /ai
-cd /ai
+mkdir /ai-opt/chatfilter
+cd /ai-opt/chatfilter
 git clone ...
-cd /ai/ai-chatfilter-service
+cd /ai-opt/chatfilter/main
 ```
 + 0.2. Setting nginx config
 > copy and chang all the path in nginx.conf file
@@ -166,11 +166,11 @@ cd /ai/ai-chatfilter-service
 cp nginx.conf.example nginx.conf
 nano nginx.conf
 ```
-> change all `/path/to/mysite/` to `/ai/ai-chatfilter-service/`
+> change all `/path/to/mysite/` to `/ai-opt/chatfilter/main`
 example fix path below:
 ```nginx
 location /static {
-    alias /path/to/mysite/static;  --->  alias /ai/ai-chatfilter-service/static;
+    alias /path/to/mysite/static;  --->  alias /ai-opt/chatfilter/main/static;
 }
 ```
 > change server name you own or if you want pass any request change to `_`
@@ -201,15 +201,15 @@ DATABASE_PASSWORD = DB_PASSWORD
 
 + 0.4. Create logs directory in project
 ```Shell
-mkdir /ai/logs
-chmod -R 777 /ai/logs
+mkdir /ai-opt/logs
+chmod -R 777 /ai-opt/logs
 ```
 
 
 ### 1. build up virtual environment
 > for example the project name is "ai":
 ```Shell
-cd /ai
+cd /ai-opt
 python3 -m venv venv
 chmod -R 777 venv
 source venv/bin/activate
@@ -268,8 +268,8 @@ python manage.py knowledge
 ```
 > if you need some help then type `python manage.py train -h` have a look on helper and see how to use train
 ```Shell
-python manage.py train -i ai/assets/textbook -f 0.995 -t 2
-python manage.py train -i ai/assets/textbook/grammar -f 0.995 -grm -t 2
+python manage.py train -i ai/assets/textbook/json/grammar/2020-08-05.json -f 0.9990 -grm -t 3
+python manage.py train -i ai/assets/textbook/json/pinyin/2020-08-14.json -f 0.9990 -t 12
 ```
 > after upon that command, you should start an AI training now, Stop anytime when you want by key in Ctrl+C
 
@@ -414,3 +414,9 @@ python manage.py backupdatabase
 
 ```
 
+
+## DOCKER
+
+docker pull django
+docker pull postgres
+docker pull redis
