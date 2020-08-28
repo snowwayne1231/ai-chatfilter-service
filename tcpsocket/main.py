@@ -8,8 +8,6 @@ import logging, time
 # sys.path.append("..")
 from service import instance
 
-from dataparser.classes.store import ListPickle
-
 
 
 class LaunchTcpSocket():
@@ -143,7 +141,7 @@ class LaunchTcpSocket():
 
                 if self.websocket_host != '127.0.0.1':
 
-                    self.service_instance.fetch_ai_model_data(remote=self.websocket_host, port=self.websocket_port)
+                    self.service_instance.fetch_ai_model_data(remote_ip=self.websocket_host, port=self.websocket_port)
             
 
             self.service_instance.open_mind()

@@ -1,17 +1,23 @@
 from django.utils import timezone
 from django.conf import settings
+from django.core.files.base import ContentFile
+from http.client import HTTPConnection
 from ai.apps import MainAiApp
+from ai.apps import pinyin_model_path, grammar_model_path
+from ai.helper import get_pinyin_path, get_grammar_path, get_vocabulary_dictionary_path
 from dataparser.apps import MessageParser, EnglishParser
+from dataparser.classes.store import ListPickle
+
+import numpy as np
+import time, re, logging, json
+
 from .classes.prefilter import PreFilter
 # from .classes.fuzzycenter import FuzzyCenter
 from .classes.chatstore import ChatStore
 from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, Textbook, ChangeNicknameRequest
-import numpy as np
-import time, re, logging
-from ai.apps import pinyin_model_path, grammar_model_path
-from ai.helper import get_pinyin_path, get_grammar_path, get_vocabulary_dictionary_path
-from django.core.files.base import ContentFile
-from http.client import HTTPConnection
+
+
+
 
 class MainService():
     """
@@ -155,16 +161,17 @@ class MainService():
             # parse
             text, lv, anchor = self.parse_message(message)
 
-            # is not player
+            # is not general player
             if anchor > 0 or len(text) == 0 or lv >= self.service_avoid_filter_lv:
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
 
             # print('text: [{}]   lv: [{}]   anchor: [{}]'.format(text, lv, anchor))
 
+            # different language switch
             if self.lang_mode == self.STATUS_MODE_CHINESE:
 
-                prediction, reason_char = self.prefilter_chinese(message)
+                prediction, reason_char = self.prefilter_chinese(text)
 
             elif self.lang_mode == self.STATUS_MODE_ENGLISH:
 
@@ -174,11 +181,17 @@ class MainService():
             if reason_char:
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
             
+            # check same room conversation
+            room_texts = self.chat_store.get_texts_by_room(room)
+            reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
+            if reason_char:
+                prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
+                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             #main ai
             prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
             
-
+            # save message to room store
             if prediction == 0:
                 self.store_temporary_text(
                     text=text,
@@ -196,12 +209,11 @@ class MainService():
 
 
 
-    def prefilter_chinese(self, message):
+    def prefilter_chinese(self, text):
 
         reason_char = self.pre_filter.find_wechat_char(text)
         if reason_char:
-            prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
-            return prediction, reason_char
+            return self.STATUS_PREDICTION_WEHCAT_SUSPICION, reason_char
 
             
         _is_all_english_word = self.regex_all_english_word.match(text)
@@ -214,18 +226,11 @@ class MainService():
 
             _is_allowed = self.is_allowed_english_sentense(text)
             if _is_allowed:
-                logging.debug('[INFO] All Right English Allow Pass Grammar AI: [{}].'.format(text))
-                return prediction, reason_char
-            
-
-        room_texts = self.chat_store.get_texts_by_room(room)
-        reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
-        if reason_char:
-            prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
-            return prediction, reason_char
+                reason_char = 'Allowed English'
+                logging.debug('[INFO] All Right English Allow Pass : [{}].'.format(text))
+                return 0, reason_char
         
-
-        return prediction, reason_char
+        return 0, reason_char
 
 
     def return_reslut(self, prediction, message, user='', room='', text='', reason='', silence=True, detail=False, st_time=0):
@@ -447,7 +452,7 @@ class MainService():
         _http_res = http_connection.getresponse()
         if _http_res.status == 200:
 
-            _json_data = _http_res.read().decode(encoding='utf-8')
+            _json_data = json.loads(_http_res.read().decode(encoding='utf-8'))
             logging.info('[get_vocabulary_data_remotely] Download Data Done.')
 
         else:

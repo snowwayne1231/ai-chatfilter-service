@@ -31,22 +31,25 @@ class Command(BaseCommand):
             host = '127.0.0.1'
 
         messages = []
+        statuses = []
 
         if file_path:
 
             ep = ExcelParser(file=file_path)
-            basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息']]
+            basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息', '发言内容'], ['状态', 'STATUS']]
             row_list = ep.get_row_list(column=basic_model_columns, limit=50000)
             for r in row_list:
                 _loc = r[2]
+                _status = int(r[3])
                 if _loc:
                     messages.append(_loc)
+                    statuses.append(_status)
 
         else:
-            messages = ['q1','w2','e3']
+            messages = ['hello','world','hi', 'hihi bady', '你好嗎我很好', '只要不贪心赢钱简单的，幑忪錝号真人之王', '死诈骗游戏']
+            statuses = [0,0,0,0,0, 1, 4]
 
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
     
         addr = (host, port)
 
@@ -60,11 +63,14 @@ class Command(BaseCommand):
         keep_doing = True
         msgid = 0
         length_messages = len(messages)
+
+        length_right = 0
         
         while keep_doing and msgid < length_messages:
 
             try:
                 msgtxt = messages[msgid]
+                status = statuses[msgid]
 
                 if msgtxt:
                     # print('sending txt: ', msgtxt)
@@ -73,20 +79,26 @@ class Command(BaseCommand):
                     if msgid % 100 == 0:
                         print('{:2.1%}'.format(msgid / length_messages), end="\r")
                 else:
-                    break
+                    print('msgtxt wrong: ', msgtxt)
+                    continue
                 
                 client.send(packed)
 
                 recv_data = client.recv(bufsize)
                 if not recv_data:
-                    print('not receive msgid: {}'.format(msgid))
+                    print('not receive msgid: {}   msgtxt: {}'.format(msgid, msgtxt))
                     break
 
                 # print('===== receive data =====')
                 # print (recv_data.decode('utf-8'))
                 trying_unpacked = unpack(recv_data)
-                
-                # print(trying_unpacked)
+                _is_deleted = trying_unpacked.code > 0
+                if _is_deleted:
+                    if status > 0:
+                        length_right += 1
+                else:
+                    if status == 0:
+                        length_right += 1
                 # print('=========================')
 
                 msgid += 1
@@ -98,6 +110,7 @@ class Command(BaseCommand):
 
 
         print('disconnect from tcp server.')
+        print('right ratio : {:2.2%}'.format(length_right / length_messages))
         client.close()
 
         
