@@ -7,12 +7,11 @@ from .classes.prefilter import PreFilter
 from .classes.chatstore import ChatStore
 from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, Textbook, ChangeNicknameRequest
 import numpy as np
-import time, re
-from service.widgets import printt
+import time, re, logging
 from ai.apps import pinyin_model_path, grammar_model_path
+from ai.helper import get_pinyin_path, get_grammar_path, get_vocabulary_dictionary_path
 from django.core.files.base import ContentFile
-
-
+from http.client import HTTPConnection
 
 class MainService():
     """
@@ -29,6 +28,8 @@ class MainService():
 
     timestamp_ymdh = [0, 0, 0, 0]
     service_avoid_filter_lv = 5
+    lang_mode = 1
+    vocabulary_data = {}
 
     
     STATUS_PREDICTION_NO_MSG = 0
@@ -43,56 +44,82 @@ class MainService():
     STATUS_PREDICTION_SUSPECT_WATER_ARMY = 15
     STATUS_PREDICTION_NOT_ALLOW = 16
 
+    STATUS_MODE_CHINESE = 1
+    STATUS_MODE_ENGLISH = 2
+
+    REMOTE_ROUTE_PINYIN_MODEL = '/api/model/pinyin'
+    REMOTE_ROUTE_GARMMAR_MODEL = '/api/model/grammar'
+    REMOTE_ROUTE_VOCABULARY_DATA = '/api/data/vocabulary'
+
     regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
     regex_has_gap = re.compile("[a-zA-Z]+\s+[a-zA-Z]+")
 
 
-    def __init__(self, is_admin_server = False):
+    def __init__(self, is_admin_server = False, lang_mode = 0):
 
         self.message_parser = MessageParser()
         self.english_parser = EnglishParser()
         self.chat_store = ChatStore()
+        self.pre_filter = PreFilter()
+
         if is_admin_server:
             self.is_admin_server = True
             self.check_analyzing()
-        
-        printt('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
+
+        logging.info('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
+            
+
+    def set_language(self, lang_key):
+        _mode = self.STATUS_MODE_CHINESE
+        if lang_key == 'EN':
+            _mode = self.STATUS_MODE_ENGLISH
+            logging.info('Setting Language :: [English]')
+        else:
+            logging.info('Setting Language :: [Chinese]')
+
+        self.lang_mode = _mode
 
 
-    def open_mind(self, pinyin_data=None, url_pinyin_model=None, url_grammar_model=None):
+    def open_mind(self):
         if self.is_open_mind:
             return True
 
-        self.pre_filter = PreFilter()
-        
-        
-        if pinyin_data:
-            _vocabulary = pinyin_data.get('vocabulary', [])
-            _vocabulary_freqs = pinyin_data.get('vocabulary_freqs', [])
-            _vocabulary_english = pinyin_data.get('vocabulary_english', [])
-            _unknowns = pinyin_data.get('unknowns', [])
-            _unknown_words = [_[0] for _ in _unknowns]
-            _remote_models = []
-            # if url_pinyin_model:
-            #     _remote_models.append(('pinyin', url_pinyin_model))
-            
-            # if url_grammar_model:
-            #     _remote_models.append(('grammar', url_grammar_model))
+        self.ai_app = MainAiApp()
 
-            
-            self.english_parser.set_vocabulary(_vocabulary_english)
-            self.ai_app = MainAiApp(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words, jieba_freqs=_vocabulary_freqs)
-
-            
-        elif self.is_admin_server:
+        _voca_data = self.vocabulary_data
+        _vocabulary = _voca_data.get('vocabulary', [])
+        _vocabulary_freqs = _voca_data.get('vocabulary_freqs', [])
+        _vocabulary_english = _voca_data.get('vocabulary_english', [])
+        _unknowns = _voca_data.get('unknowns', [])
+        _unknown_words = [_[0] for _ in _unknowns]
+        _remote_models = []
+        
+        if self.is_admin_server:
 
             self.english_parser.set_vocabulary()
-            self.ai_app = MainAiApp()
-            _vocabulary = self.ai_app.get_pinyin_vocabulary()
+            _vocabulary = False
+            _vocabulary_english = False
         
+
+        if self.lang_mode == self.STATUS_MODE_CHINESE:
+            #
+            self.english_parser.set_vocabulary(_vocabulary_english)
+
+            if _vocabulary:
+                self.ai_app.load_pinyin(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words, jieba_freqs=_vocabulary_freqs)
+            else:
+                self.ai_app.load_pinyin()
+
+            self.ai_app.load_garmmar()
+
+        elif self.STATUS_MODE_CHINESE == self.STATUS_MODE_ENGLISH:
+            #
+            pass
+
         else:
-            printt('Open Mind Failed. It is Not Admin Server.')
-            return False
+
+            logging.error('Language Mode Not Found :: {}'.format(self.lang_mode))
+        
 
         self.is_open_mind = True
         # self.fuzzy_center = FuzzyCenter()
@@ -109,7 +136,7 @@ class MainService():
     def think(self, message, user = '', room = '', silence=False, detail=False):
         st_time = time.time()
         if not self.is_open_mind:
-            printt('AI Is Not Ready..')
+            logging.warning('AI Is Not Ready..')
             return self.return_reslut(0, message=message, st_time=st_time)
         
         text = ''
@@ -118,62 +145,39 @@ class MainService():
         # print('receive message :', message)
 
         if message:
-            
-            # reason_char = self.pre_filter.find_special_char(message)
 
-            # if reason_char:
-            #     prediction = self.STATUS_PREDICTION_SPECIAL_CHAR
-            #     return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
-
-            # check if english allow to pass
-            reason_char = self.find_reject_reason_with_nonparsed_msg(message)
+            # check if mix some unknown message
+            reason_char = self.find_prefilter_reject_reason_with_nonparsed_msg(message)
             if reason_char:
                 prediction = self.STATUS_PREDICTION_NOT_ALLOW
-                return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
-                
+                return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
+            # parse
             text, lv, anchor = self.parse_message(message)
 
-            # none sense text by be parsed message.
-            if anchor > 0 or len(text) == 0:
-                return self.return_reslut(0, message=message, room=room, text=text, silence=silence, st_time=st_time)
+            # is not player
+            if anchor > 0 or len(text) == 0 or lv >= self.service_avoid_filter_lv:
+                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
+
+            # print('text: [{}]   lv: [{}]   anchor: [{}]'.format(text, lv, anchor))
+
+            if self.lang_mode == self.STATUS_MODE_CHINESE:
+
+                prediction, reason_char = self.prefilter_chinese(message)
+
+            elif self.lang_mode == self.STATUS_MODE_ENGLISH:
+
+                pass
             
-            if lv < self.service_avoid_filter_lv:
-                
-                _is_all_english_word = self.regex_all_english_word.match(text)
 
-                if _is_all_english_word:
+            if reason_char:
+                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+            
 
-                    if self.regex_has_gap.match(text):
-
-                        text = self.english_parser.replace_to_origin_english(text)
-
-                    _is_allowed = self.is_allowed_english_sentense(text)
-                    if _is_allowed:
-                        printt('[INFO] All Right English Allow Pass Grammar AI: [{}].'.format(text))
-                        return self.return_reslut(0, message=message, text=text, silence=silence, st_time=st_time)
-                    
-                reason_char = self.pre_filter.find_wechat_char(text)
-                if reason_char:
-                    prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
-                    return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, st_time=st_time)
-                
-                # reason_char = self.fuzzy_center.find_fuzzy_block_word(text, silence=silence)
-                # if reason_char:
-                #     prediction = self.STATUS_PREDICTION_BLOCK_WORD
-                #     return self.return_reslut(prediction, message=message, text=text, reason=reason_char, silence=silence, st_time=st_time)
-
-                room_texts = self.chat_store.get_texts_by_room(room)
-                reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
-                if reason_char:
-                    prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
-                    # print('deleted by SUSPECT_WATER_ARMY: ', text)
-                    return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, st_time=st_time)
-                
-                #main ai
-                # if _length_text > 0:  # dont predict for one alphabet
-                prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
+            #main ai
+            prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
+            
 
             if prediction == 0:
                 self.store_temporary_text(
@@ -192,6 +196,38 @@ class MainService():
 
 
 
+    def prefilter_chinese(self, message):
+
+        reason_char = self.pre_filter.find_wechat_char(text)
+        if reason_char:
+            prediction = self.STATUS_PREDICTION_WEHCAT_SUSPICION
+            return prediction, reason_char
+
+            
+        _is_all_english_word = self.regex_all_english_word.match(text)
+
+        if _is_all_english_word:
+
+            if self.regex_has_gap.match(text) and len(text.replace(' ', '')) > 12:
+
+                text = self.english_parser.replace_to_origin_english(text)
+
+            _is_allowed = self.is_allowed_english_sentense(text)
+            if _is_allowed:
+                logging.debug('[INFO] All Right English Allow Pass Grammar AI: [{}].'.format(text))
+                return prediction, reason_char
+            
+
+        room_texts = self.chat_store.get_texts_by_room(room)
+        reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
+        if reason_char:
+            prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
+            return prediction, reason_char
+        
+
+        return prediction, reason_char
+
+
     def return_reslut(self, prediction, message, user='', room='', text='', reason='', silence=True, detail=False, st_time=0):
         result = {}
         detail_data = {}
@@ -199,11 +235,6 @@ class MainService():
         if detail:
 
             detail_data = self.ai_app.get_details(text)
-            # print('prediction: ', prediction)
-            # print('message: ', message)
-            # print('text: ', text)
-            # print('reason: ', reason)
-            # print('detail_data: ', detail_data)
 
         ed_time = time.time()
         
@@ -219,7 +250,7 @@ class MainService():
         return result
 
 
-    def find_reject_reason_with_nonparsed_msg(self, msg):
+    def find_prefilter_reject_reason_with_nonparsed_msg(self, msg):
         reason_char = self.pre_filter.find_not_allowed_chat(msg)
         if reason_char:
             return reason_char
@@ -229,6 +260,7 @@ class MainService():
 
         return False
     
+
     def store_temporary_text(self, text, user, room):
         self.chat_store.upsert_text(text, user, room)
 
@@ -264,12 +296,8 @@ class MainService():
 
             except Exception as ex:
 
-                printt('Save Record Failed')
-                print(ex)
-
-        else:
-
-            printt('Save Record Failed, Is Not Admin Server.')
+                logging.error('Save Record Failed,  message :: {}'.format(message))
+                print(ex, flush=True)
 
     
     def saveNicknameRequestRecord(self, nickname, status):
@@ -282,11 +310,9 @@ class MainService():
                 )
                 record.save()
             except Exception as ex:
-                printt('Save NicknameRequestRecord Failed, nickname: [{}].'.format(nickname))
+                logging.error('Save NicknameRequestRecord Failed, nickname: [{}].'.format(nickname))
+                print(ex)
 
-        else:
-
-            printt('Save NicknameRequestRecord Failed, Is Not Admin Server.')
 
 
     def check_analyzing(self):
@@ -402,7 +428,7 @@ class MainService():
         return False
     
 
-    def get_pinyin_data(self):
+    def get_vocabulary_data(self):
         if self.ai_app:
             return {
                 'vocabulary': self.ai_app.get_pinyin_vocabulary(),
@@ -410,8 +436,32 @@ class MainService():
                 'vocabulary_english': self.english_parser.get_vocabulary(),
                 'unknowns': self.get_pinyin_unknowns(),
             }
+        elif self.vocabulary_data:
+            return self.vocabulary_data
         else:
             return {}
+
+    def get_vocabulary_data_remotely(self, http_connection):
+
+        http_connection.request('GET', self.REMOTE_ROUTE_VOCABULARY_DATA, headers={'Content-type': 'application/json'})
+        _http_res = http_connection.getresponse()
+        if _http_res.status == 200:
+
+            _json_data = _http_res.read().decode(encoding='utf-8')
+            logging.info('[get_vocabulary_data_remotely] Download Data Done.')
+
+        else:
+
+            logging.error('[get_vocabulary_data_remotely] Download Failed.')
+
+        _data_pk = ListPickle(get_vocabulary_dictionary_path() + '/data.pickle')
+        if _json_data:
+            _data_pk.save([_json_data])
+        else:
+            _json_data = _data_pk.get_list()[0]
+
+        return _json_data
+    
 
     def get_pinyin_unknowns(self):
         if self.is_admin_server:
@@ -419,8 +469,8 @@ class MainService():
         else:
             _unknowns = self.ai_app.get_pinyin_unknowns()
 
-
         return _unknowns
+
 
     def get_train_textbook(self):
         _limit = 5000
@@ -429,11 +479,69 @@ class MainService():
         # print('get_train_textbook: ', result)
         return result
 
+
     def get_pinyin_model_path(self):
         self.open_mind()
-        return self.ai_app.pinyin_model.get_model_path()
+        return self.ai_app.pinyin_model.get_model_path() if self.ai_app.pinyin_model else None
+
 
     def get_grammar_model_path(self):
         self.open_mind()
-        return self.ai_app.grammar_model.get_model_path()
+        return self.ai_app.grammar_model.get_model_path() if self.ai_app.grammar_model else None
+
+
+    def fetch_ai_model_data(self, remote_ip, port = 80):
+        _http_cnn = HTTPConnection(remote_ip, port)
+
+        def _save_file_by_http_response(response, path):
+            with open(path, 'wb+') as f:
+                while True:
+                    _buf = response.read()
+                    if _buf:
+                        f.write(_buf)
+                    else:
+                        break
+
+        self.vocabulary_data = self.get_vocabulary_data_remotely(_http_cnn)
+
+        if self.lang_mode == self.STATUS_MODE_CHINESE:
+            #
+            _http_cnn.request('GET', self.REMOTE_ROUTE_PINYIN_MODEL)
+            _http_res = _http_cnn.getresponse()
+            if _http_res.status == 200:
+
+                _save_file_by_http_response(response=_http_res, path=get_pinyin_path()+'/model.h5')
+                logging.info('[fetch_ai_model_data] Download Remote Pinyin Model Done.')
+
+            else:
+
+                logging.error('[fetch_ai_model_data] Download Remote Pinyin Model Failed.')
+
+            _http_cnn.request('GET', self.REMOTE_ROUTE_GARMMAR_MODEL)
+            _http_res = _http_cnn.getresponse()
+            if _http_res.status == 200:
+
+                _save_file_by_http_response(response=_http_res, path=get_grammar_path()+'/model.h5')
+                logging.info('[fetch_ai_model_data] Download Remote Grammar Model Done.')
+
+            else:
+
+                logging.error('[fetch_ai_model_data] Download Remote Grammar Model Failed.')
+
+            
+        elif self.lang_mode == self.STATUS_MODE_ENGLISH:
+            #
+            pass
+            
+        
+        
+
+        
+    
+
+        
+
+        
+
+        
 

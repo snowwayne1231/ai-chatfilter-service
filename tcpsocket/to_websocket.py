@@ -27,7 +27,6 @@ class WebsocketThread (threading.Thread):
     is_active = False
     # second_warn_spend_time = 0.35
     key_tcp_poto = '__tcp__'
-    key_get_pinyin_data = '__getpinyindata__'
     key_change_nickname_request = '__changenicknamerequest__'
     # key_send_train_remotely = '__remotetrain__'
     cache_map = {}
@@ -81,10 +80,8 @@ class WebsocketThread (threading.Thread):
         
         if _msg_id:
             _res_message = _json.get('message', {})
-            if _msg_id == self.key_get_pinyin_data:
-                self.cache_map[self.key_get_pinyin_data] = _res_message
 
-            elif _msg_id in self._waitting_ids:
+            if _msg_id in self._waitting_ids:
                 self._waitting_ids.remove(_msg_id)
 
             if self.on_message_callback:
@@ -188,14 +185,6 @@ class WebsocketThread (threading.Thread):
         
         return values
 
-
-    def get_remote_pinyin_data(self):
-        _data = {
-            'msgid': self.key_get_pinyin_data
-        }
-
-        values = self.pool.apply(self.send_thread, [_data])
-        return values
 
 
     

@@ -3,21 +3,24 @@ from tcpsocket.main import LaunchTcpSocket
 
 
 class Command(BaseCommand):
-    help = 'open tpc socket.'
+    help = 'use django manage to open tpc socket for chat center packages.'
 
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-port', dest='port', required=False, help='port',
+            '-port', dest='port', required=False, help='port of opening to recive socket connection.',
         )
         parser.add_argument(
-            '-host', dest='host', required=False, help='host',
+            '-host', dest='host', required=False, help='host ip or domain for socket connection.',
         )
         parser.add_argument(
-            '-webport', dest='webport', required=False, help='webport',
+            '-webport', dest='webport', required=False, help='port of connecting to backend websocket.',
         )
         parser.add_argument(
-            '-webhost', dest='webhost', required=False, help='webhost',
+            '-webhost', dest='webhost', required=False, help='ip or domain for connecting to backend websocket.',
+        )
+        parser.add_argument(
+            '-lang', dest='language', required=False, help='language between CH and EN. default is CH.',
         )
 
 
@@ -26,6 +29,7 @@ class Command(BaseCommand):
         host = options.get('host')
         webport = options.get('webport')
         webhost = options.get('webhost')
+        language = options.get('language')
         
         if port is None:
             port = 8025
@@ -44,5 +48,5 @@ class Command(BaseCommand):
             webhost = '127.0.0.1'
         # bufsize = 1024
 
-        main = LaunchTcpSocket(host, port, webhost, webport)
+        main = LaunchTcpSocket(host, port, webhost, webport, language=language)
 

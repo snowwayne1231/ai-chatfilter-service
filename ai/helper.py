@@ -25,8 +25,8 @@ def get_grammar_path():
         os.makedirs(_path)
     return _path
 
-def get_pinyin_dictionary_path():
-    _path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/pinyin'
+def get_vocabulary_dictionary_path():
+    _path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/vocabulary'
     if not os.path.exists(_path):
         os.makedirs(_path)
     return _path

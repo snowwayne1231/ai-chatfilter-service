@@ -18,70 +18,62 @@ class MainAiApp():
     pinyin_model = None
     grammar_model = None
 
-    code_grammar_delete = 21
+    loaded_models = []
+    loaded_model_names = []
 
-    def __init__(self, jieba_vocabulary=[], pinyin_unknown_words=[], jieba_freqs=[]):
+    def __init__(self):
         print('=============  A.I Init  =============')
         print('using tensorflow version: ', tf.__version__)
-        
+
+
+    def load_pinyin(self, jieba_vocabulary=[], pinyin_unknown_words=[], jieba_freqs=[]):
         self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path, jieba_vocabulary=jieba_vocabulary, unknown_words=pinyin_unknown_words, jieba_freqs=jieba_freqs)
+        self.loaded_models.append(self.pinyin_model)
+        self.loaded_model_names.append('pinyin')
+
+
+    def load_garmmar(self):
         self.grammar_model = GrammarFilter(load_folder=grammar_model_path)
+        self.loaded_models.append(self.grammar_model)
+        self.loaded_model_names.append('grammar')
     
 
-    def predict(self, txt, lv=0, with_reason=False, no_grammar=False):
+    def predict(self, txt, lv=0, with_reason=False):
         prediction = 0
         reason = ''
-        # return 0, ''
-        pinyin_prediction = self.pinyin_model.predictText(txt, lv)
-        if pinyin_prediction > 0:
-            # print('pinyin_prediction: ', pinyin_prediction)
-            prediction = pinyin_prediction
-            if with_reason:
-                reason = self.pinyin_model.get_reason(txt, pinyin_prediction)
 
-                if not reason:
-                    reason = txt
-        
-        elif not no_grammar:
-            grammar_prediction = self.grammar_model.predictText(txt, lv)
-            prediction = grammar_prediction
-            if grammar_prediction > 0 and with_reason:
-                reason = 'delted by grammar model'
-                prediction = self.code_grammar_delete
-
+        for model in self.loaded_models:
+            _predict = model.predictText(txt, lv)
+            if _predict > 0:
+                prediction = _predict
+                if with_reason:
+                    reason = model.get_reason(txt, _predict)
+                    if not reason:
+                        reason = txt
 
         return prediction, reason
 
     
     def get_details(self, txt):
+        details_result = {'text': txt}
         if txt:
-            _pinyin_detail = self.pinyin_model.get_details(txt)
-            _grammer_detail = self.grammar_model.get_details(txt)
-            # print('_grammer_detail: ', _grammer_detail)
-            
-        else:
-            _pinyin_detail = {}
-            _grammer_detail = {}
-            
-        return {
-            'text': txt,
-            'pinyin': _pinyin_detail,
-            'grammar': _grammer_detail,
-        }
+            _i = 0
+            for model in self.loaded_models:
+                _detail = model.get_details(txt)
+                details_result[self.loaded_model_names[_i]] = _detail
+                _i += 1
+
+        return details_result
+
 
     def get_pinyin_vocabulary(self):
-        return self.pinyin_model.get_pure_vocabulary()
+        return self.pinyin_model.get_pure_vocabulary() if self.pinyin_model else []
 
     def get_pinyin_freqs(self):
-        return self.pinyin_model.get_vocabulary_freq()
+        return self.pinyin_model.get_vocabulary_freq() if self.pinyin_model else []
 
     def get_pinyin_unknowns(self):
-        return self.pinyin_model.get_unknown_words_and_message()
+        return self.pinyin_model.get_unknown_words_and_message() if self.pinyin_model else []
 
-    def get_path_pinyin(self):
-        return self.pinyin_model.get_saved_model_path()
-
-    def get_path_grammar(self):
-        return self.grammar_model.get_saved_model_path()
 
 

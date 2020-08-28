@@ -1,13 +1,13 @@
 from tcpsocket.to_websocket import WebsocketThread
 from tcpsocket.tcp import socketTcp
 
-from http.client import HTTPConnection
+
 import socketserver, socket
 import os, sys, getopt
 import logging, time
 # sys.path.append("..")
 from service import instance
-from ai.helper import get_pinyin_path, get_grammar_path, get_pinyin_dictionary_path
+
 from dataparser.classes.store import ListPickle
 
 
@@ -25,12 +25,19 @@ class LaunchTcpSocket():
     remote_vocabulary = []
     local_host = (None, None)
     is_tcp_connecting = False
+    language = 'CH'
 
-    def __init__(self, host, port, webhost, webport):
-        # print('LaunchTcpSocket: ', host, port)
+
+    CODE_LANGUAGE_CH = 'CH'
+    CODE_LANGUAGE_EN = 'EN'
+
+
+    def __init__(self, host, port, webhost, webport, language = None):
+        # print('[LaunchTcpSocket] hots: {} | port: {}'.format(host, port))
         host_name = socket.gethostname()
         host_ip = socket.gethostbyname(host_name)
         self.local_host = (host_name, host_ip)
+        self.set_lang(language)
 
         self.addr = (host, port)
         self.websocket = WebsocketThread("Websocket Thread-1", host=webhost, port=webport, local_host=self.local_host, on_message_callback=self.on_websocket_message)
@@ -95,6 +102,19 @@ class LaunchTcpSocket():
         logging.debug('on_websocket_message msgid: {}'.format(msgid))
         
 
+    def set_lang(self, code):
+        _language = self.CODE_LANGUAGE_CH
+        if code:
+            if type(code) is int:
+                if code == 1:
+                    _language = self.CODE_LANGUAGE_CH
+                elif code == 2:
+                    _language = self.CODE_LANGUAGE_EN
+            else:
+                if code == self.CODE_LANGUAGE_EN:
+                    _language = code
+
+        self.language = _language
     
 
     def start(self):
@@ -102,59 +122,31 @@ class LaunchTcpSocket():
 
             self.websocket.start()
             _max_times = 50
+            logging.info('Watting For Connecting.. (Tcpsocket to Websocket).')
             while not self.websocket.is_active:
-                logging.debug('Watting For Connecting.. (Tcpsocket to Websocket).')
                 time.sleep(0.5)
                 _max_times -= 1
                 if _max_times <= 0:
+                    logging.error('Connection of (Tcpsocket to Websocket) Failed.')
                     break
-
-
-            if self.websocket_host != '127.0.0.1' and self.websocket.is_active:
-
-                _http_cnn = HTTPConnection(self.websocket_host, self.websocket_port)
-
-                _http_cnn.request('GET', '/api/model/pinyin')
-                _http_res = _http_cnn.getresponse()
-                if _http_res.status == 200:
-                    with open(get_pinyin_path()+'/model.h5', 'wb+') as f:
-                        while True:
-                            _buf = _http_res.read()
-                            if _buf:
-                                f.write(_buf)
-                            else:
-                                break
-                    logging.info('Download Remote Pinyin Model Done.')
-                else:
-                    logging.error('Download Remote Pinyin Model Failed.')
-
-                _http_cnn.request('GET', '/api/model/grammar')
-                _http_res = _http_cnn.getresponse()
-                if _http_res.status == 200:
-                    with open(get_grammar_path()+'/model.h5', 'wb+') as f:
-                        while True:
-                            _buf = _http_res.read()
-                            if _buf:
-                                f.write(_buf)
-                            else:
-                                break
-                    logging.info('Download Remote Grammar Model Done.')
-                else:
-                    logging.error('Download Remote Grammar Model Failed.')
             
-
-            _pinyin_data_pk = ListPickle(get_pinyin_dictionary_path() + '/data')
             
-            if self.websocket.is_active:
-                self.pinyin_data = self.websocket.get_remote_pinyin_data()
-                _pinyin_data_pk.save([self.pinyin_data])
-            else:
-                self.pinyin_data = _pinyin_data_pk.get_list()[0]
-
-            self.service_instance = instance.get_main_service()
-            self.service_instance.open_mind(pinyin_data=self.pinyin_data)
+            self.service_instance = instance.get_main_service(is_admin=False)
+            self.service_instance.set_language(self.language)
 
             self.nickname_filter_instance = instance.get_nickname_filter()
+
+            
+            if self.websocket.is_active:
+
+                logging.info('TCP Socket connect to Websocket done.')
+
+                if self.websocket_host != '127.0.0.1':
+
+                    self.service_instance.fetch_ai_model_data(remote=self.websocket_host, port=self.websocket_port)
+            
+
+            self.service_instance.open_mind()
 
             self.server = socketserver.ThreadingTCPServer(self.addr, self.handler_factory())
             logging.info('TCP Socket Server launched on port :: {}'.format(self.addr[1]))

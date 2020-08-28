@@ -16,7 +16,7 @@ class NicknameFilter():
     CODE_SYSTEM_FAILURE = 4
     regex_is_eng = re.compile('[a-zA-Z]')
 
-    def __init__(self, is_admin=True):
+    def __init__(self, is_admin=True, lang_mode=0):
         _now = timezone.now()
         today_datetime = timezone.localtime(_now)
 

@@ -403,8 +403,6 @@ python manage.py loaddata service/seed/initial.json
 
 python manage.py upsert -i ../excel file -model textbook
 
-python manage.py upsert -i ../excel file -model textbook
-
 python manage.py parsexcel -i ai/assets/textbook/pinyin
 python manage.py parsexcel -i ai/assets/textbook/grammar
 

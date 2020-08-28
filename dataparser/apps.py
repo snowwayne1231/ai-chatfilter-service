@@ -876,7 +876,6 @@ class EnglishParser():
 
 
     def replace_to_origin_english(self, text):
-
         
         
         new_text = re.sub(self._regex_english, self._sub_match_fn, text)

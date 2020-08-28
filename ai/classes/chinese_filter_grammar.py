@@ -26,6 +26,8 @@ class GrammarFilter(BasicChineseFilter):
     STATUS_OTHER = 4
     STATUS_UNKNOW = 5
 
+    CODE_DELETED = 21
+
     status_classsets = 2
     full_words_length = 64
 
@@ -295,6 +297,9 @@ class GrammarFilter(BasicChineseFilter):
             
             predicted = self.model.predict(np.array([_words]))[0]
             passible = np.argmax(predicted)
+            
+            if passible > 0:
+                passible = self.CODE_DELETED
 
             # print('predicted: ', predicted)
             # print('passible: ', passible)
@@ -304,3 +309,8 @@ class GrammarFilter(BasicChineseFilter):
             passible = 0
 
         return passible
+
+    
+    # override
+    def get_reason(self, text, prediction):
+        return 'Deleted by grammar filter.'
