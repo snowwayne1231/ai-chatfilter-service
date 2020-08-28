@@ -105,7 +105,10 @@ class ExcelParser():
                 return str(int(value))
             
         if len(column) > 0:
-        
+
+            if sh.nrows < limit:
+                limit = sh.nrows
+            
             for rx in range(limit if limit > 0 else sh.nrows):
                 
                 child = [x.value for x in sh.row(rx)]
