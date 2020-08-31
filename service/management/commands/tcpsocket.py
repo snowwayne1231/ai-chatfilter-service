@@ -19,9 +19,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '-webhost', dest='webhost', required=False, help='ip or domain for connecting to backend websocket.',
         )
-        parser.add_argument(
-            '-lang', dest='language', required=False, help='language between CH and EN. default is CH.',
-        )
+        # parser.add_argument(
+        #     '-lang', dest='language', required=False, help='language between CH and EN. default is CH.',
+        # )
 
 
     def handle(self, *args, **options):
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         host = options.get('host')
         webport = options.get('webport')
         webhost = options.get('webhost')
-        language = options.get('language')
+        # language = options.get('language')
         
         if port is None:
             port = 8025
@@ -48,5 +48,5 @@ class Command(BaseCommand):
             webhost = '127.0.0.1'
         # bufsize = 1024
 
-        main = LaunchTcpSocket(host, port, webhost, webport, language=language)
+        main = LaunchTcpSocket(host, port, webhost, webport)
 

@@ -23,19 +23,13 @@ class LaunchTcpSocket():
     remote_vocabulary = []
     local_host = (None, None)
     is_tcp_connecting = False
-    language = 'CH'
 
 
-    CODE_LANGUAGE_CH = 'CH'
-    CODE_LANGUAGE_EN = 'EN'
-
-
-    def __init__(self, host, port, webhost, webport, language = None):
+    def __init__(self, host, port, webhost, webport):
         # print('[LaunchTcpSocket] hots: {} | port: {}'.format(host, port))
         host_name = socket.gethostname()
         host_ip = socket.gethostbyname(host_name)
         self.local_host = (host_name, host_ip)
-        self.set_lang(language)
 
         self.addr = (host, port)
         self.websocket = WebsocketThread("Websocket Thread-1", host=webhost, port=webport, local_host=self.local_host, on_message_callback=self.on_websocket_message)
@@ -84,8 +78,10 @@ class LaunchTcpSocket():
                 _msg = data.nickname
             else:
                 _msg = 'None'
+
+            self.service_instance.saveRecord(prediction, _msg)
             
-            logging.error('Websocket is Not Working. [txt: {}]'.format(_msg))
+            logging.error('Websocket is Not Working. [txt: {}] [{}]'.format(_msg, prediction))
 
     
     def handle_tcp_open(self):
@@ -98,21 +94,6 @@ class LaunchTcpSocket():
 
     def on_websocket_message(self, msgid, message):
         logging.debug('on_websocket_message msgid: {}'.format(msgid))
-        
-
-    def set_lang(self, code):
-        _language = self.CODE_LANGUAGE_CH
-        if code:
-            if type(code) is int:
-                if code == 1:
-                    _language = self.CODE_LANGUAGE_CH
-                elif code == 2:
-                    _language = self.CODE_LANGUAGE_EN
-            else:
-                if code == self.CODE_LANGUAGE_EN:
-                    _language = code
-
-        self.language = _language
     
 
     def start(self):
@@ -130,7 +111,6 @@ class LaunchTcpSocket():
             
             
             self.service_instance = instance.get_main_service(is_admin=False)
-            self.service_instance.set_language(self.language)
 
             self.nickname_filter_instance = instance.get_nickname_filter()
 

@@ -61,8 +61,9 @@ class MainService():
     regex_has_gap = re.compile("[a-zA-Z]+\s+[a-zA-Z]+")
 
 
-    def __init__(self, is_admin_server = False, lang_mode = 0):
+    def __init__(self, is_admin_server = False):
 
+        self.init_language()
         self.message_parser = MessageParser()
         self.english_parser = EnglishParser()
         self.chat_store = ChatStore()
@@ -73,44 +74,45 @@ class MainService():
             self.check_analyzing()
 
         logging.info('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
-            
 
-    def set_language(self, lang_key):
-        _mode = self.STATUS_MODE_CHINESE
-        if lang_key == 'EN':
-            _mode = self.STATUS_MODE_ENGLISH
-            logging.info('Setting Language :: [English]')
+
+    def init_language(self):
+        _setting = settings.LANGUAGE_MODE
+        if _setting == 'EN':
+            self.lang_mode = self.STATUS_MODE_ENGLISH
         else:
-            logging.info('Setting Language :: [Chinese]')
+            self.lang_mode = self.STATUS_MODE_CHINESE
 
-        self.lang_mode = _mode
+        logging.info('Service Main Language [{}]'.format(_setting))
 
 
     def open_mind(self):
         if self.is_open_mind:
             return True
 
-        self.ai_app = MainAiApp()
-
-        _voca_data = self.vocabulary_data
-        _vocabulary = _voca_data.get('vocabulary', [])
-        _vocabulary_freqs = _voca_data.get('vocabulary_freqs', [])
-        _vocabulary_english = _voca_data.get('vocabulary_english', [])
-        _unknowns = _voca_data.get('unknowns', [])
-        _unknown_words = [_[0] for _ in _unknowns]
-        _remote_models = []
-        
         if self.is_admin_server:
 
             self.english_parser.set_vocabulary()
             _vocabulary = False
+            _vocabulary_freqs = None
             _vocabulary_english = False
-        
+            _unknown_words = []
+
+        else:
+            
+            _voca_data = self.get_vocabulary_data()
+            _vocabulary = _voca_data.get('vocabulary', [])
+            _vocabulary_freqs = _voca_data.get('vocabulary_freqs', [])
+            _vocabulary_english = _voca_data.get('vocabulary_english', [])
+            _unknowns = _voca_data.get('unknowns', [])
+            _unknown_words = [_[0] for _ in _unknowns]
+
+            self.english_parser.set_vocabulary(_vocabulary_english)
+
+        self.ai_app = MainAiApp()
 
         if self.lang_mode == self.STATUS_MODE_CHINESE:
             #
-            self.english_parser.set_vocabulary(_vocabulary_english)
-
             if _vocabulary:
                 self.ai_app.load_pinyin(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words, jieba_freqs=_vocabulary_freqs)
             else:
@@ -118,9 +120,9 @@ class MainService():
 
             self.ai_app.load_garmmar()
 
-        elif self.STATUS_MODE_CHINESE == self.STATUS_MODE_ENGLISH:
+        elif self.lang_mode == self.STATUS_MODE_ENGLISH:
             #
-            pass
+            self.ai_app.load_english()
 
         else:
 
@@ -271,38 +273,36 @@ class MainService():
 
 
     def saveRecord(self, prediction, message, text='', reason=''):
-        if self.is_admin_server:
+        try:
 
-            try:
-
-                if prediction == 0:
-                    # save to good sentence
-                    record = GoodSentence(
-                        message=message[:95],
-                        text=text[:63],
-                    )
+            if prediction == 0:
+                # save to good sentence
+                record = GoodSentence(
+                    message=message[:95],
+                    text=text[:63],
+                )
+            else:
+                # save to blocked
+                if text:
+                    _text = text
                 else:
-                    # save to blocked
-                    if text:
-                        _text = text
-                    else:
-                        _text, lv, anchor = self.parse_message(message)
-                    
-                    record = BlockedSentence(
-                        message=message[:95],
-                        text=_text[:63],
-                        reason=reason[:63] if reason else '',
-                        status=int(prediction),
-                    )
+                    _text, lv, anchor = self.parse_message(message)
+                
+                record = BlockedSentence(
+                    message=message[:95],
+                    text=_text[:63],
+                    reason=reason[:63] if reason else '',
+                    status=int(prediction),
+                )
 
-                record.save()
-            
-                self.check_analyzing()
+            record.save()
+        
+            self.check_analyzing()
 
-            except Exception as ex:
+        except Exception as ex:
 
-                logging.error('Save Record Failed,  message :: {}'.format(message))
-                print(ex, flush=True)
+            logging.error('Save Record Failed,  message :: {}'.format(message))
+            print(ex, flush=True)
 
     
     def saveNicknameRequestRecord(self, nickname, status):
@@ -403,7 +403,7 @@ class MainService():
                 _single_word = _parsed_english_list[0]
                 _num_eng_word = len(_single_word)
                 # print('[is_allowed_english_sentense] _single_word: ', _single_word)
-                return _num_eng_word > 9 or _num_eng_word < 3
+                return _num_eng_word < 3
                 # _is_origin_english_word = _num_eng_word == len(text)
                 # return _is_origin_english_word or _num_eng_word > 9
                 # print('_is_origin_english_word: text = {}, _single_word = {}'.format(text, _single_word) )
@@ -444,7 +444,9 @@ class MainService():
         elif self.vocabulary_data:
             return self.vocabulary_data
         else:
-            return {}
+            _data_pk = ListPickle(get_vocabulary_dictionary_path() + '/data.pickle')
+            return _data_pk.get_list()[0]
+    
 
     def get_vocabulary_data_remotely(self, http_connection):
 
@@ -493,6 +495,11 @@ class MainService():
     def get_grammar_model_path(self):
         self.open_mind()
         return self.ai_app.grammar_model.get_model_path() if self.ai_app.grammar_model else None
+
+    
+    def get_english_model_path(self):
+        self.open_mind()
+        return self.ai_app.english_model.get_model_path() if self.ai_app.english_model else None
 
 
     def fetch_ai_model_data(self, remote_ip, port = 80):

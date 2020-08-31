@@ -93,13 +93,18 @@ class Command(BaseCommand):
                 # print (recv_data.decode('utf-8'))
                 trying_unpacked = unpack(recv_data)
                 _is_deleted = trying_unpacked.code > 0
+                _is_right = False
                 if _is_deleted:
                     if status > 0:
-                        length_right += 1
+                        _is_right = True
                 else:
                     if status == 0:
-                        length_right += 1
-                # print('=========================')
+                        _is_right = True
+                
+                if _is_right:
+                    length_right += 1
+                else:
+                    print('Wrong Predict :: txt = [{}]   ans = [{}]'.format(msgtxt, status))
 
                 msgid += 1
                 time.sleep(0.01)

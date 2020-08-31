@@ -22,20 +22,18 @@ from .views import ServiceAPIView
 import os
 
 
-
 def read_model_path(request, name):
     main_service = instance.get_main_service(is_admin=True)
     if name == 'pinyin':
         _path = main_service.get_pinyin_model_path()
     elif name == 'grammar':
         _path = main_service.get_grammar_model_path()
+    elif name == 'english':
+        _path = main_service.get_english_model_path()
     else:
         raise Http404('Model Not Found.')
 
-    if _path:
-        return serve(request, os.path.basename(_path), os.path.dirname(_path))
-    else:
-        raise Http404('Model Not Found.')
+    return serve(request, os.path.basename(_path), os.path.dirname(_path))
 
 
 def read_data_path(request, name):
