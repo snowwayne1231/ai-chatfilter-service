@@ -217,7 +217,7 @@ class MainService():
         if reason_char:
             return self.STATUS_PREDICTION_WEHCAT_SUSPICION, reason_char
 
-            
+        
         _is_all_english_word = self.regex_all_english_word.match(text)
 
         if _is_all_english_word:
