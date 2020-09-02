@@ -1,8 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from .chinese_filter_basic import BasicChineseFilter
+from ai.models import Vocabulary, Language
 
 import tensorflow as tf
+import tensorflow_datasets as tfds
 import os, re
 import numpy as np
 from datetime import datetime, timedelta
@@ -23,26 +25,30 @@ class BasicEnglishFilter(BasicChineseFilter):
     full_words_length = 255
 
     basic_num_dataset = 5000
+
+    eng_vocabulary = []
+    freqs = []
+    encoder = None
+
+    def __init__(self, data = [], load_folder=None, english_vocabulary=[]):
+
+        if english_vocabulary:
+            self.eng_vocabulary = english_vocabulary
+        else:
+            _lan = Language.objects.filter(code='EN').first()
+            _model_vocabulary = Vocabulary.objects.filter(language=_lan)
+            self.eng_vocabulary = list(_model_vocabulary)
+
+        print('[BasicEnglishFilter] eng_vocabulary: ', self.eng_vocabulary)
+
+        self.encoder = tfds.features.text.TokenTextEncoder(self.eng_vocabulary)
+        
+        super().__init__(data=data, load_folder=load_folder)
     
 
     # override return list
     def transform_str(self, _string):
-        # print('transform str: ', _string)
-        _next = []
-        _string = _string.replace(' ', '')
-        for _s in _string:
-            if self.re_is_chinese.match(_s):
-                _next.append(self.STATUS_CHINESE)
-            elif self.re_is_english.match(_s):
-                _next.append(self.STATUS_ENGLISH)
-            elif self.re_is_number.match(_s):
-                _next.append(self.STATUS_NUMBER)
-            elif self.re_is_other.match(_s):
-                _next.append(self.STATUS_OTHER)
-            else:
-                _next.append(self.STATUS_UNKNOW)
-        # print('transform_str next: ', _next)
-        return _next
+        return re.split(r'[\s]+', _string)
 
     
     # override
@@ -51,16 +57,18 @@ class BasicEnglishFilter(BasicChineseFilter):
         all_scs = self.status_classsets
 
         model = tf.keras.Sequential()
-        # model.add(tf.keras.layers.Conv1D(input_shape=(full_words_length,)))
-        model.add(tf.keras.layers.Flatten(input_shape=(full_words_length,)))
-        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
-        model.add(tf.keras.layers.Dense(full_words_length * all_scs, activation=tf.nn.relu))
+        model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs, mask_zero=True))
+        # model.add(tf.keras.layers.Flatten())
+        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs)))
+        model.add(tf.keras.layers.GlobalAveragePooling1D())
+        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
+        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
+        # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         model.add(tf.keras.layers.Dense(all_scs, activation=tf.nn.softmax))
 
-        # model.build()
         model.summary()
         
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001, amsgrad=True)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.002, amsgrad=True)
 
         model.compile(
             optimizer=optimizer,
@@ -233,21 +241,24 @@ class BasicEnglishFilter(BasicChineseFilter):
         return dataset
 
 
-    def parse_texts(self, texts):
-        next_txt = []
-        _len = len(texts)
-        _full_wl = self.full_words_length
-        _status_e = self.STATUS_EMPTY
-        _left_pad = int((_full_wl - _len) / 2)
+    def load_tokenizer_vocabularies(self):
+        _vocabularies = self.jieba_dict.get_vocabulary()
+        vocabulary_length = len(_vocabularies)
+        # print('[load_tokenizer_vocabularies] vocabulary_length: ', vocabulary_length)
+        assert vocabulary_length > 0
+        assert vocabulary_length < self.full_vocab_size
+        # print('[load_tokenizer_vocabularies] _vocabularies: ', _vocabularies)
+        self.tokenizer_vocabularies = _vocabularies
+        self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)
+        self.encoder_size = vocabulary_length
 
-        if _left_pad >= 0:
-            _right_pad = _full_wl - _left_pad - _len
-            next_txt = ([_status_e] * _left_pad) + texts + ([_status_e] * _right_pad)
-            
-        else:
-            next_txt = next_txt[:_full_wl]
+
+    def parse_texts(self, texts):
+        # next_txt = []
+        # _len = len(texts)
+        _max_length = self.full_words_length
         
-        return np.array(next_txt)
+        return np.array(texts[:_max_length])
 
 
     # override

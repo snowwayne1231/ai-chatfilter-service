@@ -100,6 +100,7 @@ class PinYinFilter(BasicChineseFilter):
         model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs, mask_zero=True))
         # model.add(tf.keras.layers.Flatten())
         model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs)))
+        # model.add(tf.keras.layers.GlobalAveragePooling1D())
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))

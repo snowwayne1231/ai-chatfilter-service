@@ -12,7 +12,8 @@ from dataparser.jsonparser import JsonParser
 from dataparser.classes.store import ListPickle
 from .classes.chinese_filter_pinyin import PinYinFilter
 from .classes.chinese_filter_grammar import GrammarFilter
-from .helper import print_spend_time, get_pinyin_path, get_grammar_path
+from .classes.english_filter_basic import BasicEnglishFilter
+from .helper import print_spend_time, get_pinyin_path, get_grammar_path, get_english_model_path
 
 
 
@@ -113,3 +114,22 @@ def train_grammar_by_list(train_data_list = None, final_accuracy = None, max_spe
     print_spend_time(_st_time)
 
 
+
+def train_english_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0):
+    result_list = get_row_list_by_json_path(json_file_path)
+    train_english_by_list(result_list, final_accuracy, max_spend_time)
+
+
+def train_english_by_list(train_data_list = None, final_accuracy = None, max_spend_time=0):
+
+    _saved_folder = get_english_model_path()
+
+    _st_time = datetime.now() #
+
+    model = BasicEnglishFilter(load_folder=_saved_folder)
+
+    history = model.fit_model(train_data=train_data_list, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
+
+    print('=== history ===')
+    print(history)
+    print_spend_time(_st_time)

@@ -122,7 +122,10 @@ class MainService():
 
         elif self.lang_mode == self.STATUS_MODE_ENGLISH:
             #
-            self.ai_app.load_english()
+            if _vocabulary_english:
+                self.ai_app.load_english(english_vocabulary=_vocabulary_english)
+            else:
+                self.ai_app.load_english()
 
         else:
 
@@ -445,7 +448,7 @@ class MainService():
             return self.vocabulary_data
         else:
             _data_pk = ListPickle(get_vocabulary_dictionary_path() + '/data.pickle')
-            return _data_pk.get_list()[0]
+            return _data_pk.get_list()[0] or {}
     
 
     def get_vocabulary_data_remotely(self, http_connection):

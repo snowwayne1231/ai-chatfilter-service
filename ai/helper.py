@@ -25,6 +25,12 @@ def get_grammar_path():
         os.makedirs(_path)
     return _path
 
+def get_english_model_path():
+    _path = os.path.dirname(os.path.abspath(__file__)) + '/_models/english_model'
+    if not os.path.exists(_path):
+        os.makedirs(_path)
+    return _path
+
 def get_vocabulary_dictionary_path():
     _path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/vocabulary'
     if not os.path.exists(_path):

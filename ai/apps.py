@@ -1,13 +1,15 @@
 from django.apps import AppConfig
 from tensorflow import keras
-from .helper import get_pinyin_path, get_grammar_path
+from .helper import get_pinyin_path, get_grammar_path, get_english_model_path
 from .classes.chinese_filter_pinyin import PinYinFilter
 from .classes.chinese_filter_grammar import GrammarFilter
+from .classes.english_filter_basic import BasicEnglishFilter
 
 import tensorflow as tf
 
 pinyin_model_path = get_pinyin_path()
 grammar_model_path = get_grammar_path()
+english_model_apth = get_english_model_path()
 
 class AiConfig(AppConfig):
     name = 'ai'
@@ -17,6 +19,7 @@ class AiConfig(AppConfig):
 class MainAiApp():
     pinyin_model = None
     grammar_model = None
+    english_model = None
 
     loaded_models = []
     loaded_model_names = []
@@ -36,6 +39,12 @@ class MainAiApp():
         self.grammar_model = GrammarFilter(load_folder=grammar_model_path)
         self.loaded_models.append(self.grammar_model)
         self.loaded_model_names.append('grammar')
+
+
+    def load_english(self):
+        self.english_model = BasicEnglishFilter(load_folder=english_model_apth)
+        self.loaded_models.append(self.english_model)
+        self.loaded_model_names.append('english')
     
 
     def predict(self, txt, lv=0, with_reason=False):
