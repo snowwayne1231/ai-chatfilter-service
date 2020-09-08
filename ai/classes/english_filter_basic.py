@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from .chinese_filter_basic import BasicChineseFilter
 from ai.models import Vocabulary, Language
+from ai.service_impact import get_all_vocabulary_from_models
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -9,39 +10,60 @@ import os, re
 import numpy as np
 from datetime import datetime, timedelta
 
-
+CHARACTER_UNKNOWN = '#UNK#'
+CHARACTER_PAD = '#PAD#'
+CHARACTER_NUM = '#NUM#'
+CHARACTER_ALPHABET = '#ALP#'
+CHARACTER_RESERVE = '#RES#'
 
 
 class BasicEnglishFilter(BasicChineseFilter):
     """
     """
 
-    re_is_chinese = re.compile('[\u4e00-\u9fa5]')
-    re_is_english = re.compile('[a-zA-Z]')
-    re_is_number = re.compile('[0-9]')
-    re_is_other = re.compile('[\u0020-\u0085]')
+    # re_is_chinese = re.compile('[\u4e00-\u9fa5]')
+    # re_is_english = re.compile('[a-zA-Z]')
+    # re_is_number = re.compile('[0-9]')
+    # re_is_other = re.compile('[\u0020-\u0085]')
 
-    status_classsets = 4
+    status_classsets = 8
     full_words_length = 255
 
     basic_num_dataset = 5000
+    full_vocab_size = 65536
 
+    origin_vocabulary = [CHARACTER_PAD, CHARACTER_UNKNOWN, CHARACTER_NUM, CHARACTER_ALPHABET, CHARACTER_RESERVE]
+    alphabet_position = 0
+    unknown_position = 0
     eng_vocabulary = []
-    freqs = []
+    map_first_eng_voca = {}
     encoder = None
+    encoder_size = 0
 
     def __init__(self, data = [], load_folder=None, english_vocabulary=[]):
 
         if english_vocabulary:
             self.eng_vocabulary = english_vocabulary
         else:
-            _lan = Language.objects.filter(code='EN').first()
-            _model_vocabulary = Vocabulary.objects.filter(language=_lan)
-            self.eng_vocabulary = list(_model_vocabulary)
+            _voca_data = get_all_vocabulary_from_models(pinyin=False)
+            self.eng_vocabulary = [_[0] for _ in _voca_data['english']]
 
-        print('[BasicEnglishFilter] eng_vocabulary: ', self.eng_vocabulary)
+        # print('[BasicEnglishFilter] eng_vocabulary: ', self.eng_vocabulary)
 
-        self.encoder = tfds.features.text.TokenTextEncoder(self.eng_vocabulary)
+        for _eng in self.eng_vocabulary:
+            _first_char = _eng[0]
+            if self.map_first_eng_voca.get(_first_char):
+                self.map_first_eng_voca[_first_char].append(_eng)
+            else:
+                self.map_first_eng_voca[_first_char] = [_eng]
+
+        _full_vocabulary = self.get_vocabulary()
+
+        self.encoder = tfds.features.text.TokenTextEncoder(_full_vocabulary)
+        self.encoder_size = len(_full_vocabulary)
+
+        self.alphabet_position = self.origin_vocabulary.index(CHARACTER_ALPHABET)
+        self.unknown_position = self.origin_vocabulary.index(CHARACTER_UNKNOWN)
         
         super().__init__(data=data, load_folder=load_folder)
     
@@ -127,14 +149,6 @@ class BasicEnglishFilter(BasicChineseFilter):
         steps = int(_length_of_data / BATCH_SIZE)
         vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE)
 
-        # print("batch_train_data: ", batch_train_data)
-        # for _ in batch_train_data.take(1):
-        #     print(_)
-        
-        # print(list(batch_train_data.take(1).as_numpy_iterator()))
-        # exit(2)
-        
-
         try:
             _start = datetime.now()
             if stop_hours:
@@ -176,7 +190,10 @@ class BasicEnglishFilter(BasicChineseFilter):
         
         x, y = self.get_xy_data()
 
-        _parsed_x_list = [ self.parse_texts(_) for _ in x ]
+        _parsed_x_list = [ self.get_encode_word(_)[0] for _ in x ]
+
+        # print('_parsed_x_list: ', _parsed_x_list)
+        # exit(2)
 
         if check_duplicate:
 
@@ -200,7 +217,7 @@ class BasicEnglishFilter(BasicChineseFilter):
                         _transformed = x[_i]
                         _against_idx = _check_map_idx[_zip_str]
                         _against = self.data[_against_idx][2]
-                        print('[Grammarly Filter][get_train_batchs] Duplicate Data: {} | Idx: {} | against: {} | {}'.format(_origin, _i, _against_idx, _against))
+                        print('[English Filter][get_train_batchs] Duplicate Data: {} | Idx: {} | against: {} | {}'.format(_origin, _i, _against_idx, _against))
                         
                     
                 else:
@@ -221,45 +238,142 @@ class BasicEnglishFilter(BasicChineseFilter):
 
         self.length_x = len(_parsed_x_list)
 
-        _full_wl = self.full_words_length
+        return self.bathchs_labeler(x=_parsed_x_list, y=y)
+
+
+    def bathchs_labeler(self, x, y):
+        assert len(x) == len(y)
+
+        full_words_length = self.full_words_length
 
         def gen():
-            for idx, texts in enumerate(_parsed_x_list):
-                if len(texts) == 0:
+            for idx, texts in enumerate(x):
+                _len = len(texts)
+                if _len == 0:
                     continue
 
-                st = 1 if y[idx] and int(y[idx]) > 0 else 0
-                
-                yield texts, st
+                st = y[idx] if y[idx] else 0
+                npts = np.pad(texts, (0, full_words_length - _len), 'constant')
 
+                yield npts, np.int64(st)
+                # yield npts, [0,0,0,0,0,0,0,0]
+        
         dataset = tf.data.Dataset.from_generator(
             gen,
-            ( tf.int32, tf.int32 ),
-            ( tf.TensorShape([_full_wl, ]), tf.TensorShape([]) ),
+            ( tf.int64, tf.int64 ),
+            ( tf.TensorShape([full_words_length]), tf.TensorShape([]) ),
         )
 
         return dataset
 
 
-    def load_tokenizer_vocabularies(self):
-        _vocabularies = self.jieba_dict.get_vocabulary()
-        vocabulary_length = len(_vocabularies)
-        # print('[load_tokenizer_vocabularies] vocabulary_length: ', vocabulary_length)
-        assert vocabulary_length > 0
-        assert vocabulary_length < self.full_vocab_size
-        # print('[load_tokenizer_vocabularies] _vocabularies: ', _vocabularies)
-        self.tokenizer_vocabularies = _vocabularies
-        self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)
-        self.encoder_size = vocabulary_length
+    
+    def get_encode_word(self, _words):
+        _result_text = []
+        _encoder = self.encoder
+        _max_size = self.encoder_size
+        _found_other_unknown = False
 
+        for _ in _words:
+            _loc = _encoder.encode(_)
+            
+            if len(_loc) > 0:
+                __code = _loc[0]
 
-    def parse_texts(self, texts):
-        # next_txt = []
-        # _len = len(texts)
-        _max_length = self.full_words_length
+                if __code > _max_size:
+                    # find the new word
+                    if len(_) <= 2:
+
+                        _result_text.append(self.alphabet_position)
+                    
+                    else:
+
+                        _similar_words = self.serach_similar_word(_)
+                        # print('_similar_words: ', _similar_words)
+
+                        if _similar_words:
+
+                            _s_word = _similar_words[0]
+                            _loc = _encoder.encode(_s_word)
+                            __code = _loc[0]
+                            _result_text.append(__code)
+
+                        else:
+                            
+                            _found_other_unknown = True
+                            _result_text.append(self.unknown_position)
+                        
+                    
+                elif __code >= 0:
+                    _result_text.append(__code)
         
-        return np.array(texts[:_max_length])
+        return _result_text, _found_other_unknown
 
+
+    def serach_similar_word(self, text):
+        possibility_words = []
+        _suffix = ['ies', 'es', 's', 'ive', 'ing', 'ed', 'en']
+        _test_vars = ['y', 'e']
+        _map = self.map_first_eng_voca
+        for _sf in _suffix:
+            if text.endswith(_sf):
+                _first_char = text[0]
+                _parsed_text = text[:-(len(_sf))]
+                # print('_parsed_text: ', _parsed_text)
+                _list_of_same_first = _map.get(_first_char)
+                if _list_of_same_first:
+
+                    if _parsed_text in _list_of_same_first:
+                        possibility_words.append(_parsed_text)
+                        break
+                    
+                    _test_good = False
+                    for _tv in _test_vars:
+                        __test_word = '{}{}'.format(_parsed_text, _tv)
+                        if __test_word in _list_of_same_first:
+                            possibility_words.append(__test_word)
+                            _test_good = True
+                            break
+                    
+                    if _test_good:
+                        break
+
+                    else:
+                        _length_parsed_text = len(_parsed_text)
+                        _length_parsed_text_end = _length_parsed_text + 1
+                        _found_matched = False
+                        for _word in _list_of_same_first:
+                            _length_w = len(_word)
+                            if _length_w >= _length_parsed_text and _length_w <= _length_parsed_text_end:
+                                _i = 0
+                                _right = 0
+                                _lose_list = []
+                                for _single_w_char in _word:
+                                    _text_position_char = _parsed_text[_i]
+                                    if _single_w_char == _text_position_char:
+                                        _right += 1
+                                    else:
+                                        if _lose_list and _lose_list[0] == _text_position_char:
+                                            _right += 1
+                                            _lose_list.pop(0)
+                                        
+                                        _lose_list.append(_single_w_char)
+                                        if len(_lose_list) > 1:
+                                            break
+                                    _i += 1
+                                    if _i >= _length_parsed_text:
+                                        break
+                                
+                                if _right >= _length_parsed_text - 1:
+                                    _found_matched = True
+                                    _parsed_text = _word
+                                    break
+                        
+                        if _found_matched:
+                            possibility_words.append(_parsed_text)
+
+        return possibility_words
+    
 
     # override
     def get_details(self, text):
@@ -269,7 +383,7 @@ class BasicEnglishFilter(BasicChineseFilter):
         if len(_words) == 0:
             return 0
 
-        _texts = self.parse_texts(_words)
+        _texts = self.get_encode_word(_words)[0]
 
         # print('predictText  _words : ', _words, _words.shape)
         
@@ -278,7 +392,8 @@ class BasicEnglishFilter(BasicChineseFilter):
         # print('grammar predicted: ', predicted)
 
         return {
-            'grammar_words': _words,
+            'words': _words,
+            'encoded': _texts,
             'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
         }
     
@@ -293,18 +408,12 @@ class BasicEnglishFilter(BasicChineseFilter):
             if len(_words) == 0:
                 return 0
 
-            _words = self.parse_texts(_words)
+            _words = self.get_encode_word(_words)[0]
 
-            # print('predictText  _words : ', _words, _words.shape)
+            print('predictText  _words : ', _words)
             
             predicted = self.model.predict(np.array([_words]))[0]
             passible = np.argmax(predicted)
-            
-            if passible > 0:
-                passible = self.CODE_DELETED
-
-            # print('predicted: ', predicted)
-            # print('passible: ', passible)
         
         else:
 
@@ -315,4 +424,11 @@ class BasicEnglishFilter(BasicChineseFilter):
     
     # override
     def get_reason(self, text, prediction):
-        return 'Deleted by grammar filter.'
+        return 'Deleted by English filter.'
+
+
+    def get_vocabulary(self, pure = False):
+        if pure:
+            return self.eng_vocabulary
+        else:
+            return self.origin_vocabulary + self.eng_vocabulary

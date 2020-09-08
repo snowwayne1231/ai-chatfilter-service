@@ -28,7 +28,7 @@ class Vocabulary(models.Model):
     context = models.CharField(max_length=255)
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
     status = models.IntegerField(default=1)
-    is_common = models.BooleanField(default=True)
+    freq = models.IntegerField(default=1)
     meaning = models.CharField(max_length=512, blank=True, default="") 
     part = models.ManyToManyField(PartOfSpeech)
     abstract = models.ManyToManyField(AbstractMeaning)
@@ -49,6 +49,7 @@ class SoundVocabulary(models.Model):
     pinyin = models.CharField(max_length=65)
     type = models.IntegerField(default=1)
     status = models.IntegerField(default=1)
+    freq = models.IntegerField(default=1)
     vocabulary = models.ManyToManyField(Vocabulary)
 
     class Meta:
@@ -65,6 +66,7 @@ class DigitalVocabulary(models.Model):
     pinyin = models.CharField(max_length=65, default='')
     type = models.IntegerField(default=1)
     status = models.IntegerField(default=1)
+    freq = models.IntegerField(default=10)
     vocabulary = models.ManyToManyField(Vocabulary)
 
     class Meta:
@@ -80,6 +82,7 @@ class NewVocabulary(models.Model):
     pinyin = models.CharField(max_length=65, default='')
     text = models.CharField(max_length=65, default='')
     type = models.IntegerField(default=1)
+    freq = models.IntegerField(default=20)
     status = models.IntegerField(default=1)
 
     class Meta:

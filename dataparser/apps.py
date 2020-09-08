@@ -5,8 +5,8 @@ from django.apps import AppConfig
 from datetime import datetime
 from .classes.map_hex import mapHexes
 from .models import CustomDictionaryWord
-from .jsonparser import JsonParser
 from service.models import Blockword
+from ai.service_impact import get_all_vocabulary_from_models
 from ai.models import SoundVocabulary, NewVocabulary, DigitalVocabulary, Vocabulary, Language
 from ai.classes.translator_pinyin import translate_by_string
 
@@ -315,13 +315,11 @@ class JieBaDictionary():
     none_tone_map = {}
     re_eng = re.compile('[a-zA-Z0-9_]', re.U)
 
-    _jsonparser = None
 
     def __init__(self, vocabulary=[], freqs=[]):
         self.origin_vocabulary = [self.pad_character, self.unknown_character, self.number_character, self.alphabet_character, self.reserve_character]
         jieba.re_eng = self.re_eng
         jieba.initialize(dictionary=self.folder + '/assets/jieba.txt')
-        self._jsonparser = JsonParser(file=self.freq_json_file)
 
         if not os.path.isdir(self.pickle_folder):
             os.mkdir(self.pickle_folder)
@@ -563,43 +561,23 @@ class JieBaDictionary():
     def refresh_dictionary(self):
         print('JieBaDictionary: Start Refresh Dictionary Observed Data Source By Database.')
         _older_v_size = len(self.vocabularies)
-        
-        cdw_list = CustomDictionaryWord.objects.all()
-        for cdw in cdw_list:
-            _cdw_pinyin = cdw.pinyin
-            _freq = cdw.freq
-            self.add_word(_cdw_pinyin, freq=_freq)
 
-        _freq_map = self.get_freq_map()
+        vocabulary_data = get_all_vocabulary_from_models(english=False)
+        pinyin_data = vocabulary_data['pinyin']
 
-        _percent = 0
-
-        sound_vocabularies = SoundVocabulary.objects.filter(status=1)
-        _total = len(sound_vocabularies)
+        _total = len(pinyin_data)
         _i = 0
-        for sv in sound_vocabularies:
-            _pinyin = sv.pinyin
-            # _type = int(sv.type)
-            _freq = _freq_map.get(_pinyin, 1)
-            self.add_word(_pinyin, freq=_freq)
+
+        for pdata in pinyin_data:
+            _pinyin_txt = pdata[0]
+            _freq = pdata[1]
+            self.add_word(_pinyin_txt, freq=_freq)
 
             if _i % 500 == 0:
                 _percent = _i / _total * 100
                 print(' {:.2f}%'.format(_percent), end="\r")
             _i += 1
 
-        
-        # new_vocabularies = NewVocabulary.objects.values_list('pinyin', flat=True)
-        # for nv in new_vocabularies:
-        #     self.add_word(nv)
-
-
-        digital_vocabularies = DigitalVocabulary.objects.all()
-        for dv in digital_vocabularies:
-            digit = '{}_'.format(dv.digits)
-            dv_pinyin = dv.pinyin
-            self.add_word(digit)
-            self.add_word(dv_pinyin)
 
         if len(self.vocabularies) > _older_v_size:
             self.save_vocabularies()
@@ -770,17 +748,6 @@ class JieBaDictionary():
         return jieba.get_DAG(sentence)
 
 
-    def get_freq_map(self):
-        _json_data = self._jsonparser.load()
-        res_map = {}
-        for _ in _json_data:
-            _pinyin = _[0]
-            _freq_times = _[1]
-            res_map[_pinyin] = _freq_times
-        
-        return res_map
-
-
     def get_vocabulary_freq_list(self):
         return self.vocabulary_freqs
     
@@ -833,8 +800,6 @@ class JieBaDictionary():
 
     def save_vocabularies(self):
         _full_data = [self.vocabularies, self.vocabulary_freqs]
-        with open(self.pickle_folder + '/tokenizer_vocabularies.bak', 'wb+') as handle:
-            pickle.dump(_full_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         with open(self.pickle_folder + '/tokenizer_vocabularies.pickle', 'wb+') as handle:
             pickle.dump(_full_data, handle, protocol=pickle.HIGHEST_PROTOCOL)

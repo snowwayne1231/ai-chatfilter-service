@@ -8,12 +8,6 @@ class KnowledgeCenter():
     dot_pattern = re.compile("[\u3002|\u002c|\u300a|\u3008]")
     vocabulary_map = {}
     sound_vocabulary_map = {}
-    SoundVocabulary_LV_map = {
-        'NONE': 1,
-        'TW': 2,
-        'EN': 3,
-        'CN': 4,
-    }
 
     def __init__(self):
         pass
@@ -44,16 +38,16 @@ class KnowledgeCenter():
 
 
 
-    def absorb_dictionary(self, file_path, language_code='TW'):
+    def absorb_dictionary(self, file_path, language_code='TW', freq=1):
         if file_path:
 
             ep = ExcelParser(file=file_path)
             rows = ep.get_row_list(column=['字詞名', '釋義', '詞性'])
 
-            self.upsert_into_dictionary(rows, language_code)
+            self.upsert_into_dictionary(rows, language_code, freq=freq)
     
     
-    def upsert_into_dictionary(self, row_data, language_code='TW'):
+    def upsert_into_dictionary(self, row_data, language_code='TW', freq=1):
         lan_code = Language.objects.get(code=language_code)
         part_speechs = PartOfSpeech.objects.all()
         part_map = {}
@@ -64,10 +58,6 @@ class KnowledgeCenter():
         vocabulary_set = set()
         for v in vocabularies:
             vocabulary_set.update({str(v)})
-        
-        _type_lv = self.SoundVocabulary_LV_map.get(language_code, None)
-        if _type_lv is None:
-            _type_lv = self.SoundVocabulary_LV_map.get('NONE')
 
         # print('upsert_into_dictionary row_data: ', row_data)
         length_rows = len(row_data)
@@ -118,6 +108,7 @@ class KnowledgeCenter():
                 context=word,
                 meaning=meaning,
                 language=lan_code,
+                freq=freq,
             )
             _v.save()
 
@@ -149,10 +140,13 @@ class KnowledgeCenter():
                 
                 if _not_duplicate:
                     sv_instance.vocabulary.add(_v)
+                    _new_freq = max(_v.freq, freq)
+                    sv_instance.freq = _new_freq
+                    sv_instance.save()
 
             else:
 
-                new_sv = SoundVocabulary(pinyin=word_pinyin, type=_type_lv)
+                new_sv = SoundVocabulary(pinyin=word_pinyin, freq=freq)
                 new_sv.save()
                 new_sv.vocabulary.add(_v)
                 sv_map[word_pinyin] = new_sv

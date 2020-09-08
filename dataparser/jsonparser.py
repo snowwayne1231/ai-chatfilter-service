@@ -53,11 +53,11 @@ class JsonParser():
             end_time = datetime.now()
             spend_second = (end_time - start_time).total_seconds()
 
-            print('====ExcelParser Loads File spend seconds: ', spend_second)
+            print('====[JsonParser] Loads File spend seconds: ', spend_second)
 
         else:
             
-            print('JsonParser Failed With Wrong File path.')
+            print('[JsonParser] Failed With Wrong File path.')
 
 
     def get_data(self):
@@ -66,7 +66,13 @@ class JsonParser():
     
     def get_data_only_text(self):
         # general json text position at 4
-        return [_[4] for _ in self.data]
+        if self.data:
+            if type(self.data[0]) is list:
+                return [_[4] for _ in self.data]
+            else:
+                return self.data
+        else:
+            return []
 
 
     def load(self, path = None):

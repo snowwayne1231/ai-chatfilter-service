@@ -461,13 +461,4 @@ class PinYinFilter(BasicChineseFilter):
             return self.transform_back_str(_pinyin)
         else:
             return ''
-
-
-    def get_pure_vocabulary(self):
-        return self.jieba_dict.get_vocabulary(pure=True)
-
-    def get_unknown_words_and_message(self):
-        return self.unknown_words_new_full_message
-        
-    def get_vocabulary_freq(self):
-        return self.jieba_dict.get_vocabulary_freq_list()
+    

@@ -6,6 +6,7 @@ from datetime import datetime
 from dataparser.jsonparser import JsonParser
 from dataparser.apps import JieBaDictionary
 from ai.classes.translator_pinyin import translate_by_string
+from ai.models import SoundVocabulary
 
 import os, time
 
@@ -54,11 +55,38 @@ class Command(BaseCommand):
 
         # print(result_list)
 
-        new_json = JsonParser(file=os.path.dirname(json_file_path) + '/output.json')
+        new_json = JsonParser(file=os.path.dirname(json_file_path) + '/output.freq.json')
         new_json.save(result_list)
+
+        _all_sv = SoundVocabulary.objects.all()
+        _sv_map_instances = {}
+        for _sv in _all_sv:
+            _sv_map_instances[_sv.pinyin] = _sv
+
+
+        _max_freq = 3000
+        _pr = 0
+
+        for _r in result_list:
+            _word = _r[0]
+            _freq = _r[1]
+            _instance = _sv_map_instances[_word]
+            _next_freq = min(_freq, _max_freq)
+            _instance.freq = _next_freq
+            _instance.save()
+
+            _gap = _max_freq - _freq
+            _next_pr = _gap / _max_freq
+
+            if _next_pr > _pr + 0.01:
+                _pr = _next_pr
+                print(' {:2.2f}%'.format(_pr * 100), end='\r')
+
+            if _freq <= 5:
+                break
         
         _ed_time = datetime.now()
-        print('Spend Time: ', _ed_time - _st_time)
+        print('Setting Vocabulary FREQ Success. Spend Time: ', _ed_time - _st_time)
 
 
         

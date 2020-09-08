@@ -3,8 +3,8 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from http.client import HTTPConnection
 from ai.apps import MainAiApp
-from ai.apps import pinyin_model_path, grammar_model_path
-from ai.helper import get_pinyin_path, get_grammar_path, get_vocabulary_dictionary_path
+from ai.service_impact import get_all_vocabulary_from_models
+from ai.helper import get_pinyin_path, get_grammar_path, get_english_model_path, get_vocabulary_dictionary_path
 from dataparser.apps import MessageParser, EnglishParser
 from dataparser.classes.store import ListPickle
 
@@ -55,6 +55,7 @@ class MainService():
 
     REMOTE_ROUTE_PINYIN_MODEL = '/api/model/pinyin'
     REMOTE_ROUTE_GARMMAR_MODEL = '/api/model/grammar'
+    REMOTE_ROUTE_ENGLISH_MODEL = '/api/model/english'
     REMOTE_ROUTE_VOCABULARY_DATA = '/api/data/vocabulary'
 
     regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
@@ -90,42 +91,30 @@ class MainService():
         if self.is_open_mind:
             return True
 
-        if self.is_admin_server:
 
-            self.english_parser.set_vocabulary()
-            _vocabulary = False
-            _vocabulary_freqs = None
-            _vocabulary_english = False
-            _unknown_words = []
 
-        else:
-            
-            _voca_data = self.get_vocabulary_data()
-            _vocabulary = _voca_data.get('vocabulary', [])
-            _vocabulary_freqs = _voca_data.get('vocabulary_freqs', [])
-            _vocabulary_english = _voca_data.get('vocabulary_english', [])
-            _unknowns = _voca_data.get('unknowns', [])
-            _unknown_words = [_[0] for _ in _unknowns]
+        _voca_data = self.get_vocabulary_data()
+        _voca_pinyin = _voca_data.get('pinyin', [])
 
-            self.english_parser.set_vocabulary(_vocabulary_english)
+        _vocabulary_english = _voca_data.get('english', [])
+        _unknowns = _voca_data.get('unknowns', [])
+        _unknown_words = [_[0] for _ in _unknowns]
 
-        self.ai_app = MainAiApp()
+        self.english_parser.set_vocabulary(_vocabulary_english)
+
+        self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english)
+        
+
 
         if self.lang_mode == self.STATUS_MODE_CHINESE:
             #
-            if _vocabulary:
-                self.ai_app.load_pinyin(jieba_vocabulary=_vocabulary, pinyin_unknown_words=_unknown_words, jieba_freqs=_vocabulary_freqs)
-            else:
-                self.ai_app.load_pinyin()
+            self.ai_app.load_pinyin()
 
             self.ai_app.load_garmmar()
 
         elif self.lang_mode == self.STATUS_MODE_ENGLISH:
             #
-            if _vocabulary_english:
-                self.ai_app.load_english(english_vocabulary=_vocabulary_english)
-            else:
-                self.ai_app.load_english()
+            self.ai_app.load_english()
 
         else:
 
@@ -437,18 +426,19 @@ class MainService():
     
 
     def get_vocabulary_data(self):
-        if self.ai_app:
-            return {
-                'vocabulary': self.ai_app.get_pinyin_vocabulary(),
-                'vocabulary_freqs': self.ai_app.get_pinyin_freqs(),
-                'vocabulary_english': self.english_parser.get_vocabulary(),
-                'unknowns': self.get_pinyin_unknowns(),
-            }
-        elif self.vocabulary_data:
+        if self.vocabulary_data:
             return self.vocabulary_data
+        elif self.is_admin_server:
+            
+            _unknowns = [[_['unknown'], _['text']] for _ in UnknownWord.objects.values('unknown', 'text')]
+            _voca = get_all_vocabulary_from_models()
+            _voca['unknowns'] = _unknowns
+            # self.vocabulary_data = _voca
+            return _voca
         else:
             _data_pk = ListPickle(get_vocabulary_dictionary_path() + '/data.pickle')
             return _data_pk.get_list()[0] or {}
+            
     
 
     def get_vocabulary_data_remotely(self, http_connection):
@@ -472,22 +462,6 @@ class MainService():
 
         return _json_data
     
-
-    def get_pinyin_unknowns(self):
-        if self.is_admin_server:
-            _unknowns = [[_, ''] for _ in UnknownWord.objects.values_list('unknown', flat=True)]
-        else:
-            _unknowns = self.ai_app.get_pinyin_unknowns()
-
-        return _unknowns
-
-
-    def get_train_textbook(self):
-        _limit = 5000
-        queryset = Textbook.objects.filter(type=1).values_list('model', 'type', 'text', 'status').order_by('-id')[:_limit]
-        result = list(queryset)
-        # print('get_train_textbook: ', result)
-        return result
 
 
     def get_pinyin_model_path(self):
@@ -546,7 +520,16 @@ class MainService():
             
         elif self.lang_mode == self.STATUS_MODE_ENGLISH:
             #
-            pass
+            _http_cnn.request('GET', self.REMOTE_ROUTE_ENGLISH_MODEL)
+            _http_res = _http_cnn.getresponse()
+            if _http_res.status == 200:
+
+                _save_file_by_http_response(response=_http_res, path=get_english_model_path()+'/model.h5')
+                logging.info('[fetch_ai_model_data] Download Remote English Model Done.')
+
+            else:
+
+                logging.error('[fetch_ai_model_data] Download Remote English Model Failed.')
             
         
         

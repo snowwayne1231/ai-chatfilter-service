@@ -64,6 +64,7 @@ class LaunchTcpSocket():
                 _msg = data.msg
                 _room = data.roomid if hasattr(data, 'roomid') else ''
                 self.websocket.send_msg(msgid=_msgid, msg=_msg, room=_room, prediction=prediction)
+                
             elif data.cmd == 0x040007:
                 # nickname change
                 _nickname = data.nickname

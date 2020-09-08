@@ -21,16 +21,29 @@ class MainAiApp():
     grammar_model = None
     english_model = None
 
+    pinyin_data = []
+    english_data = []
+
     loaded_models = []
     loaded_model_names = []
 
-    def __init__(self):
+    def __init__(self, pinyin_data=[], english_data=[]):
         print('=============  A.I Init  =============')
+
+        if pinyin_data:
+            self.pinyin_data = pinyin_data
+
+        if english_data:
+            self.english_data = english_data
+        
         print('using tensorflow version: ', tf.__version__)
 
 
-    def load_pinyin(self, jieba_vocabulary=[], pinyin_unknown_words=[], jieba_freqs=[]):
-        self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path, jieba_vocabulary=jieba_vocabulary, unknown_words=pinyin_unknown_words, jieba_freqs=jieba_freqs)
+    def load_pinyin(self):
+        _jieba_vocabulary = [_[0] for _ in self.pinyin_data]
+        _jieba_freqs = [_[1] for _ in self.pinyin_data]
+
+        self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path, jieba_vocabulary=_jieba_vocabulary, unknown_words=[], jieba_freqs=_jieba_freqs)
         self.loaded_models.append(self.pinyin_model)
         self.loaded_model_names.append('pinyin')
 
@@ -42,7 +55,9 @@ class MainAiApp():
 
 
     def load_english(self):
-        self.english_model = BasicEnglishFilter(load_folder=english_model_apth)
+        # print('[load_english]: english_data: ', self.english_data)
+        _english_vocabulary = [_[0] for _ in self.english_data]
+        self.english_model = BasicEnglishFilter(load_folder=english_model_apth, english_vocabulary=_english_vocabulary)
         self.loaded_models.append(self.english_model)
         self.loaded_model_names.append('english')
     
@@ -73,16 +88,6 @@ class MainAiApp():
                 _i += 1
 
         return details_result
-
-
-    def get_pinyin_vocabulary(self):
-        return self.pinyin_model.get_pure_vocabulary() if self.pinyin_model else []
-
-    def get_pinyin_freqs(self):
-        return self.pinyin_model.get_vocabulary_freq() if self.pinyin_model else []
-
-    def get_pinyin_unknowns(self):
-        return self.pinyin_model.get_unknown_words_and_message() if self.pinyin_model else []
 
 
 

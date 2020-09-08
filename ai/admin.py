@@ -21,8 +21,8 @@ class PartOfSpeechAdmin(admin.ModelAdmin):
 
 
 class VocabularyAdmin(admin.ModelAdmin):
-    fields = ['context', 'language', 'status', 'meaning', 'part', 'abstract']
-    list_display = ['context', 'status', 'meaning', 'date']
+    fields = ['context', 'language', 'status', 'freq', 'meaning', 'part', 'abstract']
+    list_display = ['context', 'status', 'freq', 'meaning', 'date']
     readonly_fields = ('context',)
     sortable_by = ('date',)
     empty_value_display = '---'
@@ -32,8 +32,8 @@ class VocabularyAdmin(admin.ModelAdmin):
 
 class SoundVocabularyAdmin(admin.ModelAdmin):
     # fields = ['pinyin', 'type', 'status']
-    fields = ['pinyin', 'type', 'status', 'vocabulary']
-    list_display = ['pinyin', 'type', 'status']
+    fields = ['pinyin', 'type', 'freq', 'status', 'vocabulary']
+    list_display = ['pinyin', 'type', 'freq', 'status']
     # list_editable = ['type', 'status']
     empty_value_display = '---'
 
@@ -42,8 +42,8 @@ class SoundVocabularyAdmin(admin.ModelAdmin):
 
 
 class DigitalVocabularyAdmin(admin.ModelAdmin):
-    fields = ['digits', 'pinyin', 'type', 'status', 'vocabulary']
-    list_display = ['digits', 'pinyin', 'type', 'status']
+    fields = ['digits', 'pinyin', 'type', 'freq', 'status', 'vocabulary']
+    list_display = ['digits', 'pinyin', 'type', 'freq', 'status']
     empty_value_display = '---'
 
     readonly_fields = ('vocabulary',)
@@ -51,8 +51,8 @@ class DigitalVocabularyAdmin(admin.ModelAdmin):
 
 
 class NewVocabularyAdmin(admin.ModelAdmin):
-    fields = ['pinyin', 'text', 'type', 'status']
-    list_display = ['pinyin', 'text']
+    fields = ['pinyin', 'text', 'type', 'freq', 'status']
+    list_display = ['pinyin', 'text', 'freq']
     empty_value_display = '---'
 
     search_fields = ('pinyin', )

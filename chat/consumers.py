@@ -26,7 +26,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     group_name_admin_client = 'GLOBAL_CHATTING_ADMIN_CLIENT'
     group_name_standby = 'GLOBAL_CHATTING_STATNDBY'
     # max_message_length = 255
-    key_send_train_remotely = '__remotetrain__'
+    # key_send_train_remotely = '__remotetrain__'
     key_get_model = '__getmodel__'
     key_is_admin_client = '__isadminclient__'
     key_tcp_poto = '__tcp__'
@@ -168,8 +168,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def get_message_by_order(self, order_key, json = {}):
         if order_key == self.key_tcp_poto:
             return json.get('hostname', None)
-        elif order_key == self.key_send_train_remotely:
-            return self.main_service.get_train_textbook()
+        # elif order_key == self.key_send_train_remotely:
+        #     return self.main_service.get_train_textbook()
         elif order_key == self.key_get_model:
             _model_name = json.get('model', None)
             _app_name = json.get('app', 'service')
