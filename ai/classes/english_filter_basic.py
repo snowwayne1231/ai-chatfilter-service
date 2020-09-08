@@ -410,7 +410,7 @@ class BasicEnglishFilter(BasicChineseFilter):
 
             _words = self.get_encode_word(_words)[0]
 
-            print('predictText  _words : ', _words)
+            # print('predictText  _words : ', _words)
             
             predicted = self.model.predict(np.array([_words]))[0]
             passible = np.argmax(predicted)

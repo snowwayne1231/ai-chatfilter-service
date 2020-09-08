@@ -3,26 +3,13 @@
 ## Requirements
 
 ### 1. python3.7 / pip3 and some dependencies
-> for Debian Linux (ubuntu)
-```Shell
-sudo apt update
-sudo apt-get install python3.7
-
-sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
-sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2
-sudo update-alternatives --config python3
-python3 -V
-
-sudo apt-get install -y python-apt
-sudo apt-get install -y python3-pip
-sudo apt-get install -y python-dev python3.7-dev python-levenshtein
-```
-
 > for Redhat Linux (centos)
+
+Install Python3.7 and pip3
+
 ```Shell
 sudo yum update
 sudo yum -y install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gcc make libffi-devel
-
 sudo yum -y install epel-release
 sudo yum -y install python-pip
 sudo pip install wget
@@ -42,12 +29,6 @@ sudo yum -y install python-devel python3-devel python-Levenshtein
 
 
 ### 2. postgresql 10.11.x
-> for Debian Linux (ubuntu)
-```Shell
-sudo apt-get install postgresql-10
-sudo apt-get install postgresql-contrib libpq-dev
-```
-
 > for Redhat Linux (centos)
 ```Shell
 sudo rpm -Uvh https://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
@@ -75,14 +56,6 @@ postgres=# show_hba_file;
 
 
 ### 3. redis server
-> for Debian Linux (ubuntu)
-```Shell
-sudo apt install redis-server
-sudo nano /etc/redis/redis.conf  // change supervised no > supervised systemd
-sudo systemctl restart redis.service
-sudo systemctl status redis
-```
-
 > for Redhat Linux (centos)
 ```Shell
 sudo yum -y install epel-release yum-utils
@@ -96,12 +69,6 @@ sudo systemctl status redis
 
 
 ### 4. nginx
-> for Debian Linux (ubuntu)
-```Shell
-sudo apt-get install nginx
-sudo /etc/init.d/nginx start
-```
-
 > for Redhat Linux (centos)
 ```Shell
 sudo yum -y install nginx
@@ -117,12 +84,6 @@ sudo firewall-cmd --reload
 
 
 ### 5. virtualenv
-> for Debian Linux (ubuntu)
-```Shell
-sudo apt-get install python-virtualenv
-sudo apt-get install python3.7-venv
-```
-
 > for Redhat Linux (centos)
 ```Shell
 sudo yum -y install python-virtualenv
@@ -130,13 +91,11 @@ sudo yum -y install python-virtualenv
 
 
 ### 6. tensorflow 2.0+
-> make sure the system is matched one of below:
-+ Ubuntu 16.04 or later
-+ Windows 7 or later
-+ macOS 10.12.6 (Sierra) or later (no GPU support)
-+ Raspbian 9.0 or later
 
 > make sure pip version > 19.0.x
+```Shell
+sudo pip -V
+```
 
 
 ### 7. wsgi

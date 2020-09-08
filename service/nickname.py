@@ -37,8 +37,6 @@ class NicknameFilter():
         else:
             self.lang_mode = self.STATUS_MODE_CHINESE
 
-        logging.info('Nickname Filter Language [{}]'.format(_setting))
-
 
     def think(self, nickname):
         result = {
