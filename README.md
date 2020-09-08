@@ -1,6 +1,6 @@
 # AI-Chatting-Filter
 
-## Requirements
+## Installation Requirements for System (Centos ver)
 
 ### 1. python3.7 / pip3 and some dependencies
 > for Redhat Linux (centos)
@@ -105,68 +105,59 @@ sudo pip install uwsgi
 ```
 
 
-## Installation Steps
+
+## Project installation Steps
 
 
-### 0. prepare the project
-> first thing is make project folder and clone the project of ai-chat-filter.
-**for example the project name is "ai"**:
+### 1. prepare the project
+> make project folder and clone the project.
+**for example the project name is "ai-opt"**:
 
-+ 0.1. Clone the project
++ 1.1. Clone the project
 ```Shell
 mkdir /ai-opt/chatfilter
 cd /ai-opt/chatfilter
 git clone ...
 cd /ai-opt/chatfilter/main
 ```
-+ 0.2. Setting nginx config
-> copy and chang all the path in nginx.conf file
+
++ 1.2. Setting nginx config
+> copy and chang your network setting in nginx.conf file
 ```Shell
 cp nginx.conf.example nginx.conf
-nano nginx.conf
-```
-> change all `/path/to/mysite/` to `/ai-opt/chatfilter/main`
-example fix path below:
-```nginx
-location /static {
-    alias /path/to/mysite/static;  --->  alias /ai-opt/chatfilter/main/static;
-}
-```
-> change server name you own or if you want pass any request change to `_`
-```EditorConfig
-server_name _;
-```
->  make symbolic link to niginx configs
-```Shell
-sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/sites-enabled/
-or
-sudo ln -s /path/to/mysite/nginx.conf /etc/nginx/conf.d/
 ```
 
-+ 0.3. Setting Project config
+>  make symbolic link to niginx configs
+```Shell
+sudo ln -s /ai-opt/chatfilter/main/nginx.conf /etc/nginx/sites-enabled/
+or
+sudo ln -s /ai-opt/chatfilter/main/nginx.conf /etc/nginx/conf.d/
+```
+
++ 1.3. Setting Project config
 > copy setting.ini and chagne config you need
 ```Shell
 cp setting.ini.example setting.ini
 nano setting.ini
 ```
-> change "ALLOWED_HOSTS" and "DATABASE"
+
+> change "DATABASE" setting
 ```EditorConfig
-ALLOWED_HOSTS = 127.0.0.1, 172.16.20.120
 [DATABASE]
 DATABASE_NAME = DB_NAME
 DATABASE_USER = DB_USER_NAME
 DATABASE_PASSWORD = DB_PASSWORD
 ```
 
-+ 0.4. Create logs directory in project
++ 0.4. Create logs directory in project and make sure the logs folder changeable for supervisor(python)
 ```Shell
 mkdir /ai-opt/logs
 chmod -R 777 /ai-opt/logs
 ```
 
 
-### 1. build up virtual environment
-> for example the project name is "ai":
+### 2. build up virtual environment
+> Create virtual environment named venv:
 ```Shell
 cd /ai-opt
 python3 -m venv venv
@@ -178,7 +169,7 @@ pip -V
 > should be seen the python version at least with 3.7.5 and pip is 19+
 
 
-### 2. install tensorflow 2.0 - lastest
+### 3. install tensorflow 2.0 - lastest
 > before doing this you've make sure you already got "venv" environment
 > install what python's need in "venv"
 ```Shell
@@ -187,7 +178,7 @@ pip install tensorflow_datasets
 ```
 
 
-### 3. install python librarys
+### 4. install python librarys
 ```Shell
 pip install -r requirement.txt
 pip install psycopg2-binary
@@ -199,52 +190,58 @@ pip install django-import-export
 ```
 
 
-### 4. do django framework initialize
+### 5. do django framework initialize
 > build up the database instruction
 ```Shell
 python manage.py migrate
 python manage.py loaddata service/seed/initial.json
 python manage.py loaddata ai/json/knowledge.json
 ```
+
 > create django admin superuser with following the guiding steps to finish
 ```Shell
 python manage.py createsuperuser
 ```
+..fill all the form
+
 > collect and copy the static file in project to improve performance
 ```Shell
 python manage.py collectstatic
 ```
 
 
-### 5. training ai
+### 6. training ai
 > before you train you may need to check your vocabulary dictionary
 ```Shell
-python manage.py knowledge -i ai/assets/chinese/dict_taiwan.xlsx -lan TW
-python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN
-python manage.py knowledge -i ai/assets/english/dict.xls -lan EN
+python manage.py knowledge -i ai/assets/chinese/dict_taiwan.xlsx -lan TW -f 2
+python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN -f 100
 python manage.py knowledge -di ai/assets/chinese_digits/dict.xls
-python manage.py knowledge
+python manage.py knowledge -i ai/assets/english/dict.xls -lan EN -f 3
 ```
-> if you need some help then type `python manage.py train -h` have a look on helper and see how to use train
+
+> start training
 ```Shell
-python manage.py train -i ai/assets/textbook/json/grammar/2020-08-05.json -f 0.9990 -grm -t 3
-python manage.py train -i ai/assets/textbook/json/pinyin/2020-08-14.json -f 0.9990 -t 12
+python manage.py freq -i ai/assets/textbook/json/pinyin/2020-08-31.json
+python manage.py train -i ai/assets/textbook/json/grammar/2020-08-05.json -f 0.9985 -grm -t 3
+python manage.py train -i ai/assets/textbook/json/pinyin/2020-08-31.json -f 0.9987 -t 12
+python manage.py train -i ai/assets/textbook/json/english/2020-09-08.json -eng -t 1
 ```
-> after upon that command, you should start an AI training now, Stop anytime when you want by key in Ctrl+C
 
 
-### 6. firewall setting
-> open tcp port for chatting socket
+### 7. firewall setting
+> open tcp port for chatting socket if need
 ```Shell
 sudo firewall-cmd --permanent --zone=public --add-port=8025/tcp
 ```
 
 
+
+
 ## For linux product deploy using supervisor
 setting supervisor <http://supervisord.org/configuration.html>
-> for Debian Linux (ubuntu)
+(if you are in sourced on venv you have to deactivate it)
 ```Shell
-sudo apt install supervisor
+deactivate
 ```
 
 > for Redhat Linux (centos)
@@ -261,22 +258,22 @@ sudo systemctl status supervisord
 cp supervisor.conf.example supervisor.conf
 nano superviosr.conf
 ```
-+ > change all `/ai/ai-chatfilter-service` to your project's service folder
++ > change all directory `/opt/` to your project's folder
 ```EditorConfig
-directory=/ai/ai-chatfilter-service
+directory=/ai-opt/chatfilter/main
 ```
-+ > change all `/ai/venv/bin/python` to your virtual environment python
++ > change all `/opt/venv/bin/python` to your virtual environment python
 ```EditorConfig
-command=/ai/venv/bin/python tcpsocket/main.py -p 8025
+command=/ai-opt/venv/bin/python tcpsocket/main.py -p 8025
 ```
-+ > change all `/ai/logs/` to your logs folder
++ > change all `/opt/logs/` to your logs folder
 ```EditorConfig
-stdout_logfile=/ai/logs/tcpsocket.log
+stdout_logfile=/ai-opt/logs/tcpsocket.log
 ```
 
 > symbolic link to supervisor config
 ```Shell
-sudo ln -s /path/to/mysite/supervisor.conf /etc/supervisord.d/ai-chatfilter-service.ini
+sudo ln -s /ai-opt/chatfilter/main/supervisor.conf /etc/supervisord.d/ai-chatfilter-service.ini
 ```
 
 > reload supervisor
@@ -307,7 +304,7 @@ sestatus
 ## Testing
 
 ### 1. website
-> Test the django web site is working, type domain:port on browser for example: `http://172.16.20.120:81/` you should see the screen with 404 not found page but has content like below
+> Test the django web site is working, type domain:port on browser for example: `http://127.0.0.1:8000/` you should see the screen with 404 not found page but has content like below
 ```
 Using the URLconf defined in service.urls, Django tried these URL patterns, in this order:
 
@@ -318,12 +315,12 @@ auth/
 The empty path didn't match any of these.
 ```
 
-> that means the website is working fine and next we change url to `http://172.16.20.120:81/chat/`, try typeing something to test websockets
+> that means the website is working fine and next we change url to `http://127.0.0.1:8000/chat/`, try typeing something to test websockets
 
 ### 2. tcp socket
 > use tcpsocket client to test chatting binary packages.
 ```Shell
-cd /ai/ai-chatfilter-service
+cd /ai-opt/chatfilter/main
 python tcpsocket/client.py -h 127.0.0.1 -p 8025
 ```
 > you will see
@@ -336,26 +333,25 @@ Please choose package type:
 5.chat response
 Enter number:
 ```
-*everything was fine!!*
+*everything is fine!!*
 
 
 ### 3. command line
 ```shell
-python manage.py predict -t speaksome.. -s
-python manage.py predict -i ai/assets/.. -s
+python manage.py predict -t [speaksome..] -s
+python manage.py predict -i [ai/assets/..] -s
 ```
 
 ```shell
-python manage.py testsocket -i ai/assets/.. -p 8025 -h 127.0.0.1
+python manage.py testsocket -i [ai/assets/..] -p 8025 -h 127.0.0.1
 ```
 
 
 ## Maintaining
 > some commod tips
 > dump and restore blockword data
+> do not use until you know all about database
 ```Shell
-python manage.py clear -a service -m blockedsentence
-python manage.py clear -a service -m goodsentence
 python manage.py dumpdata service > service/seed/initial.json
 
 python manage.py loaddata service/seed/initial.json

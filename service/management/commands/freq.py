@@ -55,8 +55,8 @@ class Command(BaseCommand):
 
         # print(result_list)
 
-        new_json = JsonParser(file=os.path.dirname(json_file_path) + '/output.freq.json')
-        new_json.save(result_list)
+        # new_json = JsonParser(file=os.path.dirname(json_file_path) + '/output.freq.json')
+        # new_json.save(result_list)
 
         _all_sv = SoundVocabulary.objects.all()
         _sv_map_instances = {}
