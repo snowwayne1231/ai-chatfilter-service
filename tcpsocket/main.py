@@ -112,9 +112,6 @@ class LaunchTcpSocket():
             
             
             self.service_instance = instance.get_main_service(is_admin=False)
-
-            self.nickname_filter_instance = instance.get_nickname_filter()
-
             
             if self.websocket.is_active:
 
@@ -124,8 +121,11 @@ class LaunchTcpSocket():
 
                     self.service_instance.fetch_ai_model_data(remote_ip=self.websocket_host, port=self.websocket_port)
             
-
+            
             self.service_instance.open_mind()
+            
+            self.nickname_filter_instance = instance.get_nickname_filter()
+            self.nickname_filter_instance.set_english_parser(self.service_instance.get_english_parser())
 
             self.server = socketserver.ThreadingTCPServer(self.addr, self.handler_factory())
             logging.info('TCP Socket Server launched on port :: {}'.format(self.addr[1]))

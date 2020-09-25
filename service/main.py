@@ -423,6 +423,10 @@ class MainService():
                 return True
 
         return False
+
+
+    def get_english_parser(self):
+        return self.english_parser
     
 
     def get_vocabulary_data(self):
@@ -442,7 +446,7 @@ class MainService():
     
 
     def get_vocabulary_data_remotely(self, http_connection):
-
+        
         http_connection.request('GET', self.REMOTE_ROUTE_VOCABULARY_DATA, headers={'Content-type': 'application/json'})
         _http_res = http_connection.getresponse()
         if _http_res.status == 200:
@@ -452,6 +456,7 @@ class MainService():
 
         else:
 
+            _json_data = None
             logging.error('[get_vocabulary_data_remotely] Download Failed.')
 
         _data_pk = ListPickle(get_vocabulary_dictionary_path() + '/data.pickle')
@@ -459,7 +464,7 @@ class MainService():
             _data_pk.save([_json_data])
         else:
             _json_data = _data_pk.get_list()[0]
-
+        
         return _json_data
     
 

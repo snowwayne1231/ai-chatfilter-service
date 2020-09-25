@@ -20,9 +20,6 @@ allowed_character_regexies = [
     (u'\U0001f910', u'\U0001f9ff'), # faces
 ]
 
-suspect_english_or_digits = [
-    '!', '$', '&', '()', 
-]
 
 
 class PreFilter():

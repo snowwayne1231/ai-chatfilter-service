@@ -18,7 +18,7 @@ from django.urls import path, include
 from django.http import Http404, HttpResponse, JsonResponse
 from django.views.static import serve
 from service import instance
-from .views import ServiceAPIView
+from .views import ServiceAPIView, ServiceJSONDataAPIView
 import os
 
 
@@ -54,7 +54,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
-    path('api/upload/', ServiceAPIView.as_view()),
+    # path('api/upload/', ServiceAPIView.as_view()),
     path('api/model/<slug:name>', read_model_path),
     path('api/data/<slug:name>', read_data_path),
+    path('api/jsondata/<slug:name>', ServiceJSONDataAPIView.as_view()),
 ]

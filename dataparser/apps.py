@@ -882,9 +882,13 @@ class EnglishParser():
         return match_str
 
 
+    def replace_to_only_english(self, text):
+        return re.sub(r'[^(a-zA-Z\s)]+', '', text)
+
+
     def parse_right_vocabulary_list(self, eng_str):
         result_list = []
-        _eng_string = eng_str.strip()
+        _eng_string = eng_str.strip().lower()
         _eng_list = re.split(r'\s+', _eng_string)
 
         for _ in _eng_list:

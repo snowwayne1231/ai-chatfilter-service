@@ -143,6 +143,10 @@ while True:
 
         nickname = input()
         packed = pack(command_hex, reqid=12345, nickname=nickname)
+        if nickname:
+            is_keep_chatting = True
+        else:
+            is_keep_chatting = False
 
     
     # if not data or data=='exit':
