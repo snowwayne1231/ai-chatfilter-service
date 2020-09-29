@@ -86,7 +86,12 @@ def pack(cmd, **options):
 
 
 def unpack(buffer):
-    (cmd,) = struct.unpack('!i', buffer[:4])
+    try:
+        (cmd,) = struct.unpack('!i', buffer[:4])
+    except Exception as err:
+        logging.error('Buffer: {}'.format(buffer))
+        print(err)
+        cmd = 0x000000
 
     # print(' -- unpack cmd: ', cmd)
 
