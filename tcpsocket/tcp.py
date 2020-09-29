@@ -146,7 +146,7 @@ class socketTcp(Tcp):
 
             else:
                 
-                logging.debug('Recived Package Unknow.')
+                logging.error('Recived Package Unknow.')
                 packed_res = pack(0x000001)
             
             

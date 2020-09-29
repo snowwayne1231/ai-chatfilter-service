@@ -4,7 +4,7 @@ import logging
 import traceback
 
 
-def pack(cmd, **options):
+def pack(cmd = 0x000000, **options):
     
     size = 0
     package = None
@@ -80,6 +80,10 @@ def pack(cmd, **options):
 
         size = struct.calcsize(NickNameFilterResponsePackage.fmt)
         package = struct.pack(NickNameFilterResponsePackage.fmt, cmd, size, reqid, code)
+
+    else:
+
+        package = struct.pack('x')
     
 
     return package
@@ -89,10 +93,8 @@ def unpack(buffer):
     try:
         (cmd,) = struct.unpack('!i', buffer[:4])
     except Exception as err:
-        logging.error('Buffer: {}'.format(buffer))
-        print(err)
+        logging.error('Unpack Packgae Failed. Buffer: {}'.format(buffer))
         cmd = 0x000000
-
     # print(' -- unpack cmd: ', cmd)
 
     if cmd == HeartingPackage.m_cmd:
@@ -138,10 +140,12 @@ class BasicStructPackage():
     fmt = '!2i'
 
     def __init__(self, buffer):
-        self.parse(buffer)
+        try:
+            self.parse(buffer)
+        except:
+            pass
 
     def parse(self, buffer):
-        print('BasicStructPackage buffer: ', buffer)
         cmd, size = struct.unpack(self.fmt, buffer)
         self.cmd = cmd
         self.size = size

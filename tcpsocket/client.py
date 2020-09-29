@@ -50,8 +50,8 @@ def let_user_pick(options):
         pass
     return None
 
-cmd_options = ['hearting', 'login', 'login response', 'chatting', 'chatting json', 'chat response', 'nickname filter']
-cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x041003, 0x040004, 0x040007]
+cmd_options = ['hearting', 'login', 'login response', 'chatting', 'chatting json', 'chat response', 'nickname filter', 'empty byte']
+cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x041003, 0x040004, 0x040007, 0x000000]
 
 is_keep_chatting = False
 msgid = 0
@@ -147,6 +147,9 @@ while True:
             is_keep_chatting = True
         else:
             is_keep_chatting = False
+
+    elif command_hex == 0x000000:
+        packed = pack()
 
     
     # if not data or data=='exit':
