@@ -29,6 +29,7 @@ class ExcelParser():
         return List
     """
     file = None
+    file_content = None
     books = []
     is_multiple = False
     file_extension = re.compile("^(.*).xlsx?$", re.IGNORECASE)
@@ -39,6 +40,13 @@ class ExcelParser():
             'file',
             None,
         )
+
+        self.file_content = kwargs.get(
+            'file_content',
+            None,
+        )
+
+        self.books = []
 
         if self.file:
             start_time = datetime.now()
@@ -69,6 +77,15 @@ class ExcelParser():
 
             print('====ExcelParser Loads File spend seconds: ', spend_second)
             print("Worksheet name(s): {0}".format(book.sheet_names()))
+
+        elif self.file_content:
+
+            self.is_multiple = False
+            book = xlrd.open_workbook(
+                    filename=None,
+                    file_contents=self.file_content,
+                )
+            self.books.append(book)
 
         else:
 

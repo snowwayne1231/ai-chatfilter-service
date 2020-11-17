@@ -14,7 +14,8 @@ import time, re, logging, json
 from .classes.prefilter import PreFilter
 # from .classes.fuzzycenter import FuzzyCenter
 from .classes.chatstore import ChatStore
-from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, Textbook, ChangeNicknameRequest
+from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, ChangeNicknameRequest
+from ai.models import TextbookSentense
 
 
 
@@ -535,9 +536,42 @@ class MainService():
             else:
 
                 logging.error('[fetch_ai_model_data] Download Remote English Model Failed.')
-            
         
-        
+
+    def add_textbook_sentense(self, sentenses):
+        limit_tbs_size = 50
+        try:
+            tbs = []
+            for _sen in sentenses:
+                _origin_sen = _sen[0]
+                _status = _sen[1]
+                _text, _lv, _a = self.parse_message(_origin_sen)
+                _textbook = TextbookSentense(
+                    origin=_origin_sen,
+                    text=_text,
+                    status=_status,
+                )
+                tbs.append(_textbook)
+                # _textbook.save()
+                if len(tbs) >= limit_tbs_size:
+                    TextbookSentense.objects.bulk_create(tbs)
+                    tbs = []
+
+            if len(tbs) > 0:
+                TextbookSentense.objects.bulk_create(tbs)
+
+            return True
+        except Exception as err:
+            logging.error(str(err))
+            return False
+
+
+    def remove_textbook_sentense(self, id):
+        try:
+            TextbookSentense.objects.get(pk=id).delete()
+            return True
+        except Exception as err:
+            return False
 
         
     

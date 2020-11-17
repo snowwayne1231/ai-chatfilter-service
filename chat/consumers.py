@@ -17,21 +17,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
     """
 
     main_service = None
+    nickname_filter = None
+
     hostname = None
-    is_admin_client = False
+    has_admin_client = False
     is_tcp = False
     is_standby = True
     is_working = False
     group_name_global = 'GLOBAL_CHATTING'
     group_name_admin_client = 'GLOBAL_CHATTING_ADMIN_CLIENT'
-    group_name_standby = 'GLOBAL_CHATTING_STATNDBY'
-    # max_message_length = 255
-    # key_send_train_remotely = '__remotetrain__'
+
     key_get_model = '__getmodel__'
     key_is_admin_client = '__isadminclient__'
     key_tcp_poto = '__tcp__'
     key_change_nickname_request = '__changenicknamerequest__'
+    key_training_start = '__trainingstart__'
+    key_tcpsocket_connection_login = '__tcpsocketconnectionlogin__'
 
+    def check_service(self):
+        if not self.main_service:
+            self.main_service = instance.get_main_service(is_admin=True)
+            self.nickname_filter = instance.get_nickname_filter(is_admin=True)
+        
+        if not self.main_service.is_open_mind:
+            self.main_service.open_mind()
+    
 
     async def connect(self):
         # self.room_name = self.scope['url_route']['kwargs']['room_name']
@@ -39,10 +49,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         #     self.group_name_global,
         #     self.channel_name
         # )
-
-        self.main_service = instance.get_main_service(is_admin=True)
-        if not self.main_service.is_open_mind:
-            self.main_service.open_mind()
+        self.check_service()
 
         await self.channel_layer.group_add(
             self.group_name_global,
@@ -60,17 +67,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        if self.is_admin_client:
-            await self.channel_layer.group_discard(
-                self.group_name_admin_client,
-                self.channel_name
-            )
+        await self.channel_layer.group_discard(
+            self.group_name_admin_client,
+            self.channel_name
+        )
 
-        # if self.is_standby:
-        #     await self.channel_layer.group_discard(
-        #         self.group_name_standby,
-        #         self.channel_name
-        #     )
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -108,10 +109,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 result_next['prediction'] = 0
                 printt('Web Socket [receive] Wrong!! Not Pass Prediction. msgid: ', msgid)
 
-            await self.channel_layer.group_send(
-                self.group_name_admin_client,
-                result_next,
-            )
+            if self.has_admin_client:
+                await self.channel_layer.group_send(
+                    self.group_name_admin_client,
+                    result_next,
+                )
             
             self.main_service.saveRecord(result_next['prediction'], message=message)
             printt('Save Message: {} | {}'.format(message, result_next['prediction']))
@@ -132,37 +134,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def channel_chat_message(self, event):
         msgid = event['msgid']
 
-        if self.is_admin_client:
-            message = event.get('message', '')
-            prediction = int(event.get('prediction', 0))
-            user = event.get('user', '')
-            room = event.get('room', 'none')
-            reason_char = event.get('reason_char', '')
-            detail = event.get('detail', {})
-            await self.send(text_data=json.dumps({
-                'msgid': msgid,
-                'message': message,
-                'prediction': prediction,
-                'reason_char': reason_char,
-                'user': user,
-                'room': room,
-                'detail': detail,
-            }))
-        else:
-            await self.send(text_data=json.dumps({
-                'msgid': msgid,
-            }))
-            
-
-    async def send_cmd_start_train(self, event):
-        message = event.get('message', None)
-        msgid = event.get('msgid', None)
-        print('[send_cmd_start_train] self.hostname: ', self.hostname)
-        print('[send_cmd_start_train] message: ', message[:2])
+        message = event.get('message', '')
+        prediction = int(event.get('prediction', 0))
+        user = event.get('user', '')
+        room = event.get('room', 'none')
+        reason_char = event.get('reason_char', '')
+        detail = event.get('detail', {})
         await self.send(text_data=json.dumps({
             'msgid': msgid,
             'message': message,
+            'prediction': prediction,
+            'reason_char': reason_char,
+            'user': user,
+            'room': room,
+            'detail': detail,
         }))
+
+    
+    async def channel_chat_nickname(self, event):
+        _nickname = event.get('nickname', False)
+        if _nickname:
+            await self.send(text_data=json.dumps({
+                'msgid': self.key_change_nickname_request,
+                'nickname': _nickname,
+                'code': event.get('code', 0),
+            }))
     
 
     def get_message_by_order(self, order_key, json = {}):
@@ -189,26 +185,40 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
             self.is_working = True
-            self.is_admin_client = True
+            self.has_admin_client = True
 
         elif order_key == self.key_tcp_poto:
 
             _hostname = message
             if _hostname:
                 self.hostname = _hostname
-                # await self.channel_layer.group_add(
-                #     self.group_name_standby,
-                #     self.channel_name
-                # )
-                # self.is_standby = True
 
                 self.is_tcp = True
 
         # elif order_key == self.key_send_train_remotely:
         elif order_key == self.key_change_nickname_request:
             _nickname = message.get('message', '')
-            _code = message.get('prediction', 0)
+            _code = message.get('prediction', None)
+
+            if _code is None:
+
+                _code = self.nickname_filter.think(_nickname)['code']
+
             self.main_service.saveNicknameRequestRecord(nickname=_nickname, status=_code)
+
+            await self.channel_layer.group_send(
+                self.group_name_admin_client,
+                {
+                    'type': 'channel_chat_nickname',
+                    'nickname': _nickname,
+                    'code': _code,
+                },
+            )
+            return None
+
+        elif order_key == self.key_training_start:
+            pass
+            
         
         await self.send(text_data=json.dumps({'msgid': order_key, 'message': message}))
 

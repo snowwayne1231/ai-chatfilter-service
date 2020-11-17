@@ -60,10 +60,10 @@ class NewVocabularyAdmin(admin.ModelAdmin):
 
 class TextbookSentenseAdmin(admin.ModelAdmin):
     fields = ['origin', 'text', 'keypoint', 'weight', 'status', 'reason']
-    list_display = ['origin', 'text']
+    list_display = ['origin', 'text', 'status']
     empty_value_display = '---'
 
-    search_fields = ('origin', )
+    search_fields = ('origin', 'status')
 
     
 

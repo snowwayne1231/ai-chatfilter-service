@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'django_rq',
     'corsheaders',
     'chat',
     'ai',
@@ -179,3 +180,44 @@ CORS_ORIGIN_ALLOW_ALL  = True
 
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 IMPORT_EXPORT_IMPORT_PERMISSION_CODE = 'add'
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.cache.RedisCache',
+        'LOCATION': 'localhost:6379:1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'MAX_ENTRIES': 5000,
+        },
+    },
+}
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+        'PASSWORD': '',
+        'DEFAULT_TIMEOUT': 360,
+    },
+    'with-sentinel': {
+        'SENTINELS': [('localhost', 26736), ('localhost', 26737)],
+        'MASTER_NAME': 'redismaster',
+        'DB': 0,
+        'PASSWORD': 'secret',
+        'SOCKET_TIMEOUT': None,
+        'CONNECTION_KWARGS': {
+            'socket_connect_timeout': 0.3
+        },
+    },
+    'high': {
+        'URL': os.getenv('REDISTOGO_URL', 'redis://localhost:6379/0'), # If you're on Heroku
+        'DEFAULT_TIMEOUT': 500,
+    },
+    'low': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+    }
+}

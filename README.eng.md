@@ -190,6 +190,7 @@ pip install websocket-client
 pip install zhconv
 pip install xlwt
 pip install django-import-export
+pip install django-rq
 ```
 
 

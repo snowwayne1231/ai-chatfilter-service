@@ -14,6 +14,7 @@ import pickle
 from datetime import datetime, timedelta
 
 
+static_should_be_blocked_list = ['公众号', 'wx', '微信', '禾呈序', '程序', '陈序', '屏音', '拼瑛', '全部平', '文字拚', '拼鹰', '拚文字', '拚字', '字拚', '姘写', '泉饼', '关注', '公眾号', '小禾呈', '工從號', '公號', '拼', '拚', '微', '看威', '是钻', '松众號']
 
 
 class PinYinFilter(BasicChineseFilter):
@@ -39,6 +40,8 @@ class PinYinFilter(BasicChineseFilter):
     unknown_words_new_full_message = []
     unknown_position = 0
     alphabet_position = 0
+
+    should_block_list = []
     
 
     def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[], jieba_freqs=[]):
@@ -53,6 +56,11 @@ class PinYinFilter(BasicChineseFilter):
             self.unknown_words = unknown_words
         
         super().__init__(data=data, load_folder=load_folder)
+
+        for _ in static_should_be_blocked_list:
+            _py = translate_by_string(_)
+            # print('========', _, ' :: ', _py)
+            self.should_block_list.append(_py)
     
 
     #override return list
@@ -251,6 +259,10 @@ class PinYinFilter(BasicChineseFilter):
 
         if len(_words) == 0:
             return 0
+        else:
+            for _w in _words:
+                if _w in self.should_block_list:
+                    return 1
         
         _result_text, _has_unknown = self.get_encode_word(_words)
         # if _has_unknown:
@@ -380,9 +392,10 @@ class PinYinFilter(BasicChineseFilter):
                         _origin = self.data[_i][2]
                         _against_idx = _check_map_idx[_zip_str]
                         _against_data = self.data[_against_idx][2]
-                        _before_against_data = self.data[_against_idx-1][2] if _against_idx > 0 else 'None'
-                        print('[Pinyin Filter][get_train_batchs] Duplicate Data: ', _origin, " idx: ", _i,  ' | ', 'against data: ', _against_data, 'idx: ', _against_idx)
-                        print('      _before_against_data: ', _before_against_data)
+                        # _before_against_data = self.data[_against_idx-1][2] if _against_idx > 0 else 'None'
+                        print('[Pinyin Filter][get_train_batchs] Duplicate Data::  _origin: ', _origin," idx: ", _i)
+                        print('      against data: ', _against_data, ' idx: ', _against_idx)
+                        # print('      _before_against_data: ', _before_against_data)
                     
                 else:
                     _check_map[_zip_str] = _y_value
@@ -439,18 +452,19 @@ class PinYinFilter(BasicChineseFilter):
             if text == _[0]:
                 encoded_words = _[1]
 
-        _res = self.model.predict(encoded_words)
-        _i = 0
-        # print('encoded_words: ', encoded_words)
-        for _ in _res:
-            _max = np.argmax(_)
-            if _max == prediction:
-                # vocabulary = _words[_i]
-                # reason = self.transform_back_str(vocabulary)
-                _icode = encoded_words[_i]
-                reason = self.get_decode_str(_icode)
-                break
-            _i += 1
+        if encoded_words:
+            _res = self.model.predict(encoded_words)
+            _i = 0
+            # print('encoded_words: ', encoded_words)
+            for _ in _res:
+                _max = np.argmax(_)
+                if _max == prediction:
+                    # vocabulary = _words[_i]
+                    # reason = self.transform_back_str(vocabulary)
+                    _icode = encoded_words[_i]
+                    reason = self.get_decode_str(_icode)
+                    break
+                _i += 1
         
         return reason
 
