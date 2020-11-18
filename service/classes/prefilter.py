@@ -134,6 +134,17 @@ class PreFilter():
 
         return next_char if is_many_asci or is_many_language or has_double_eng else ''
 
+    
+    def find_emoji_word_mixed(self, text):
+        _r_emoji = r'\{\d{1,3}\}'
+        _has_emoji = re.search(_r_emoji, text)
+        if _has_emoji:
+            _pured = re.sub(_r_emoji, '', text).strip()
+            if len(_pured) > 0:
+                return '#emoji#'
+        return ''
+        
+
 
     def is_chinese(self, uchar):
         return (uchar >= u'\u4e00' and uchar <= u'\u9fa5') or (uchar >= u'\uf970' and uchar <= u'\ufa6d')

@@ -108,12 +108,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 
                 result_next['prediction'] = 0
                 printt('Web Socket [receive] Wrong!! Not Pass Prediction. msgid: ', msgid)
-
-            if self.has_admin_client:
-                await self.channel_layer.group_send(
-                    self.group_name_admin_client,
-                    result_next,
-                )
+            
+            await self.channel_layer.group_send(
+                self.group_name_admin_client,
+                result_next,
+            )
             
             self.main_service.saveRecord(result_next['prediction'], message=message)
             printt('Save Message: {} | {}'.format(message, result_next['prediction']))
@@ -132,9 +131,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
 
     async def channel_chat_message(self, event):
+        
         msgid = event['msgid']
 
         message = event.get('message', '')
+        printt('channel_chat_message: ' + message)
         prediction = int(event.get('prediction', 0))
         user = event.get('user', '')
         room = event.get('room', 'none')
