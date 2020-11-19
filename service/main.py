@@ -251,7 +251,7 @@ class MainService():
 
 
     def find_prefilter_reject_reason_with_nonparsed_msg(self, msg):
-        print('find_prefilter_reject_reason_with_nonparsed_msg: ', msg)
+        # print('find_prefilter_reject_reason_with_nonparsed_msg: ', msg)
         reason_char = self.pre_filter.find_not_allowed_chat(msg)
         if reason_char:
             return reason_char

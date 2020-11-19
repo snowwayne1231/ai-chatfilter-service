@@ -16,8 +16,8 @@ allowed_character_regexies = [
     # (u'\u3131', u'\u318e'), # korea yin 2
     (u'\uac00', u'\ud7a3'), # korea
     (u'\uff01', u'\uff65'), # full type of english, digits and symbol
-    (u'\U0001f600', u'\U0001f64f'), # faces
-    (u'\U0001f910', u'\U0001f9ff'), # faces
+    # (u'\U0001f600', u'\U0001f64f'), # faces
+    # (u'\U0001f910', u'\U0001f9ff'), # faces
 ]
 
 

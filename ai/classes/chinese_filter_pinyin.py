@@ -13,9 +13,8 @@ import numpy as np
 import pickle
 from datetime import datetime, timedelta
 
-
-static_should_be_blocked_list = ['公众号', 'wx', '微信', '禾呈序', '程序', '陈序', '屏音', '拼瑛', '全部平', '文字拚', '拼鹰', '拚文字', '拚字', '字拚', '姘写', '泉饼', '关注', '公眾号', '小禾呈', '工從號', '公號', '拼', '拚', '微', '看威', '是钻', '松众號']
-
+static_should_be_blocked_list = ['公众号', 'wx', 'wx小成序', '微信', '禾呈序', '程序', '小程序', '陈序', '层序', '屏音', '拼瑛', '拼音', '全部平', '文字拚', '拼鹰', '拚文字', '拚字', '字拚', '姘写', '泉饼', '关注', '公眾号', '小禾呈', '工從號', '公號', '拼', '拚', '微', '看威', '是钻', '松众號', '众号', '拚英', '屏', '是葳', '鹰']
+static_should_be_blocked_shap_list = ['拼', '手并', '拚', ['公', '号'], ['众', '号'], ['公', '众'], ['程', '序'], ['关', '注'], ['文', '字']]
 
 class PinYinFilter(BasicChineseFilter):
     """
@@ -42,6 +41,8 @@ class PinYinFilter(BasicChineseFilter):
     alphabet_position = 0
 
     should_block_list = []
+    should_block_shap_list = []
+    STATUS_SEPCIFY_BLOCK = 8
     
 
     def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[], jieba_freqs=[]):
@@ -61,6 +62,9 @@ class PinYinFilter(BasicChineseFilter):
             _py = translate_by_string(_)
             # print('========', _, ' :: ', _py)
             self.should_block_list.append(_py)
+
+        self.should_block_shap_list = static_should_be_blocked_shap_list
+
     
 
     #override return list
@@ -251,6 +255,31 @@ class PinYinFilter(BasicChineseFilter):
         
         return tokenized
 
+
+    def find_block_word(self, word_list = [], text_string = ''):
+        _sbl = self.should_block_list
+        _sbsl = self.should_block_shap_list
+        for _w in word_list:
+            if _w in _sbl:
+                return _w
+
+        for _ in _sbsl:
+            if isinstance(_, list):
+                _num_matched = 0
+                for __ in _:
+                    if __ in text_string:
+                        _num_matched += 1
+                
+                if _num_matched == len(_):
+                    return ''.join(_)
+            
+            else:
+                for _str in text_string:
+                    if _str == _:
+                        return _str
+            
+        return ''
+
     
     # override
     def predictText(self, text, lv = 0):
@@ -259,24 +288,22 @@ class PinYinFilter(BasicChineseFilter):
 
         if len(_words) == 0:
             return 0
-        else:
-            for _w in _words:
-                if _w in self.should_block_list:
-                    return 1
         
         _result_text, _has_unknown = self.get_encode_word(_words)
-        # if _has_unknown:
-        #     print('[Pinyin filter][predictText] _has_unknown: ', text, _words)
-        
-        
-        if len(_result_text) == 0:
-            # print('[Pinyin filter][predictText] | No result text: {},  words: {},  length: {}'.format(text, _words, len(text)))
-            return 0
 
         if len(self.tmp_encoded_text) >= 3:
             self.tmp_encoded_text = self.tmp_encoded_text[-2:]
 
         self.tmp_encoded_text.append([text, _result_text])
+
+        
+        if len(_result_text) == 0:
+            return 0
+        else:
+            _blocked_word = self.find_block_word(_words, text)
+            if _blocked_word:
+                return self.STATUS_SEPCIFY_BLOCK
+
 
         predicted = self.model.predict([_result_text])[0]
         # print('predicted: ', predicted)
