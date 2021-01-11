@@ -372,5 +372,8 @@ class BasicChineseFilter():
 
 
     def get_model_path(self):
-        return self.get_saved_folder() + '/model.h5'
+        _path = self.get_saved_folder() + '/model.h5'
+        if not os.path.exists(_path):
+            _path = self.get_saved_folder() + '/model.remote.h5'
+        return _path
 

@@ -509,7 +509,8 @@ class MainService():
             _http_res = _http_cnn.getresponse()
             if _http_res.status == 200:
 
-                _save_file_by_http_response(response=_http_res, path=get_pinyin_path()+'/model.h5')
+                # _save_file_by_http_response(response=_http_res, path=get_pinyin_path()+'/model.h5')
+                _save_file_by_http_response(response=_http_res, path=get_pinyin_path()+'/model.remote.h5')
                 logging.info('[fetch_ai_model_data] Download Remote Pinyin Model Done.')
 
             else:
@@ -520,21 +521,23 @@ class MainService():
             _http_res = _http_cnn.getresponse()
             if _http_res.status == 200:
 
-                _save_file_by_http_response(response=_http_res, path=get_grammar_path()+'/model.h5')
+                # _save_file_by_http_response(response=_http_res, path=get_grammar_path()+'/model.h5')
+                _save_file_by_http_response(response=_http_res, path=get_grammar_path()+'/model.remote.h5')
                 logging.info('[fetch_ai_model_data] Download Remote Grammar Model Done.')
 
             else:
 
                 logging.error('[fetch_ai_model_data] Download Remote Grammar Model Failed.')
 
-            
+
         elif self.lang_mode == self.STATUS_MODE_ENGLISH:
             #
             _http_cnn.request('GET', self.REMOTE_ROUTE_ENGLISH_MODEL)
             _http_res = _http_cnn.getresponse()
             if _http_res.status == 200:
 
-                _save_file_by_http_response(response=_http_res, path=get_english_model_path()+'/model.h5')
+                # _save_file_by_http_response(response=_http_res, path=get_english_model_path()+'/model.h5')
+                _save_file_by_http_response(response=_http_res, path=get_english_model_path()+'/model.remote.h5')
                 logging.info('[fetch_ai_model_data] Download Remote English Model Done.')
 
             else:
@@ -550,12 +553,13 @@ class MainService():
                 _origin_sen = _sen[0]
                 _status = _sen[1]
                 _text, _lv, _a = self.parse_message(_origin_sen)
-                _textbook = TextbookSentense(
-                    origin=_origin_sen,
-                    text=_text,
-                    status=_status,
-                )
-                tbs.append(_textbook)
+                if _text and _status:
+                    _textbook = TextbookSentense(
+                        origin=_origin_sen,
+                        text=_text,
+                        status=_status,
+                    )
+                    tbs.append(_textbook)
                 # _textbook.save()
                 if len(tbs) >= limit_tbs_size:
                     TextbookSentense.objects.bulk_create(tbs)

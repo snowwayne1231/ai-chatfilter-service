@@ -13,7 +13,7 @@ import numpy as np
 import pickle
 from datetime import datetime, timedelta
 
-static_should_be_blocked_list = ['公众号', 'wx', 'wx小成序', '微信', '禾呈序', '程序', '小程序', '陈序', '层序', '屏音', '拼瑛', '拼音', '全部平', '文字拚', '拼鹰', '拚文字', '拚字', '字拚', '姘写', '泉饼', '关注', '公眾号', '小禾呈', '工從號', '公號', '拼', '拚', '微', '看威', '是钻', '松众號', '众号', '拚英', '屏', '是葳', '鹰']
+static_should_be_blocked_list = ['公众号', 'wx', 'wx小成序', '微信', '禾呈序', '程序', '小程序', '陈序', '层序', '屏音', '拼瑛', '拼音', '全部平', '文字拚', '拼鹰', '拚文字', '拚字', '字拚', '姘写', '泉饼', '关注', '公眾号', '小禾呈', '工從號', '公號', '拼', '拚', '微', '看威', '是钻', '松众號', '众号', '拚英', '屏', '是葳']
 static_should_be_blocked_shap_list = ['拼', '手并', '拚', ['公', '号'], ['众', '号'], ['公', '众'], ['程', '序'], ['关', '注'], ['文', '字']]
 
 class PinYinFilter(BasicChineseFilter):
@@ -109,18 +109,18 @@ class PinYinFilter(BasicChineseFilter):
         all_scs = self.num_status_classs
 
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Embedding(self.full_vocab_size, all_scs, mask_zero=True))
+        model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length, mask_zero=True))
         # model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs)))
+        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
         # model.add(tf.keras.layers.GlobalAveragePooling1D())
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
-        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
+        # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         model.add(tf.keras.layers.Dense(all_scs, activation=tf.nn.softmax))
 
         model.summary()
         
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.002, amsgrad=True)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001, amsgrad=True)
 
         model.compile(
             optimizer=optimizer,

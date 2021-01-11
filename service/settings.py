@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'dataparser',
     'service',
     'tcpsocket',
+    'grpcservice',
 ]
 
 REST_FRAMEWORK = {

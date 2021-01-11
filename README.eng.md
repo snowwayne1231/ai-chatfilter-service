@@ -183,6 +183,7 @@ pip install tensorflow_datasets
 
 ### 4. install python librarys
 ```Shell
+pip install --upgrade pip
 pip install -r requirement.txt
 pip install psycopg2-binary
 pip install websocket
@@ -191,6 +192,9 @@ pip install zhconv
 pip install xlwt
 pip install django-import-export
 pip install django-rq
+pip install grpcio
+pip install grpcio-tools
+pip install --upgrade protobuf
 ```
 
 
@@ -373,3 +377,8 @@ docker pull django
 docker pull postgres
 docker pull redis
 ```
+
+
+### gRPC maintaining syntax
+
+python -m grpc_tools.protoc -I./grpcservice/protos --python_out=./grpcservice/pb --grpc_python_out=./grpcservice/pb ./grpcservice/protos/learn.proto

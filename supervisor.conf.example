@@ -22,6 +22,7 @@ stderr_logfile=/opt/logs/tcpsocket-error.log
 redirect_stderr=true
 
 
+
 [program:tcpsocket-2]
 
 directory=/opt/chatfilter/main
@@ -57,6 +58,23 @@ stdout_logfile_backups=5
 stderr_logfile=/opt/logs/django-error.log
 
 redirect_stderr=true
+
+
+
+[program:interal-grpc-server]
+
+directory=/opt/chatfilter/main
+
+command=/opt/venv/bin/python manage.py rungrpc -port 50051 -webhost 127.0.0.1 -webport 8000
+
+autostart=true
+autorestart=true
+
+stdout_logfile=/opt/logs/grpc.log
+stdout_logfile_maxbytes=1MB
+stdout_logfile_backups=1
+
+
 
 
 [inet_http_server]

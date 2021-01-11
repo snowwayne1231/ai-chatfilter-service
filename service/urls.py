@@ -33,7 +33,10 @@ def read_model_path(request, name):
     else:
         raise Http404('Model Not Found.')
 
-    return serve(request, os.path.basename(_path), os.path.dirname(_path))
+    if _path:
+        return serve(request, os.path.basename(_path), os.path.dirname(_path))
+    else:
+        return Http404('Model Path Not Found.')
 
 
 def read_data_path(request, name):
@@ -44,7 +47,7 @@ def read_data_path(request, name):
         if result_data:
             return JsonResponse(result_data)
 
-    raise Http404('Model Not Found.')
+    raise Http404('Data Not Found.')
 
 
 

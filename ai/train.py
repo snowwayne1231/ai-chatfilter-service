@@ -13,7 +13,7 @@ from dataparser.classes.store import ListPickle
 from .classes.chinese_filter_pinyin import PinYinFilter
 from .classes.chinese_filter_grammar import GrammarFilter
 from .classes.english_filter_basic import BasicEnglishFilter
-from .helper import print_spend_time, get_pinyin_path, get_grammar_path, get_english_model_path
+from .helper import print_spend_time, get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_multiple_version_path
 
 
 
@@ -81,6 +81,8 @@ def train_pinyin_by_list(train_data_list, final_accuracy = None, max_spend_time=
     print(history)
     print_spend_time(_st_time)
 
+    return piny
+
 
 
 def train_grammar_by_excel_path(excel_file_path = None, final_accuracy = None, max_spend_time=0):
@@ -133,3 +135,16 @@ def train_english_by_list(train_data_list = None, final_accuracy = None, max_spe
     print('=== history ===')
     print(history)
     print_spend_time(_st_time)
+
+
+def train_pinyin_to_next_version(train_data_list, jieba_vocabulary, jieba_freqs, stop_hours = 1):
+
+    pinyin_saved_folder = get_pinyin_path()
+
+    piny = PinYinFilter(load_folder=pinyin_saved_folder, jieba_vocabulary=jieba_vocabulary, jieba_freqs=jieba_freqs)
+
+    next_version_saved_folder = get_pinyin_multiple_version_path()
+
+    history = piny.fit_model(train_data=train_data_list, stop_hours=stop_hours, save_folder=next_version_saved_folder)
+
+    return history
