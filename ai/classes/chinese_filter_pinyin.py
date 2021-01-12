@@ -13,8 +13,8 @@ import numpy as np
 import pickle
 from datetime import datetime, timedelta
 
-static_should_be_blocked_list = ['公众号', 'wx', 'wx小成序', '微信', '禾呈序', '程序', '小程序', '陈序', '层序', '屏音', '拼瑛', '拼音', '全部平', '文字拚', '拼鹰', '拚文字', '拚字', '字拚', '姘写', '泉饼', '关注', '公眾号', '小禾呈', '工從號', '公號', '拼', '拚', '微', '看威', '是钻', '松众號', '众号', '拚英', '屏', '是葳']
-static_should_be_blocked_shap_list = ['拼', '手并', '拚', ['公', '号'], ['众', '号'], ['公', '众'], ['程', '序'], ['关', '注'], ['文', '字']]
+static_should_be_blocked_list = ['公众号', 'wx', 'wx小成序', '微信', '禾呈序', '程序', '小程序', '陈序', '层序', '屏音', '拼瑛', '拼音', '全部平', '文字拚', '拼鹰', '拚文字', '拚字', '字拚', '姘写', '泉饼', '关注', '公眾号', '小禾呈', '工從號', '公號', '拼', '拚', '微', '看威', '是钻', '松众號', '众号', '拚英', '是葳', '么丛', '么纵', '肿浩', '小浧', '丛号', '纵号', '涅序', '屏字', '么众', '讧纵', '字音']
+static_should_be_blocked_shap_list = ['拼', '手并', '拚', ['公', '号'], ['众', '号'], ['公', '众'], ['程', '序'], ['关', '注'], ['文', '字'], ['纵', '号'], ['涅', '序'], ['字', '音']]
 
 class PinYinFilter(BasicChineseFilter):
     """
@@ -47,23 +47,24 @@ class PinYinFilter(BasicChineseFilter):
 
     def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[], jieba_freqs=[]):
 
-        self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs)
-        # self.english_parser = EnglishParser()
-        self.unknown_position = self.jieba_dict.get_unknown_position() + 1
-        self.alphabet_position = self.jieba_dict.get_alphabet_position() + 1
-        if len(unknown_words) == 0:
-            pass
-        else:
-            self.unknown_words = unknown_words
-        
-        super().__init__(data=data, load_folder=load_folder)
-
         for _ in static_should_be_blocked_list:
             _py = translate_by_string(_)
             # print('========', _, ' :: ', _py)
             self.should_block_list.append(_py)
 
         self.should_block_shap_list = static_should_be_blocked_shap_list
+
+        self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs, appended_vocabulary=self.should_block_list)
+        # self.english_parser = EnglishParser()
+        self.unknown_position = self.jieba_dict.get_unknown_position() + 1
+        self.alphabet_position = self.jieba_dict.get_alphabet_position() + 1
+        
+        if len(unknown_words) == 0:
+            pass
+        else:
+            self.unknown_words = unknown_words
+
+        super().__init__(data=data, load_folder=load_folder)
 
     
 
@@ -421,7 +422,8 @@ class PinYinFilter(BasicChineseFilter):
                         _against_data = self.data[_against_idx][2]
                         # _before_against_data = self.data[_against_idx-1][2] if _against_idx > 0 else 'None'
                         print('[Pinyin Filter][get_train_batchs] Duplicate Data::  _origin: ', _origin," idx: ", _i)
-                        print('      against data: ', _against_data, ' idx: ', _against_idx)
+                        print('---against data: ', _against_data, ' idx: ', _against_idx)
+                        # print('---zip_str: ', _zip_str)
                         # print('      _before_against_data: ', _before_against_data)
                     
                 else:

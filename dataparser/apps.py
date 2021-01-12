@@ -331,9 +331,10 @@ class JieBaDictionary():
     vocabulary_freqs = []
     none_tone_map = {}
     re_eng = re.compile('[a-zA-Z0-9_]', re.U)
+    freq_additional = 500
 
 
-    def __init__(self, vocabulary=[], freqs=[]):
+    def __init__(self, vocabulary=[], freqs=[], appended_vocabulary=[]):
         self.origin_vocabulary = [self.pad_character, self.unknown_character, self.number_character, self.alphabet_character, self.reserve_character]
         jieba.re_eng = self.re_eng
         jieba.initialize(dictionary=self.folder + '/assets/jieba.txt')
@@ -343,8 +344,12 @@ class JieBaDictionary():
 
         if len(vocabulary) == 0:
             # self.load_vocabularies()
-            self.refresh_dictionary()
+            self.refresh_dictionary(appended_vocabulary=appended_vocabulary)
         else:
+            for _av in appended_vocabulary:
+                vocabulary.append(_av)
+                freqs.append(self.freq_additional)
+            
             self.load_vocabularies(vocabulary=vocabulary, freqs=freqs)
             self.save_vocabularies()
         
@@ -575,7 +580,7 @@ class JieBaDictionary():
         return route_list
 
 
-    def refresh_dictionary(self):
+    def refresh_dictionary(self, appended_vocabulary):
         print('JieBaDictionary: Start Refresh Dictionary Observed Data Source By Database.')
         _older_v_size = len(self.vocabularies)
 
@@ -594,6 +599,10 @@ class JieBaDictionary():
                 _percent = _i / _total * 100
                 print(' {:.2f}%'.format(_percent), end="\r")
             _i += 1
+
+
+        for _av in appended_vocabulary:
+            self.add_word(_av, freq=self.freq_additional)
 
 
         if len(self.vocabularies) > _older_v_size:
