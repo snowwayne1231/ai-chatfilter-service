@@ -347,8 +347,9 @@ class JieBaDictionary():
             self.refresh_dictionary(appended_vocabulary=appended_vocabulary)
         else:
             for _av in appended_vocabulary:
-                vocabulary.append(_av)
-                freqs.append(self.freq_additional)
+                if _av not in vocabulary:
+                    vocabulary.append(_av)
+                    freqs.append(self.freq_additional)
             
             self.load_vocabularies(vocabulary=vocabulary, freqs=freqs)
             self.save_vocabularies()
@@ -794,21 +795,25 @@ class JieBaDictionary():
 
             if len(_list) != len(_freqs):
                 print('[ERROR] Wrong Length Between Vocabulary and Freqs. v: {} , f: {}'.format(len(_list), len(_freqs)))
+                exit(2)
             else:
                 print('===========[load_vocabularies] by Vocabulary Data: ', vocabulary[-10:], len(vocabulary), _freqs[-10:], flush=True)
 
         else:
-            path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
-            if os.path.isfile(path):
-                with open(path, 'rb') as handle:
-                    _full_data = pickle.load(handle)
-                    _list = _full_data[0]
-                    _voca_freqs = _full_data[1]
-                
-            else:
-                self.save_vocabularies()
 
-            print('===========[load_vocabularies] by Local File: ', _list[-10:], len(_list), flush=True)
+            print('[ERROR][load_vocabularies] Failed.')
+            exit(2)
+            # path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
+            # if os.path.isfile(path):
+            #     with open(path, 'rb') as handle:
+            #         _full_data = pickle.load(handle)
+            #         _list = _full_data[0]
+            #         _voca_freqs = _full_data[1]
+                
+            # else:
+            #     self.save_vocabularies()
+
+            # print('===========[load_vocabularies] by Local File: ', _list[-10:], len(_list), flush=True)
 
 
         # if len(_list) != len(_voca_freqs):
