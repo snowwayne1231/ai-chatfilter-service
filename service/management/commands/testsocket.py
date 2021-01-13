@@ -27,6 +27,9 @@ class Command(BaseCommand):
 
         if port is None:
             port = 8025
+        else:
+            port = int(port)
+            
         if host is None:
             host = '127.0.0.1'
 
