@@ -39,25 +39,27 @@ class MainAiApp():
         print('using tensorflow version: ', tf.__version__)
 
 
-    def load_pinyin(self):
+    def load_pinyin(self, folder=None):
         _jieba_vocabulary = [_[0] for _ in self.pinyin_data]
         _jieba_freqs = [_[1] for _ in self.pinyin_data]
-
-        self.pinyin_model = PinYinFilter(load_folder=pinyin_model_path, jieba_vocabulary=_jieba_vocabulary, unknown_words=[], jieba_freqs=_jieba_freqs)
+        _pinyin_model_path = folder if folder else pinyin_model_path
+        self.pinyin_model = PinYinFilter(load_folder=_pinyin_model_path, jieba_vocabulary=_jieba_vocabulary, unknown_words=[], jieba_freqs=_jieba_freqs)
         self.loaded_models.append(self.pinyin_model)
         self.loaded_model_names.append('pinyin')
 
 
-    def load_garmmar(self):
-        self.grammar_model = GrammarFilter(load_folder=grammar_model_path)
+    def load_garmmar(self, folder=None):
+        _grammar_model_path = folder if folder else grammar_model_path
+        self.grammar_model = GrammarFilter(load_folder=_grammar_model_path)
         self.loaded_models.append(self.grammar_model)
         self.loaded_model_names.append('grammar')
 
 
-    def load_english(self):
+    def load_english(self, folder=None):
         # print('[load_english]: english_data: ', self.english_data)
+        _english_model_apth = folder if folder else english_model_apth
         _english_vocabulary = [_[0] for _ in self.english_data]
-        self.english_model = BasicEnglishFilter(load_folder=english_model_apth, english_vocabulary=_english_vocabulary)
+        self.english_model = BasicEnglishFilter(load_folder=_english_model_apth, english_vocabulary=_english_vocabulary)
         self.loaded_models.append(self.english_model)
         self.loaded_model_names.append('english')
     

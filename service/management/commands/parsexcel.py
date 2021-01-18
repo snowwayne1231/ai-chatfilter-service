@@ -18,29 +18,42 @@ class Command(BaseCommand):
             '-o', dest='output_path', required=False,
             help='the name of app.',
         )
+        parser.add_argument(
+            '-c', dest='check_file_path', required=False,
+            help='json file path for check.',
+        )
 
     def handle(self, *args, **options):
         input_file = options.get('input_file')
         output_path = options.get('output_path', None)
+        check_file_path = options.get('check_file_path', None)
+
+        result_list = []
 
         if output_path is None:
             _dirname = os.path.dirname(input_file)
             _filename = '{}.json'.format(date.today())
             output_path = os.path.join(_dirname, _filename)
 
+        if check_file_path:
+            _jp = JsonParser(file=check_file_path)
+            result_list = _jp.load()
+
+
         try:
             _ep = ExcelParser(file=input_file)
-            _basic_model_columns = [['VID', '房號'], ['LOGINNAME', '會員號'], ['MESSAGE', '聊天信息', '禁言内容', '发言内容'], ['STATUS', '審核結果', '状态']]
+            _basic_model_columns = [['VID', '房號'], ['WEIGHT', '權重'], ['MESSAGE', '聊天信息', '禁言内容', '发言内容'], ['STATUS', '審核結果', '状态']]
             _excel_data = _ep.get_row_list(column=_basic_model_columns)
             _idx = 0
             _checking_map = {}
             _has_duplicate = False
-            result_list = []
+            
 
             _message_parser = MessageParser()
 
             _excel_data.reverse()
             for _data in _excel_data:
+                weight = int(_data[1]) if _data[1] else 0
                 msg = _data[2]
                 status = int(_data[3])
                 is_deleted = status > 0 if status else False
@@ -51,8 +64,10 @@ class Command(BaseCommand):
                 _data.append(anchor)
 
                 if anchor == 0:
-                    _pinyin_text = ''.join(translate_by_string(text)).replace('_', '')
-                    # print('_pinyin_text: ', _pinyin_text)
+                    _transed = translate_by_string(text)
+                    _pinyin_text = ''.join(_transed).replace('_', '')
+                    # print('text: ', text)
+                    # print('_transed: ', _transed)
                     if len(_pinyin_text) == 1:
                         _pinyin_text = '_'
                     else:
@@ -62,17 +77,20 @@ class Command(BaseCommand):
                     if _check:
                         _check_is_deleted = _check[2] > 0
                         if _check_is_deleted != is_deleted:
-                            continue
-                            # _has_duplicate = True
-                            # _against_idx = _check[0]
-                            # _against_msg = _check[1]
-                            # print('Duplicate MSG [{}], idx: {} || against idx: {}, msg: [{}]'.format(msg, _idx, _against_idx, _against_msg))
+                            # continue
+                            _has_duplicate = True
+                            _against_idx = _check[0]
+                            _against_msg = _check[1]
+                            print('Duplicate MSG [{}], idx: {} || against idx: {}, msg: [{}]'.format(msg, _idx, _against_idx, _against_msg))
                         
                     else:
                         
                         _checking_map[_pinyin_text] = [_idx, msg, is_deleted]
 
                     result_list.append(_data)
+                    if weight > 1:
+                        for i in range(weight *2):
+                            result_list.append(_data)
 
                 _idx += 1
 
@@ -80,7 +98,7 @@ class Command(BaseCommand):
 
                 print('Stop.')
 
-            else: 
+            else:
                 print('_excel_data length: ', len(_excel_data))
                 print('result_list length: ', len(result_list))
                 print('output_path: ', output_path)

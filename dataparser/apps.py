@@ -343,14 +343,16 @@ class JieBaDictionary():
             os.mkdir(self.pickle_folder)
 
         if len(vocabulary) == 0:
-            # self.load_vocabularies()
             self.refresh_dictionary(appended_vocabulary=appended_vocabulary)
         else:
             for _av in appended_vocabulary:
-                if _av not in vocabulary:
+                if _av in vocabulary:
+                    _idx = vocabulary.index(_av)
+                    freqs[_idx] = self.freq_additional
+                else:
                     vocabulary.append(_av)
                     freqs.append(self.freq_additional)
-            
+
             self.load_vocabularies(vocabulary=vocabulary, freqs=freqs)
             self.save_vocabularies()
         
@@ -794,31 +796,13 @@ class JieBaDictionary():
             _freqs = freqs
 
             if len(_list) != len(_freqs):
-                print('[ERROR] Wrong Length Between Vocabulary and Freqs. v: {} , f: {}'.format(len(_list), len(_freqs)))
-                exit(2)
+                print('[ERROR][JieBaDictionary][load_vocabularies] Wrong Length Between Vocabulary and Freqs. v: {} , f: {}'.format(len(_list), len(_freqs)))
             else:
                 print('===========[load_vocabularies] by Vocabulary Data: ', vocabulary[-10:], len(vocabulary), _freqs[-10:], flush=True)
 
         else:
 
-            print('[ERROR][load_vocabularies] Failed.')
-            exit(2)
-            # path = self.pickle_folder + '/tokenizer_vocabularies.pickle'
-            # if os.path.isfile(path):
-            #     with open(path, 'rb') as handle:
-            #         _full_data = pickle.load(handle)
-            #         _list = _full_data[0]
-            #         _voca_freqs = _full_data[1]
-                
-            # else:
-            #     self.save_vocabularies()
-
-            # print('===========[load_vocabularies] by Local File: ', _list[-10:], len(_list), flush=True)
-
-
-        # if len(_list) != len(_voca_freqs):
-        #     print('[ERROR] Vocabulary and Freqs Legnths Can Not Be Different', flush=True)
-        #     exit(2)
+            print('[ERROR][JieBaDictionary][load_vocabularies] Failed.')
         
 
         for _idx, _ in enumerate(_list):

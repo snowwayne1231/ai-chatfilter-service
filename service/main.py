@@ -468,7 +468,8 @@ class MainService():
         if _json_data:
             _data_pk.save([_json_data])
         else:
-            _json_data = _data_pk.get_list()[0]
+            # _json_data = _data_pk.get_list()[0]
+            _json_data = {}
         
         return _json_data
     
@@ -490,6 +491,9 @@ class MainService():
 
 
     def fetch_ai_model_data(self, remote_ip, port = 80):
+        if self.is_admin_server:
+            logging.error('Admin Server Can Not Fetch Data From Anywhere.')
+            return exit(2)
         _http_cnn = HTTPConnection(remote_ip, port)
 
         def _save_file_by_http_response(response, path):
