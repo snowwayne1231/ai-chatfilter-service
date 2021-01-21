@@ -494,6 +494,7 @@ class MainService():
         if self.is_admin_server:
             logging.error('Admin Server Can Not Fetch Data From Anywhere.')
             return exit(2)
+
         _http_cnn = HTTPConnection(remote_ip, port)
 
         def _save_file_by_http_response(response, path):

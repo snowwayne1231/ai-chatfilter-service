@@ -63,4 +63,5 @@ urlpatterns = [
     path('api/upload/<slug:name>', ServiceUploadAPIView.as_view()),
     path('api/remove/<slug:name>/<slug:id>', ServiceRemoveAPIView.as_view()),
     # path(r'^django-rq/', include('django_rq.urls')),
+    path('ai/', include('ai.urls')),
 ]

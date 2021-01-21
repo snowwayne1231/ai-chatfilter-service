@@ -187,6 +187,9 @@ pip install websocket-client
 pip install zhconv
 pip install xlwt
 pip install django-import-export
+pip install grpcio
+pip install grpcio-tools
+pip install djangogrpcframework
 ```
 
 
@@ -364,6 +367,8 @@ python manage.py parsexcel -i ai/assets/textbook/grammar
 python manage.py freq -i ai/assets/textbook/json/pinyin
 
 python manage.py backupdatabase
+
+python -m grpc_tools.protoc --proto_path=./ --python_out=./ --grpc_python_out=./ ./account.proto
 
 ```
 

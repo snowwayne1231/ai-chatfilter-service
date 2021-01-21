@@ -10,11 +10,8 @@ from dataparser.apps import JieBaDictionary, EnglishParser
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import numpy as np
-import pickle
+import pickle, json
 from datetime import datetime, timedelta
-
-static_should_be_blocked_list = ['公众号', 'wx', 'wx小成序', '微信', '禾呈序', '程序', '小程序', '陈序', '层序', '屏音', '拼瑛', '拼音', '全部平', '文字拚', '拼鹰', '拚文字', '拚字', '字拚', '姘写', '泉饼', '关注', '公眾号', '小禾呈', '工從號', '公號', '看威', '是钻', '松众號', '众号', '拚英', '是葳', '么丛', '么纵', '肿浩', '小浧', '丛号', '纵号', '涅序', '屏字', '么众', '讧纵', '字音', '音姘', '小写', '佰度', '读音', '读写', '字的音', '筷手', '肿号', 'V唁', '中号', '英屏', '字英', 'V吗', '音写', '批音', '用音', '音威', '诠写', '莲须', '併字', '字的英']
-static_should_be_blocked_shap_list = ['拼', '手并', '拚','微', ['公', '号'], ['众', '号'], ['公', '众'], ['程', '序'], ['关', '注'], ['文', '字'], ['纵', '号'], ['涅', '序'], ['字', '音'], ['字', '英']]
 
 class PinYinFilter(BasicChineseFilter):
     """
@@ -47,13 +44,22 @@ class PinYinFilter(BasicChineseFilter):
 
     def __init__(self, data = [], load_folder=None, unknown_words=[], jieba_vocabulary=[], jieba_freqs=[]):
 
-        for _ in static_should_be_blocked_list:
+        should_be_blocked_exist_words_list = []
+        should_be_blocked_pinyin_list = []
+
+        _json_file_path = os.path.join(os.path.dirname(__file__), '..', 'json', 'pinyin_block_list.json')
+        with open(_json_file_path, encoding='utf-8') as _file:
+            json_data = json.load(_file)
+            should_be_blocked_pinyin_list = json_data.get('attached')
+            should_be_blocked_exist_words_list = json_data.get('exists')
+
+        for _ in should_be_blocked_pinyin_list:
             _py = translate_by_string(_)
             # print('========', _, ' :: ', _py)
             if _py not in self.should_block_list:
                 self.should_block_list.append(_py)
 
-        self.should_block_shap_list = static_should_be_blocked_shap_list
+        self.should_block_shap_list = should_be_blocked_exist_words_list
 
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs, appended_vocabulary=self.should_block_list)
         # self.english_parser = EnglishParser()
@@ -67,7 +73,7 @@ class PinYinFilter(BasicChineseFilter):
 
         super().__init__(data=data, load_folder=load_folder)
 
-    
+
 
     #override return list
     def transform_str(self, _string):
