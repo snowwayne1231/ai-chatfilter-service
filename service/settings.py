@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'django_grpc_framework',
+    # 'django_grpc_framework',
     'djoser',
     # 'django_rq',
     'corsheaders',
