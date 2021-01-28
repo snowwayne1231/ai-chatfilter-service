@@ -828,6 +828,7 @@ class EnglishParser():
     """
     _vocabularies = []
     _regex_english = r'[a-zA-Z]+'
+    _regex_reversed_english = re.compile("[^(a-z)\s]+", re.IGNORECASE)
 
     def __init__(self, vocabularies = []):
 
@@ -916,4 +917,10 @@ class EnglishParser():
                 return []
 
         return result_list
+
+    def trim(self, text):
+        return re.sub(self._regex_reversed_english, '', text).strip()
+
+    def is_vocabulary(self, text):
+        return text in self._vocabularies
 

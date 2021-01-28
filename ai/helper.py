@@ -30,8 +30,10 @@ def check_path(path):
         os.makedirs(path)
     return path
 
-def get_pinyin_path():
+def get_pinyin_path(is_version=False):
     _path = os.path.dirname(os.path.abspath(__file__)) + '/_models/pinyin_model'
+    if is_version:
+        _path += '/vers'
     return check_path(_path)
 
 def get_pinyin_multiple_version_path():

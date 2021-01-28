@@ -10,6 +10,7 @@ from dataparser.classes.store import ListPickle
 
 import numpy as np
 import time, re, logging, json
+from os import path, listdir
 
 from .classes.prefilter import PreFilter
 # from .classes.fuzzycenter import FuzzyCenter
@@ -224,6 +225,15 @@ class MainService():
                 reason_char = 'Allowed English'
                 logging.debug('[INFO] All Right English Allow Pass : [{}].'.format(text))
                 return 0, reason_char
+        
+        else:
+            # wechat suspected english style
+            _trimed_engtxt = self.english_parser.trim(text).replace(' ', '')
+            _len_eng = len(_trimed_engtxt)
+            if 0 < _len_eng <= 2 and not self.english_parser.is_vocabulary(_len_eng):
+                _len = len(text)
+                if  _len > 6:
+                    return self.STATUS_PREDICTION_WEHCAT_SUSPICION, 'Wechat Suspected'
         
         return 0, reason_char
 
@@ -557,12 +567,14 @@ class MainService():
             for _sen in sentenses:
                 _origin_sen = _sen[0]
                 _status = _sen[1]
+                _weight = _sen[2] or 1
                 _text, _lv, _a = self.parse_message(_origin_sen)
                 if _text and _status:
                     _textbook = TextbookSentense(
                         origin=_origin_sen,
                         text=_text,
                         status=_status,
+                        weight=_weight,
                     )
                     tbs.append(_textbook)
                 # _textbook.save()
@@ -585,6 +597,13 @@ class MainService():
             return True
         except Exception as err:
             return False
+
+    
+    def get_model_versions(self):
+        result = {'pinyin': []}
+        _pinyin_path = get_pinyin_path(is_version=True)
+        result['pinyin'] = listdir(_pinyin_path)
+        return result
 
         
     

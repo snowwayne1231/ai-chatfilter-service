@@ -143,7 +143,7 @@ class PreFilter():
             if len(_pured) > 0:
                 return '#emoji#'
         return ''
-        
+
 
 
     def is_chinese(self, uchar):

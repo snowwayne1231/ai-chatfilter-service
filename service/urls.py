@@ -41,13 +41,16 @@ def read_model_path(request, name):
 
 def read_data_path(request, name):
     main_service = instance.get_main_service(is_admin=True)
-    result_data = {}
+    result_data = None
     if name == 'vocabulary':
         result_data = main_service.get_vocabulary_data()
-        if result_data:
-            return JsonResponse(result_data)
+    elif name == 'modelversion':
+        result_data = main_service.get_model_versions()
 
-    raise Http404('Data Not Found.')
+    if result_data:
+        return JsonResponse(result_data, safe=False)
+    else:
+        raise Http404('Data Not Found.')
 
 
 

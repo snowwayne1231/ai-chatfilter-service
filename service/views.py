@@ -86,7 +86,7 @@ class ServiceUploadAPIView(APIView):
 
                     _ep = ExcelParser(file_content=_file.read())
                     
-                    _data = _ep.get_row_list(column=['发言内容', '状态'])
+                    _data = _ep.get_row_list(column=['发言内容', '状态', '權重'])
 
                     _done = get_main_service(is_admin=True).add_textbook_sentense(_data)
 
