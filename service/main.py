@@ -172,7 +172,7 @@ class MainService():
             elif self.lang_mode == self.STATUS_MODE_ENGLISH:
 
                 pass
-            
+
 
             if reason_char:
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
@@ -232,7 +232,7 @@ class MainService():
             _len_eng = len(_trimed_engtxt)
             if 0 < _len_eng <= 2 and not self.english_parser.is_vocabulary(_len_eng):
                 _len = len(text)
-                if  _len > 6:
+                if  _len > 4:
                     return self.STATUS_PREDICTION_WEHCAT_SUSPICION, 'Wechat Suspected'
         
         return 0, reason_char

@@ -59,6 +59,8 @@ class PinYinFilter(BasicChineseFilter):
             if _py not in self.should_block_list:
                 self.should_block_list.append(_py)
 
+        # print('should_block_list: ', self.should_block_list)
+
         self.should_block_shap_list = should_be_blocked_exist_words_list
 
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs, appended_vocabulary=self.should_block_list)
