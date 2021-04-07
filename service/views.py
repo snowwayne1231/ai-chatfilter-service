@@ -33,7 +33,7 @@ class ServiceJSONDataAPIView(APIView):
                 _pagination = data.get('pagination', 100)
                 
                 Model = apps.get_model(app_label=app_name, model_name=name)
-                q = Model.objects.filter(**_filter).values(*_columns)
+                q = Model.objects.filter(**_filter).values(*_columns).order_by('-id')
 
                 if _pagination:
                     paginator = Paginator(q, _pagination)

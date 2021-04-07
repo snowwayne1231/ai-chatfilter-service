@@ -331,7 +331,7 @@ class JieBaDictionary():
     vocabulary_freqs = []
     none_tone_map = {}
     re_eng = re.compile('[a-zA-Z0-9_]', re.U)
-    freq_additional = 5000
+    freq_additional = 750
 
 
     def __init__(self, vocabulary=[], freqs=[], appended_vocabulary=[]):

@@ -271,6 +271,9 @@ class MainService():
         reason_char = self.pre_filter.find_emoji_word_mixed(msg)
         if reason_char:
             return reason_char
+        reason_char = self.pre_filter.find_unallow_eng(msg)
+        if reason_char:
+            return reason_char
 
         return False
     

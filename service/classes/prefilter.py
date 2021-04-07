@@ -144,6 +144,15 @@ class PreFilter():
                 return '#emoji#'
         return ''
 
+    
+    def find_unallow_eng(self, text):
+        # 
+        _unallow_engs = ['wei']
+        for _ in _unallow_engs:
+            if _ in text:
+                return _
+        return ''
+
 
 
     def is_chinese(self, uchar):
