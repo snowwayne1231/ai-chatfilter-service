@@ -48,18 +48,20 @@ class socketTcp(Tcp):
         while True:
             recived = self.request.recv(1024)
             if not recived:
+                logging.error('Not Recived [ {} ]'.format(recived))
                 break
+
+            # now = datetime.datetime.now()
             
             unpacked_data = unpack(recived)
 
             # packed_res = pack(0x000001)
 
-            now = datetime.datetime.now()
-
             status_code = -1
             prediction = None
 
             if unpacked_data.cmd == 0x000001:
+                logging.debug('Recived Package is [ Check Hearting ]')
                 packed_res = pack(0x000001) # hearting
 
             elif unpacked_data.cmd == 0x040001:
