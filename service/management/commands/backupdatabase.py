@@ -46,9 +46,13 @@ class Command(BaseCommand):
         _sql_create_new_table = _sql_create_string.format(_table_name, _new_table_name)
         _sql_create_new_table_2 = _sql_create_string.format(_table_name_blocked, _new_table_name_blocked)
 
-        _sql_alter_str = 'ALTER TABLE {} ALTER COLUMN id SERIAL PRIMARY KEY;'
+        _sql_alter_str = 'ALTER TABLE {} ADD PRIMARY KEY(id);'
         _sql_alter_id = _sql_alter_str.format(_table_name)
         _sql_alter_id_2 = _sql_alter_str.format(_table_name_blocked)
+
+        _sql_alter_str_autoincrement = "ALTER TABLE {} ALTER COLUMN id SET DEFAULT nextval('service_goodsentence_id_seq');"
+        _sql_alter_auto = _sql_alter_str_autoincrement.format(_table_name)
+        _sql_alter_auto_2 = _sql_alter_str_autoincrement.format(_table_name_blocked)
         
         
         # print('SQL1 : {}'.format(_sql_rename_table))
@@ -64,9 +68,11 @@ class Command(BaseCommand):
             cursor.execute(_sql_rename_table)
             cursor.execute(_sql_create_new_table)
             cursor.execute(_sql_alter_id)
+            cursor.execute(_sql_alter_auto)
             cursor.execute(_sql_rename_table_2)
             cursor.execute(_sql_create_new_table_2)
             cursor.execute(_sql_alter_id_2)
+            cursor.execute(_sql_alter_auto_2)
 
         print('Done Rename Table [{}] ==> [{}]'.format(_table_name, _new_table_name))
         print('Done Rename Table [{}] ==> [{}]'.format(_table_name_blocked, _new_table_name_blocked))
