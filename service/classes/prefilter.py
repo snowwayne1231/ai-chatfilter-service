@@ -78,6 +78,7 @@ class PreFilter():
         qk_size = 0
         next_char = ''
         _text_ = text.replace(' ', '')
+        _has_wv = False
         
         length_char = len(_text_)
 
@@ -91,6 +92,8 @@ class PreFilter():
                     # print('is number: ', u)
             elif self.is_english(u):
                 eng_size += 1
+                if u in 'vVwW':
+                    _has_wv = True
             else:
                 continue
 
@@ -131,6 +134,8 @@ class PreFilter():
            return next_char
 
         # print('[find_wechat_chat] _words:', _words)
+        if _has_wv and eng_size < 3 and (length_char - eng_size) > 1:
+            return next_char
 
         return next_char if is_many_asci or is_many_language or has_double_eng else ''
 
