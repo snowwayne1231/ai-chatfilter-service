@@ -1,5 +1,6 @@
 
 from configparser import RawConfigParser
+from dataparser.apps import ExcelParser
 from socketserver import StreamRequestHandler as Tcp
 from tcpsocket.chat_package import pack, unpack
 # from queue import Queue
@@ -35,6 +36,8 @@ class LockThread(threading.Thread):
         try:
             if threadLock.acquire(timeout=3):
                 self.target(*self.args)
+                threadLock.release()
+                print('threading.active_count(): ', threading.active_count())
             
         except Exception as exp:
 
@@ -43,7 +46,7 @@ class LockThread(threading.Thread):
 
         finally:
 
-            threadLock.release()
+            
             del self.target, self.args
             
 
@@ -165,10 +168,13 @@ class socketTcp(Tcp):
             logging.error('Recived Package Unknow.')
             packed_res = pack(0x000001)
         
-        
-        self.request.sendall(packed_res)
-        if self.callback and prediction is not None:
-            self.callback(unpacked_data, int(prediction), status_code)
+            try:
+                self.request.sendall(packed_res)
+                if self.callback and prediction is not None:
+                    self.callback(unpacked_data, int(prediction), status_code)
+            except Exception as exp:
+                logging.error('Request Sendall Failed.')
+                print(exp)
     
 
 
@@ -190,6 +196,9 @@ class socketTcp(Tcp):
             # self.request.sendall(recived)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
+        for thread in threading.enumerate(): 
+            print(thread.join())
+        
         self.on_client_close()
     
 

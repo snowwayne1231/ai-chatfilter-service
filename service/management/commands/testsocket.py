@@ -157,8 +157,11 @@ class Command(BaseCommand):
                     _new_thread.start()
                 else:
                     length_right += self.handle_recv_data(packed, status)
-                    
-                time.sleep(0.001)
+                
+                if msgid % 8 == 0:
+                    time.sleep(0.35)
+                else:
+                    time.sleep(0.01)
                 msgid += 1
 
             except KeyboardInterrupt:
