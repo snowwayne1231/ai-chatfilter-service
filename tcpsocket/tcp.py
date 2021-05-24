@@ -35,18 +35,20 @@ class LockThread(threading.Thread):
 
     def run(self):
         try:
-            # if threadLock.acquire(timeout=3):
-            if threadLimiter.acquire(timeout=2):
+            if threadLock.acquire(timeout=2):
+            # if threadLimiter.acquire(timeout=1):
                 self.target(*self.args)
-            
+            else:
+                logging.error('Timeout Threading With Thread Count [ {} ]'.format(threading.active_count()))
+                self.target(*self.args, True)
+
+            threadLock.release()
         except Exception as exp:
 
-            logging.error('LockThread Something Wrong.')
-            print(exp)
+            logging.error('LockThread Failed. [ {} ]'.format(exp))
 
         finally:
-            # threadLock.release()
-            threadLimiter.release()
+            
             del self.target, self.args
             
 
@@ -71,13 +73,18 @@ class socketTcp(Tcp):
         super().__init__(*args, **keys)
 
 
-    def handle_recive_threading(self, recived):
+    def handle_recive_threading(self, recived, directly_reject = False):
         unpacked_data = unpack(recived)
 
         status_code = -1
         prediction = None
 
-        if unpacked_data.cmd == 0x000001:
+        if directly_reject:
+            status_code = 5
+            prediction = 99
+            packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
+
+        elif unpacked_data.cmd == 0x000001:
             logging.debug('Recived Package is [ Check Hearting ]')
             packed_res = pack(0x000001) # hearting
 

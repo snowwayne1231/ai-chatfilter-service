@@ -114,6 +114,12 @@ class BasicChineseFilter():
 
     def load_model(self, path):
         if os.path.exists(path):
+            # config = tf.ConfigProto(device_count={"CPU": 4},
+            #                         inter_op_parallelism_threads=1,
+            #                         intra_op_parallelism_threads=1)
+            # sess = tf.Session(config=config)
+            tf.config.threading.set_inter_op_parallelism_threads(2)
+            tf.config.threading.set_intra_op_parallelism_threads(2)
             self.model = tf.keras.models.load_model(path)
         else:
             self.build_model()

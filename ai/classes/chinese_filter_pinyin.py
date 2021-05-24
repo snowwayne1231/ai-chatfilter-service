@@ -293,9 +293,7 @@ class PinYinFilter(BasicChineseFilter):
     
     # override
     def predictText(self, text, lv = 0):
-
         _words = self.transform(text)
-
         if len(_words) == 0:
             return 0
         
@@ -313,13 +311,12 @@ class PinYinFilter(BasicChineseFilter):
             _blocked_word = self.find_block_word(_words, text)
             if _blocked_word:
                 return self.STATUS_SEPCIFY_BLOCK
-
-
-        predicted = self.model.predict([_result_text])[0]
+        # _first_now = datetime.now()
+        # predicted = self.model.predict([_result_text])[0]
+        predicted = self.model(np.array([_result_text]))[0]
         # print('predicted: ', predicted)
 
         possible = np.argmax(predicted)
-        # print('possible: ', possible)
 
         # should be delete and lv over power
         if possible > 0:
@@ -336,7 +333,6 @@ class PinYinFilter(BasicChineseFilter):
             #     _ratio_plus = 0.25
             #     if (_ratio_zero + _ratio_plus) > _ratio_predict:
             #         possible = 0
-
         return possible
 
 

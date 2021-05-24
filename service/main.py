@@ -185,7 +185,11 @@ class MainService():
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             #main ai
+            # _before_ai_time = time.time() - st_time
             prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
+            # _after_ai_time = time.time() - (st_time + _before_ai_time)
+            # if _before_ai_time > 0.3 or _after_ai_time > 0.3:
+            #     logging.info('All before ai predict spend time: {:.2f} | After predict spend time {:.2f}'.format(_before_ai_time, _after_ai_time))
             
             # save message to room store
             if prediction == 0:
