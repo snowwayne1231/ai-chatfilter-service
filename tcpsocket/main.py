@@ -144,6 +144,8 @@ class LaunchTcpSocket():
             logging.error(err)
 
         if self.server:
+            self.server.server_close()
+            print('Shutdown Server.')
             self.server.shutdown()
         sys.exit(2)
 

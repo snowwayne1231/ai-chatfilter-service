@@ -76,6 +76,7 @@ class MainAiApp():
                     reason = model.get_reason(txt, _predict)
                     if not reason:
                         reason = txt
+                break
 
         return prediction, reason
 

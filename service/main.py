@@ -100,7 +100,7 @@ class MainService():
 
         _vocabulary_english = _voca_data.get('english', [])
         _unknowns = _voca_data.get('unknowns', [])
-        _unknown_words = [_[0] for _ in _unknowns]
+        # _unknown_words = [_[0] for _ in _unknowns]
 
         self.english_parser.set_vocabulary(_vocabulary_english)
 
@@ -256,7 +256,7 @@ class MainService():
         result['reason_char'] = reason
         result['detail'] = detail_data
         result['spend_time'] = ed_time - st_time
-
+        # print('Spend Time = ', result['spend_time'])
         return result
 
 

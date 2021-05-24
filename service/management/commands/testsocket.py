@@ -7,20 +7,6 @@ from dataparser.apps import ExcelParser
 import os, sys, socket, time, threading
 
 
-threadLimiter = threading.BoundedSemaphore(8)
-class AutoReleaseThread(threading.Thread):
-
-    def run(self):
-        threadLimiter.acquire()
-        try:
-            self.Executemycode()
-        finally:
-            threadLimiter.release()
-
-    def Executemycode(self):
-        print(" Hello World!")
-        # <your code here>
-
 
 class Command(BaseCommand):
     help = 'train models'
@@ -160,6 +146,7 @@ class Command(BaseCommand):
                 
                 if msgid % 8 == 0:
                     time.sleep(0.35)
+                    # time.sleep(0.01)
                 else:
                     time.sleep(0.01)
                 msgid += 1

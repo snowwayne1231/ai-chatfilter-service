@@ -25,6 +25,7 @@ logging_level = logging.DEBUG if bool('True' in config_setting.get('MAIN', 'DEBU
 logging.basicConfig(format='[%(levelname)s]%(asctime)s %(message)s', datefmt='(%m/%d) %I:%M:%S %p :: ', level=logging_level)
 
 threadLock = threading.Lock()
+threadLimiter = threading.BoundedSemaphore(8)
 
 class LockThread(threading.Thread):
     def __init__(self, target, args):
@@ -34,7 +35,8 @@ class LockThread(threading.Thread):
 
     def run(self):
         try:
-            if threadLock.acquire(timeout=3):
+            # if threadLock.acquire(timeout=3):
+            if threadLimiter.acquire(timeout=2):
                 self.target(*self.args)
             
         except Exception as exp:
@@ -43,7 +45,8 @@ class LockThread(threading.Thread):
             print(exp)
 
         finally:
-            threadLock.release()
+            # threadLock.release()
+            threadLimiter.release()
             del self.target, self.args
             
 
@@ -185,16 +188,12 @@ class socketTcp(Tcp):
                 break
 
             # now = datetime.datetime.now()
-            
             _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
             _thread.start()
-            
 
             # self.request.sendall(recived)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
-        for thread in threading.enumerate(): 
-            print(thread.join())
         
         self.on_client_close()
     
