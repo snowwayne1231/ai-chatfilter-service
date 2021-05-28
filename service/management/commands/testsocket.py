@@ -29,6 +29,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '-m', dest='multiple', required=False, help='use multiple thread to test.',
         )
+        parser.add_argument(
+            '-gap', dest='time_gap', required=False, help='set time gap for every 8 records.',
+        )
 
     def handle_recv_data(self, packed, status, txt = ''):
         _start_time = time.time()
@@ -73,6 +76,7 @@ class Command(BaseCommand):
         port = options.get('port')
         host = options.get('host')
         is_multiple = options.get('multiple', False)
+        time_gap = options.get('time_gap', None)
 
         if port is None:
             port = 8025
@@ -81,6 +85,11 @@ class Command(BaseCommand):
             
         if host is None:
             host = '127.0.0.1'
+
+        if time_gap is None:
+            time_gap = 0.2
+        else:
+            time_gap = float(time_gap)
 
         messages = []
         statuses = []
@@ -151,7 +160,7 @@ class Command(BaseCommand):
                     length_right += self.handle_recv_data(packed, status)
                 
                 if msgid % 8 == 0:
-                    time.sleep(0.2)
+                    time.sleep(time_gap)
                 
                 msgid += 1
 

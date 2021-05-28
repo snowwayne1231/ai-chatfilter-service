@@ -7,16 +7,16 @@ logfile = /opt/logs/supervisord.log
 
 directory=/opt/chatfilter/main
 
-command=/opt/venv/bin/python manage.py tcpsocket -port 8027 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
+command=/opt/venv/bin/python manage.py training-service -port 8030 -host 0.0.0.0 -webport 8000 -webhost 127.0.0.1
 
 autostart=true
 autorestart=true
 
-stdout_logfile=/opt/logs/tcpsocket_2.log
+stdout_logfile=/opt/logs/training-service.log
 stdout_logfile_maxbytes=10MB
-stdout_logfile_backups=8
+stdout_logfile_backups=2
 
-stderr_logfile=/opt/logs/tcpsocket_2-error.log
+stderr_logfile=/opt/logs/training-service-error.log
 
 redirect_stderr=true
 
