@@ -118,8 +118,8 @@ class BasicChineseFilter():
             #                         inter_op_parallelism_threads=1,
             #                         intra_op_parallelism_threads=1)
             # sess = tf.Session(config=config)
-            tf.config.threading.set_inter_op_parallelism_threads(4)
-            tf.config.threading.set_intra_op_parallelism_threads(4)
+            # tf.config.threading.set_inter_op_parallelism_threads(4)
+            # tf.config.threading.set_intra_op_parallelism_threads(4)
             self.model = tf.keras.models.load_model(path)
         else:
             self.build_model()
