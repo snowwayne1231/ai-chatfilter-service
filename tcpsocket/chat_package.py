@@ -90,6 +90,7 @@ def pack(cmd = 0x000000, **options):
 
 
 def unpack(buffer):
+    package = {'size': -1}
     try:
         (cmd,) = struct.unpack('!i', buffer[:4])
     except Exception as err:
@@ -99,38 +100,43 @@ def unpack(buffer):
 
     if cmd == HeartingPackage.m_cmd:
 
-        return HeartingPackage(buffer)
+        package = HeartingPackage(buffer)
 
     elif cmd == LoginPackage.m_cmd:
 
-        return LoginPackage(buffer)
+        package = LoginPackage(buffer)
 
     elif cmd == LoginResponsePackage.m_cmd:
 
-        return LoginResponsePackage(buffer)
+        package = LoginResponsePackage(buffer)
 
     elif cmd == ChatFilterPackage.m_cmd:
 
-        return ChatFilterPackage(buffer)
+        package = ChatFilterPackage(buffer)
 
     elif cmd == ChatWithJSONPackage.m_cmd:
 
-        return ChatWithJSONPackage(buffer)
+        package = ChatWithJSONPackage(buffer)
 
     elif cmd == ChatFilterResponsePackage.m_cmd:
 
-        return ChatFilterResponsePackage(buffer)
+        package = ChatFilterResponsePackage(buffer)
 
     elif cmd == NickNameFilterRequestPackage.m_cmd:
 
-        return NickNameFilterRequestPackage(buffer)
+        package = NickNameFilterRequestPackage(buffer)
 
     elif cmd == NickNameFilterResponsePackage.m_cmd:
 
-        return NickNameFilterResponsePackage(buffer)
+        package = NickNameFilterResponsePackage(buffer)
     
+    else:
 
-    return BasicStructPackage(buffer)
+        package = BasicStructPackage(buffer)
+    
+    left_buffer = buffer[package.size:]
+    
+    return package, left_buffer
 
 
 class BasicStructPackage():
@@ -245,21 +251,21 @@ class ChatWithJSONPackage(BasicStructPackage):
         self.size = size
         self.msgid = msgid
         self.jsonsize = jsonsize
-        logging.debug('ChatWithJSONPackage size: {}  jsonsize: {}  len(buffer): {}'.format(size, jsonsize, len(buffer)))
         
         if jsonsize:
             self.jsonbuffer = _left_buffer[:jsonsize]
         else:
+            logging.warning('ChatWithJSONPackage :: Package No Specify Jsonsize (size={} msgid={})'.format(size, msgid))
             self.jsonbuffer = _left_buffer
         
         try:
-            self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
+            self.jsonstr = self.jsonbuffer.decode('utf-8')
             self.json = json.loads(self.jsonstr.strip())
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
         except Exception as e:
             self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
-            logging.error('Unpack Failed :: CMD= {}, Buffer= {}, JSON= {},  jsonsize= {}'.format(cmd, _left_buffer, self.jsonstr, jsonsize))
+            logging.error('ChatWithJSONPackage :: Unpack Failed (JSON= {},  jsonsize= {})'.format(self.jsonstr, jsonsize))
             logging.error(traceback.format_exc())
             self.json = {}
             self.msg = '[Parsing Byte Failed]'

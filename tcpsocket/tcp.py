@@ -58,19 +58,19 @@ class testPureTcp(Tcp):
     def __init__(self, *args, **keys):
         super().__init__(*args, **keys)
     def handle(self):
-        print('TestPureTcp Start handler_factory')
+        print('::TestPureTcp Start handler_factory')
         self.last_time = time.time()
         while True:
             
             # readed = self.rfile.read(8096)
             # print('readed: ', readed.decode("utf-8", errors='ignore') )
             recived = self.request.recv(512)
-            _ = unpack(recived)
+            _, _left = unpack(recived)
             now = time.time()
             print('recived time gap: {}'.format(now - self.last_time))
             print('recived: ', recived.decode("utf-8", errors='ignore'))
             print('size: ', _.size)
-            print('-----')
+            print('=============================')
             self.last_time = now
             self.length_done += 1
             if not recived:
@@ -83,9 +83,7 @@ class testPureTcp(Tcp):
             except Exception as exp:
                 logging.error('Request Sendall Failed. exp[ {} ]'.format(exp))
         
-        
-        # print('wreaded: ', wreaded)
-        logging.info('TestPureTcp End handler_factory Done Recived: {}'.format(self.length_done))
+        logging.info('::TestPureTcp End handler_factory Done Recived: {}'.format(self.length_done))
 
 
 class socketTcp(Tcp):
@@ -96,7 +94,6 @@ class socketTcp(Tcp):
     service_instance = None
     nickname_filter_instance = None
     # thread_queue = Queue(4)
-    last_while_time = 0
     
 
     def __init__(self, callback, service_instance, on_client_open = None, on_client_close = None, nickname_filter_instance = None, *args, **keys):
@@ -105,13 +102,12 @@ class socketTcp(Tcp):
         self.on_client_close = on_client_close
         self.service_instance = service_instance
         self.nickname_filter_instance = nickname_filter_instance
-        self.last_while_time = time.time()
         
         super().__init__(*args, **keys)
 
 
     def handle_recive_threading(self, recived, directly_reject = False):
-        unpacked_data = unpack(recived)
+        unpacked_data, unpacked_left_buffer = unpack(recived)
 
         status_code = -1
         prediction = None
@@ -145,10 +141,6 @@ class socketTcp(Tcp):
 
         elif unpacked_data.cmd == 0x040003:
             logging.debug('Recived Package is [ Chat ] msg: {}'.format(unpacked_data.msg))
-            # logging.debug('msgid: {}'.format(unpacked_data.msgid))
-            # logging.debug('msgtxt: {}'.format(unpacked_data.msg))
-            # logging.debug('msgbuffer: {}'.format(unpacked_data.msgbuffer))
-            # logging.debug('msgsize: {}'.format(unpacked_data.msgsize))
 
             status_code = 0
             _msg = unpacked_data.msg
@@ -209,8 +201,8 @@ class socketTcp(Tcp):
 
         else:
             
-            logging.error('Recived Package Unknow.')
-            packed_res = pack(0x000001)
+            logging.error('Recived Package Unknow.  [ {} ]'.format(recived.decode("utf-8", errors='ignore')))
+            return 0
         
         try:
             self.request.sendall(packed_res)
@@ -219,30 +211,27 @@ class socketTcp(Tcp):
         except Exception as exp:
             logging.error('Request Sendall Failed.')
             print(exp)
+        
+        if unpacked_left_buffer:
+            logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), len(unpacked_left_buffer)))
+            self.handle_recive_threading(unpacked_left_buffer)
     
 
 
     def handle(self):
         logging.info('**TCPSocket Version[{}] clinet has connected, address: {}'.format(version, self.client_address))
-        print('self.request: ', self.request)
         self.on_client_open()
-        print('self.request: ', self.request)
         while True:
-            now = time.time()
-            if now - self.last_while_time > 0.1:
-                print('while recive long spend | now: {} | spend: {}'.format(now, now - self.last_while_time))
-            self.last_while_time = now
             
-            recived = self.request.recv(8096)
+            recived = self.request.recv(1024)
             if not recived:
-                logging.error('Not Recived [ {} ]'.format(recived))
+                logging.error('Not Recived [ {} ]'.format(recived.decode("utf-8", errors='ignore')))
                 break
             
             _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
             _thread.start()
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
-        
         self.on_client_close()
     
 

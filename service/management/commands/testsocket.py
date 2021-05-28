@@ -48,7 +48,8 @@ class Command(BaseCommand):
         if not recv_data:
             print('not receive packed: {} '.format(packed))
             return 0
-        _trying_unpacked = unpack(recv_data)
+        _trying_unpacked, _ = unpack(recv_data)
+        
         _is_deleted = _trying_unpacked.code > 0
         _is_right = False
         if _is_deleted:
@@ -150,8 +151,7 @@ class Command(BaseCommand):
                     length_right += self.handle_recv_data(packed, status)
                 
                 if msgid % 8 == 0:
-                    # time.sleep(0.2)
-                    time.sleep(0.1)
+                    time.sleep(0.2)
                 
                 msgid += 1
 
@@ -167,7 +167,7 @@ class Command(BaseCommand):
         length_timeout = self.length_timeout_no_recv
         print('disconnect from tcp server.')
         print('Length Of Message: ', length_messages, 'Count Of Threading: ', threading.active_count())
-        print('Spend Receive Second: ', self.spend_recv_second, 'Execute Time: ', time.time() - _handle_start_time)
+        print('Sum Of Spending Receive Second: ', self.spend_recv_second, ' Executed Time: ', time.time() - _handle_start_time)
         print('right ratio : {:2.2%}  ,  length of timeout : {}'.format(length_right / length_messages, length_timeout))
         client.close()
 

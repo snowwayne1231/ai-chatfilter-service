@@ -166,7 +166,7 @@ while True:
 
     print('===== receive data =====')
     # print (recv_data.decode('utf-8'))
-    trying_unpacked = unpack(recv_data)
+    trying_unpacked, _ = unpack(recv_data)
     # print(recv_data)
     print(trying_unpacked)
     print('=========================')
