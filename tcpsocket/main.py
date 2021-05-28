@@ -1,5 +1,5 @@
 from tcpsocket.to_websocket import WebsocketThread
-from tcpsocket.tcp import socketTcp
+from tcpsocket.tcp import socketTcp, testPureTcp
 
 
 import socketserver, socket
@@ -127,7 +127,10 @@ class LaunchTcpSocket():
             self.nickname_filter_instance = instance.get_nickname_filter()
             self.nickname_filter_instance.set_english_parser(self.service_instance.get_english_parser())
 
-            self.server = socketserver.ThreadingTCPServer(self.addr, self.handler_factory())
+            # self.server = socketserver.ThreadingTCPServer(self.addr, self.handler_factory())
+            # self.server = socketserver.TCPServer(self.addr, self.handler_factory(), bind_and_activate=True)
+            self.server = socketserver.TCPServer(self.addr, testPureTcp, bind_and_activate=True)
+            # self.server.request_queue_size = 8
             logging.info('TCP Socket Server launched on port :: {}'.format(self.addr[1]))
             self.server.serve_forever()
 

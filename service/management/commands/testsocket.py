@@ -13,6 +13,8 @@ class Command(BaseCommand):
     client = None
     bufsize = 1024
     spend_recv_second = 0
+    length_right = 0
+    length_timeout_no_recv = 0
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -28,7 +30,7 @@ class Command(BaseCommand):
             '-m', dest='multiple', required=False, help='use multiple thread to test.',
         )
 
-    def handle_recv_data(self, packed, status):
+    def handle_recv_data(self, packed, status, txt = ''):
         _start_time = time.time()
         self.client.send(packed)
         try:
@@ -37,7 +39,8 @@ class Command(BaseCommand):
             _spend_recv_second = _recv_time - _start_time
             self.spend_recv_second += _spend_recv_second
         except socket.timeout:
-            print('Recv Data Timeout.')
+            print('Recv Data Timeout. txt: {}'.format(txt))
+            self.length_timeout_no_recv += 1
             return 0
         except Exception:
             recv_data = None
@@ -56,6 +59,7 @@ class Command(BaseCommand):
                 _is_right = True
         
         if _is_right:
+            self.length_right += 1
             return 1
         else:
             print('Wrong Predict :: txt = [{}]   ans = [{}]'.format(_trying_unpacked.code, status))
@@ -108,9 +112,9 @@ class Command(BaseCommand):
         
         self.client = client
 
-        cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x040004]
+        cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x040004, 0x041003]
 
-        num = 3
+        num = 5
         command_hex = cmd_ints[num]
 
         keep_doing = True
@@ -127,7 +131,8 @@ class Command(BaseCommand):
 
                 if msgtxt:
                     # print('sending txt: ', msgtxt)
-                    packed = pack(command_hex, msgid=msgid+100000000, msgtxt=msgtxt)
+                    # packed = pack(command_hex, msgid=msgid+100000000, msgtxt=msgtxt)
+                    packed = pack(command_hex, msgid=msgid+100000000, json={'msg': msgtxt, 'roomid': 'localhost'})
 
                     if msgid % 100 == 0:
                         print('{:2.1%}'.format(msgid / length_messages), end="\r")
@@ -138,17 +143,16 @@ class Command(BaseCommand):
                 
 
                 if is_multiple:
-                    _new_thread = threading.Thread(target= self.handle_recv_data, args = (packed, status))
+                    _new_thread = threading.Thread(target= self.handle_recv_data, args = (packed, status, msgtxt))
                     _threads.append(_new_thread)
                     _new_thread.start()
                 else:
                     length_right += self.handle_recv_data(packed, status)
                 
                 if msgid % 8 == 0:
-                    time.sleep(0.35)
-                    # time.sleep(0.1)
-                else:
-                    time.sleep(0.01)
+                    # time.sleep(0.2)
+                    time.sleep(0.1)
+                
                 msgid += 1
 
             except KeyboardInterrupt:
@@ -158,9 +162,12 @@ class Command(BaseCommand):
         
         for t in _threads:
             t.join()
+
+        length_right = self.length_right
+        length_timeout = self.length_timeout_no_recv
         print('disconnect from tcp server.')
         print('Length Of Message: ', length_messages, 'Count Of Threading: ', threading.active_count())
         print('Spend Receive Second: ', self.spend_recv_second, 'Execute Time: ', time.time() - _handle_start_time)
-        print('right ratio : {:2.2%}'.format(length_right / length_messages))
+        print('right ratio : {:2.2%}  ,  length of timeout : {}'.format(length_right / length_messages, length_timeout))
         client.close()
 

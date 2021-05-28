@@ -5,7 +5,7 @@ from socketserver import StreamRequestHandler as Tcp
 from tcpsocket.chat_package import pack, unpack
 # from queue import Queue
 import logging
-import os, datetime, json, threading
+import os, time, json, threading
 
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SOCKET_DIR)
@@ -52,6 +52,41 @@ class LockThread(threading.Thread):
             del self.target, self.args
             
 
+class testPureTcp(Tcp):
+    length_done = 0
+    last_time = time.time()
+    def __init__(self, *args, **keys):
+        super().__init__(*args, **keys)
+    def handle(self):
+        print('TestPureTcp Start handler_factory')
+        self.last_time = time.time()
+        while True:
+            
+            # readed = self.rfile.read(8096)
+            # print('readed: ', readed.decode("utf-8", errors='ignore') )
+            recived = self.request.recv(512)
+            _ = unpack(recived)
+            now = time.time()
+            print('recived time gap: {}'.format(now - self.last_time))
+            print('recived: ', recived.decode("utf-8", errors='ignore'))
+            print('size: ', _.size)
+            print('-----')
+            self.last_time = now
+            self.length_done += 1
+            if not recived:
+                logging.error('Not Recived [ {} ]'.format(recived))
+                break
+            
+            try:
+                packed_res = pack(0x040004, msgid=1, code=5)
+                self.request.send(packed_res)
+            except Exception as exp:
+                logging.error('Request Sendall Failed. exp[ {} ]'.format(exp))
+        
+        
+        # print('wreaded: ', wreaded)
+        logging.info('TestPureTcp End handler_factory Done Recived: {}'.format(self.length_done))
+
 
 class socketTcp(Tcp):
 
@@ -61,6 +96,7 @@ class socketTcp(Tcp):
     service_instance = None
     nickname_filter_instance = None
     # thread_queue = Queue(4)
+    last_while_time = 0
     
 
     def __init__(self, callback, service_instance, on_client_open = None, on_client_close = None, nickname_filter_instance = None, *args, **keys):
@@ -69,6 +105,7 @@ class socketTcp(Tcp):
         self.on_client_close = on_client_close
         self.service_instance = service_instance
         self.nickname_filter_instance = nickname_filter_instance
+        self.last_while_time = time.time()
         
         super().__init__(*args, **keys)
 
@@ -187,18 +224,22 @@ class socketTcp(Tcp):
 
     def handle(self):
         logging.info('**TCPSocket Version[{}] clinet has connected, address: {}'.format(version, self.client_address))
+        print('self.request: ', self.request)
         self.on_client_open()
+        print('self.request: ', self.request)
         while True:
-            recived = self.request.recv(1024)
+            now = time.time()
+            if now - self.last_while_time > 0.1:
+                print('while recive long spend | now: {} | spend: {}'.format(now, now - self.last_while_time))
+            self.last_while_time = now
+            
+            recived = self.request.recv(8096)
             if not recived:
                 logging.error('Not Recived [ {} ]'.format(recived))
                 break
-
-            # now = datetime.datetime.now()
+            
             _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
             _thread.start()
-
-            # self.request.sendall(recived)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
         

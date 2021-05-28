@@ -95,7 +95,7 @@ def unpack(buffer):
     except Exception as err:
         logging.error('Unpack Packgae Failed. Buffer: {}'.format(buffer))
         cmd = 0x000000
-    # print(' -- unpack cmd: ', cmd)
+    # logging.debug(' -- unpack cmd: {}'.format(cmd))
 
     if cmd == HeartingPackage.m_cmd:
 
@@ -245,6 +245,7 @@ class ChatWithJSONPackage(BasicStructPackage):
         self.size = size
         self.msgid = msgid
         self.jsonsize = jsonsize
+        logging.debug('ChatWithJSONPackage size: {}  jsonsize: {}  len(buffer): {}'.format(size, jsonsize, len(buffer)))
         
         if jsonsize:
             self.jsonbuffer = _left_buffer[:jsonsize]
