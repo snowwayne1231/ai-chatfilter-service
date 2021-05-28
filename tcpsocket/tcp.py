@@ -113,7 +113,7 @@ class socketTcp(Tcp):
         status_code = -1
         prediction = None
 
-        if directly_reject:
+        if directly_reject and unpacked_data.cmd == 0x041003:
             status_code = 5
             prediction = 99
             packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
@@ -203,7 +203,7 @@ class socketTcp(Tcp):
         else:
             
             logging.error('Recived Package Unknow.  [ {} ]'.format(recived.decode("utf-8", errors='ignore')))
-            return 0
+            return False
         
         try:
             self.request.sendall(packed_res)
@@ -234,7 +234,7 @@ class socketTcp(Tcp):
             # _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
             # _thread.start()
             while recived:
-                recived = self.handle_recive_threading(recived)
+                recived = self.handle_recive_threading(recived, len(recived) > 256)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
         self.on_client_close()

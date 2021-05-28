@@ -264,8 +264,8 @@ class ChatWithJSONPackage(BasicStructPackage):
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
         except Exception as e:
-            self.jsonstr = self.jsonbuffer.decode('utf-8', "ignore")
-            logging.error('ChatWithJSONPackage :: Unpack Failed (JSON= {},  jsonsize= {})'.format(self.jsonstr, jsonsize))
+            afterignorejson = self.jsonbuffer.decode('utf-8', "ignore")
+            logging.error('ChatWithJSONPackage :: Unpack Failed (JSON= {},  ignoreJSON= {}, jsonsize= {})'.format(self.jsonstr, afterignorejson, jsonsize))
             logging.error(traceback.format_exc())
             self.json = {}
             self.msg = '[Parsing Byte Failed]'
