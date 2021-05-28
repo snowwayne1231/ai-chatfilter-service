@@ -260,7 +260,7 @@ class MainService():
         result['reason_char'] = reason
         result['detail'] = detail_data
         result['spend_time'] = ed_time - st_time
-        if result['spend_time'] > 1:
+        if result['spend_time'] > 0.2:
             logging.error('Spend Time Of Think Result = '.format(result['spend_time']))
             print(result)
         return result

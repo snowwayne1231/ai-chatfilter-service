@@ -161,6 +161,8 @@ class Command(BaseCommand):
                 
                 if msgid % 4 == 0:
                     time.sleep(time_gap)
+                else:
+                    time.sleep(0.01)
                 
                 msgid += 1
 
