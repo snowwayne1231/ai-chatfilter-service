@@ -6,6 +6,7 @@ from tcpsocket.chat_package import pack, unpack
 # from queue import Queue
 import logging
 import os, time, json, threading
+# from multiprocessing import Process
 
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SOCKET_DIR)
@@ -25,7 +26,7 @@ logging_level = logging.DEBUG if bool('True' in config_setting.get('MAIN', 'DEBU
 logging.basicConfig(format='[%(levelname)s]%(asctime)s %(message)s', datefmt='(%m/%d) %I:%M:%S %p :: ', level=logging_level)
 
 threadLock = threading.Lock()
-threadLimiter = threading.BoundedSemaphore(8)
+# threadLimiter = threading.BoundedSemaphore(8)
 
 class LockThread(threading.Thread):
     def __init__(self, target, args):
@@ -35,7 +36,7 @@ class LockThread(threading.Thread):
 
     def run(self):
         try:
-            if threadLock.acquire(timeout=2):
+            if threadLock.acquire(timeout=1):
             # if threadLimiter.acquire(timeout=1):
                 self.target(*self.args)
             else:
@@ -214,8 +215,9 @@ class socketTcp(Tcp):
         
         if unpacked_left_buffer:
             logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), len(unpacked_left_buffer)))
-            self.handle_recive_threading(unpacked_left_buffer)
-            # LockThread(target = self.handle_recive_threading, args = (unpacked_left_buffer,)).start()
+            return unpacked_left_buffer
+        else:
+            return False
     
 
 
@@ -231,7 +233,8 @@ class socketTcp(Tcp):
             
             # _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
             # _thread.start()
-            self.handle_recive_threading(recived)
+            while recived:
+                recived = self.handle_recive_threading(recived)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
         self.on_client_close()

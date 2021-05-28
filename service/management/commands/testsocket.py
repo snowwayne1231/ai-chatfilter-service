@@ -159,7 +159,7 @@ class Command(BaseCommand):
                 else:
                     length_right += self.handle_recv_data(packed, status)
                 
-                if msgid % 8 == 0:
+                if msgid % 4 == 0:
                     time.sleep(time_gap)
                 
                 msgid += 1
