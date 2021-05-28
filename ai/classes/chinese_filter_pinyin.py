@@ -10,7 +10,7 @@ from dataparser.apps import JieBaDictionary, EnglishParser
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import numpy as np
-import pickle, json
+import time, json
 from datetime import datetime, timedelta
 
 class PinYinFilter(BasicChineseFilter):

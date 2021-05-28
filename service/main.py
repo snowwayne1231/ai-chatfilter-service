@@ -260,7 +260,7 @@ class MainService():
         result['reason_char'] = reason
         result['detail'] = detail_data
         result['spend_time'] = ed_time - st_time
-        # print('Spend Time = ', result['spend_time'])
+        print('Spend Time Of Think Result = ', result['spend_time'])
         return result
 
 
