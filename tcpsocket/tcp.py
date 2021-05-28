@@ -214,8 +214,8 @@ class socketTcp(Tcp):
         
         if unpacked_left_buffer:
             logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), len(unpacked_left_buffer)))
-            # self.handle_recive_threading(unpacked_left_buffer)
-            LockThread(target = self.handle_recive_threading, args = (unpacked_left_buffer,)).start()
+            self.handle_recive_threading(unpacked_left_buffer)
+            # LockThread(target = self.handle_recive_threading, args = (unpacked_left_buffer,)).start()
     
 
 
@@ -229,8 +229,9 @@ class socketTcp(Tcp):
                 logging.error('Not Recived [ {} ]'.format(recived.decode("utf-8", errors='ignore')))
                 break
             
-            _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
-            _thread.start()
+            # _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
+            # _thread.start()
+            self.handle_recive_threading(recived)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
         self.on_client_close()
