@@ -87,7 +87,7 @@ class Command(BaseCommand):
             host = '127.0.0.1'
 
         if time_gap is None:
-            time_gap = 0.2
+            time_gap = 0.3
         else:
             time_gap = float(time_gap)
 

@@ -28,6 +28,8 @@ logging.basicConfig(format='[%(levelname)s]%(asctime)s %(message)s', datefmt='(%
 threadLock = threading.Lock()
 # threadLimiter = threading.BoundedSemaphore(8)
 
+SECOND_TIMEOUT_THREADING = 1
+
 class LockThread(threading.Thread):
     def __init__(self, target, args):
         threading.Thread.__init__(self)
@@ -53,38 +55,38 @@ class LockThread(threading.Thread):
             del self.target, self.args
             
 
-class testPureTcp(Tcp):
-    length_done = 0
-    last_time = time.time()
-    def __init__(self, *args, **keys):
-        super().__init__(*args, **keys)
-    def handle(self):
-        print('::TestPureTcp Start handler_factory')
-        self.last_time = time.time()
-        while True:
+# class testPureTcp(Tcp):
+#     length_done = 0
+#     last_time = time.time()
+#     def __init__(self, *args, **keys):
+#         super().__init__(*args, **keys)
+#     def handle(self):
+#         print('::TestPureTcp Start handler_factory')
+#         self.last_time = time.time()
+#         while True:
             
-            # readed = self.rfile.read(8096)
-            # print('readed: ', readed.decode("utf-8", errors='ignore') )
-            recived = self.request.recv(512)
-            _, _left = unpack(recived)
-            now = time.time()
-            print('recived time gap: {}'.format(now - self.last_time))
-            print('recived: ', recived.decode("utf-8", errors='ignore'))
-            print('size: ', _.size)
-            print('=============================')
-            self.last_time = now
-            self.length_done += 1
-            if not recived:
-                logging.error('Not Recived [ {} ]'.format(recived))
-                break
+#             # readed = self.rfile.read(8096)
+#             # print('readed: ', readed.decode("utf-8", errors='ignore') )
+#             recived = self.request.recv(512)
+#             _, _left = unpack(recived)
+#             now = time.time()
+#             print('recived time gap: {}'.format(now - self.last_time))
+#             print('recived: ', recived.decode("utf-8", errors='ignore'))
+#             print('size: ', _.size)
+#             print('=============================')
+#             self.last_time = now
+#             self.length_done += 1
+#             if not recived:
+#                 logging.error('Not Recived [ {} ]'.format(recived))
+#                 break
             
-            try:
-                packed_res = pack(0x040004, msgid=1, code=5)
-                self.request.send(packed_res)
-            except Exception as exp:
-                logging.error('Request Sendall Failed. exp[ {} ]'.format(exp))
+#             try:
+#                 packed_res = pack(0x040004, msgid=1, code=5)
+#                 self.request.send(packed_res)
+#             except Exception as exp:
+#                 logging.error('Request Sendall Failed. exp[ {} ]'.format(exp))
         
-        logging.info('::TestPureTcp End handler_factory Done Recived: {}'.format(self.length_done))
+#         logging.info('::TestPureTcp End handler_factory Done Recived: {}'.format(self.length_done))
 
 
 class socketTcp(Tcp):
@@ -113,12 +115,7 @@ class socketTcp(Tcp):
         status_code = -1
         prediction = None
 
-        if directly_reject and unpacked_data.cmd == 0x041003:
-            status_code = 5
-            prediction = 99
-            packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
-
-        elif unpacked_data.cmd == 0x000001:
+        if unpacked_data.cmd == 0x000001:
             logging.debug('Recived Package is [ Check Hearting ]')
             packed_res = pack(0x000001) # hearting
 
@@ -165,15 +162,16 @@ class socketTcp(Tcp):
 
             if isinstance(unpacked_data.msgid, int) and _msg:
 
-                ai_results = self.service_instance.think(message=_msg, room=unpacked_data.roomid)
-                prediction = ai_results.get('prediction', None)
+                if directly_reject:
+                    prediction = 99
+                else:
+                    ai_results = self.service_instance.think(message=_msg, room=unpacked_data.roomid)
+                    prediction = ai_results.get('prediction', None)
             
-
             if prediction and prediction > 0:
                 status_code = 5
                 logging.info('Message be blocked = id: {} msg: {}'.format(unpacked_data.msgid, _msg))
             
-
             packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
 
         elif unpacked_data.cmd == 0x040004:
@@ -226,15 +224,17 @@ class socketTcp(Tcp):
         self.on_client_open()
         while True:
             
-            recived = self.request.recv(1024)
+            recived = self.request.recv(2048)
             if not recived:
                 logging.error('Not Recived [ {} ]'.format(recived.decode("utf-8", errors='ignore')))
                 break
-            
+            _start_handle_recived_time = time.time()
             # _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
             # _thread.start()
             while recived:
-                recived = self.handle_recive_threading(recived, len(recived) > 256)
+                _inner_recived_time = time.time()
+                _is_over_time = (_inner_recived_time - _start_handle_recived_time) > SECOND_TIMEOUT_THREADING
+                recived = self.handle_recive_threading(recived, _is_over_time)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
         self.on_client_close()
