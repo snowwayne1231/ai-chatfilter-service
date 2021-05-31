@@ -158,8 +158,8 @@ class Command(BaseCommand):
                     # packed = pack(command_hex, msgid=msgid+BIAS_MSGID, msgtxt=msgtxt)
                     packed = pack(command_hex, msgid=msgid+BIAS_MSGID, json={'msg': msgtxt, 'roomid': 'localhost'})
 
-                    if msgid % 100 == 0:
-                        print('{:2.1%}'.format(msgid / length_messages), end="\r")
+                    if msgid % 10 == 0:
+                        print(' {:2.1%}'.format(msgid / length_messages), end="\r")
                 else:
                     print('msgtxt wrong: ', msgtxt)
                     continue
