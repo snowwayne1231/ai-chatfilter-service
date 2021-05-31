@@ -262,7 +262,7 @@ class MainService():
         result['spend_time'] = ed_time - st_time
         if result['spend_time'] > 0.2:
             logging.error('Spend Time Of Think Result = '.format(result['spend_time']))
-            print(result)
+        logging.debug('Think Result [ msg: {} txt: {} prediction: {} time: {} ] '.format(result['message'], result['text'], result['prediction'], result['spend_time']))
         return result
 
 

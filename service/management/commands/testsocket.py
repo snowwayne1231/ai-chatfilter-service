@@ -1,3 +1,4 @@
+import logging
 from django.core.management.base import BaseCommand
 from configparser import RawConfigParser
 
@@ -6,7 +7,7 @@ from dataparser.apps import ExcelParser
 
 import os, sys, socket, time, threading
 
-
+BIAS_MSGID = 100000000
 
 class Command(BaseCommand):
     help = 'train models'
@@ -33,41 +34,54 @@ class Command(BaseCommand):
             '-gap', dest='time_gap', required=False, help='set time gap for every 8 records.',
         )
 
-    def handle_recv_data(self, packed, status, txt = ''):
-        _start_time = time.time()
-        self.client.send(packed)
-        try:
-            recv_data = self.client.recv(self.bufsize)
-            _recv_time = time.time()
-            _spend_recv_second = _recv_time - _start_time
-            self.spend_recv_second += _spend_recv_second
-        except socket.timeout:
-            print('Recv Data Timeout. txt: {}'.format(txt))
-            self.length_timeout_no_recv += 1
-            return 0
-        except Exception:
-            recv_data = None
+    def while_recv_data(self, statuses, messages):
+        _total_length = len(statuses)
+        while _total_length > 0:
+            try:
+                _start_time = time.time()
+                recv_data = self.client.recv(self.bufsize)
+                _recv_time = time.time()
+                _spend_recv_second = _recv_time - _start_time
+                self.spend_recv_second += _spend_recv_second
+                while recv_data:
+                    _total_length -= 1
+                    recv_data = self.handle_recv_data(recv_data, statuses, messages)
+            except socket.timeout:
+                # print('Recv Data Timeout. txt: {}'.format(messages[msgidx]))
+                self.length_timeout_no_recv += 1
+                logging.warning('Recv Timeout Length: {}'.format(self.length_timeout_no_recv))
+                _total_length -= 1
+            except Exception:
+                _total_length -= 1
 
-        if not recv_data:
-            print('not receive packed: {} '.format(packed))
-            return 0
-        _trying_unpacked, _ = unpack(recv_data)
-        
-        _is_deleted = _trying_unpacked.code > 0
-        _is_right = False
-        if _is_deleted:
-            if status > 0:
-                _is_right = True
-        else:
-            if status == 0:
-                _is_right = True
-        
-        if _is_right:
-            self.length_right += 1
-            return 1
-        else:
-            print('Wrong Predict :: txt = [{}]   ans = [{}]'.format(_trying_unpacked.code, status))
-            return 0
+
+    def handle_recv_data(self, recv_data, statuses, messages):
+        try:
+            _trying_unpacked, _left_buffer = unpack(recv_data)
+            _msgidx = _trying_unpacked.msgid - BIAS_MSGID
+            _is_deleted = _trying_unpacked.code > 0
+            _is_right = False
+            _right_status = statuses[_msgidx]
+            if _is_deleted:
+                if _right_status > 0:
+                    _is_right = True
+            else:
+                if _right_status == 0:
+                    _is_right = True
+            
+            if _is_right:
+                self.length_right += 1
+            else:
+                logging.warning('Wrong Predict :: txt = [{}]   ans = [{}]'.format(messages[_msgidx], statuses[_msgidx]))
+
+            statuses[_msgidx] = -1
+            return _left_buffer
+
+        except Exception as exp:
+            logging.error(exp)
+            print('_msgidx: ', _msgidx)
+            print('_trying_unpacked: ', _trying_unpacked.msgid, _trying_unpacked.code)
+            raise Exception(exp)
 
 
     def handle(self, *args, **options):
@@ -121,6 +135,8 @@ class Command(BaseCommand):
         client.connect(addr)
         
         self.client = client
+        while_recv_thread = threading.Thread(target= self.while_recv_data, args = (statuses, messages))
+        while_recv_thread.start()
 
         cmd_ints = [0x000001, 0x040001, 0x040002, 0x040003, 0x040004, 0x041003]
 
@@ -132,17 +148,15 @@ class Command(BaseCommand):
         length_messages = len(messages)
 
         length_right = 0
-        _threads = []
         while keep_doing and msgid < length_messages:
 
             try:
                 msgtxt = messages[msgid]
-                status = statuses[msgid]
 
                 if msgtxt:
                     # print('sending txt: ', msgtxt)
-                    # packed = pack(command_hex, msgid=msgid+100000000, msgtxt=msgtxt)
-                    packed = pack(command_hex, msgid=msgid+100000000, json={'msg': msgtxt, 'roomid': 'localhost'})
+                    # packed = pack(command_hex, msgid=msgid+BIAS_MSGID, msgtxt=msgtxt)
+                    packed = pack(command_hex, msgid=msgid+BIAS_MSGID, json={'msg': msgtxt, 'roomid': 'localhost'})
 
                     if msgid % 100 == 0:
                         print('{:2.1%}'.format(msgid / length_messages), end="\r")
@@ -150,19 +164,15 @@ class Command(BaseCommand):
                     print('msgtxt wrong: ', msgtxt)
                     continue
                 
-                
-
-                if is_multiple:
-                    _new_thread = threading.Thread(target= self.handle_recv_data, args = (packed, status, msgtxt))
-                    _threads.append(_new_thread)
-                    _new_thread.start()
-                else:
-                    length_right += self.handle_recv_data(packed, status)
+                self.client.send(packed)
                 
                 if msgid % 4 == 0:
                     time.sleep(time_gap)
                 else:
-                    time.sleep(0.01)
+                    if is_multiple:
+                        time.sleep(0.01)
+                    else:
+                        time.sleep(0.1)
                 
                 msgid += 1
 
@@ -171,11 +181,15 @@ class Command(BaseCommand):
                 keep_doing = False
 
         
-        for t in _threads:
-            t.join()
+        if keep_doing:
+            while_recv_thread.join()
 
         length_right = self.length_right
         length_timeout = self.length_timeout_no_recv
+
+        for i in range(len(statuses)):
+            if statuses[i] >= 0:
+                print('None Response Message: ', messages[i])
         print('disconnect from tcp server.')
         print('Length Of Message: ', length_messages, 'Count Of Threading: ', threading.active_count())
         print('Sum Of Spending Receive Second: ', self.spend_recv_second, ' Executed Time: ', time.time() - _handle_start_time)

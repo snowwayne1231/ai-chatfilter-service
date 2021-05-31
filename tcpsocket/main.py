@@ -112,14 +112,12 @@ class LaunchTcpSocket():
             
             
             self.service_instance = instance.get_main_service(is_admin=False)
+            # self.service_instance = instance.get_main_service(is_admin=True)
             
             if self.websocket.is_active:
 
                 logging.info('TCP Socket connect to Websocket done.')
-
-                if self.websocket_host != '127.0.0.1':
-
-                    self.service_instance.fetch_ai_model_data(remote_ip=self.websocket_host, port=self.websocket_port)
+                self.service_instance.fetch_ai_model_data(remote_ip=self.websocket_host, port=self.websocket_port)
             
             
             self.service_instance.open_mind()

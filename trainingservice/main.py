@@ -31,67 +31,8 @@ class LaunchTrainingService():
         # self.websocket = WebsocketThread("Websocket Thread", host=webhost, port=webport, local_host=self.local_host, on_message_callback=self.on_websocket_message)
         self.websocket_host = webhost
         self.websocket_port = webport
-        self.ws_url = self.websocket.get_ws_url()
 
         self.start()
-
-    
-    def handler_factory(self):
-        callback = self.handle_tcp_callback
-        on_open = self.handle_tcp_open
-        on_close = self.handle_tcp_close
-        service_instance = self.service_instance
-        nickname_filter_instance = self.nickname_filter_instance
-        
-        def createHandler(*args, **keys):
-            return socketTcp(callback, service_instance, on_open, on_close, nickname_filter_instance, *args, **keys)
-        return createHandler
-    
-
-    def handle_tcp_callback(self, data, prediction, status_code = 0):
-        if prediction is None:
-            return
-        
-        if self.websocket and self.websocket.is_active:
-
-            if data.cmd == 0x040003 or data.cmd == 0x041003:
-                #
-                _msgid = data.msgid
-                _msg = data.msg
-                _room = data.roomid if hasattr(data, 'roomid') else ''
-                self.websocket.send_msg(msgid=_msgid, msg=_msg, room=_room, prediction=prediction)
-                
-            elif data.cmd == 0x040007:
-                # nickname change
-                _nickname = data.nickname
-                logging.debug('[handle_tcp_callback][Send To Websocket Nickname] prediction: {} | type: {}'.format(prediction, type(prediction)))
-                logging.debug('_nickname: [{}] | type: {}'.format(_nickname, type(_nickname)))
-                self.websocket.send_msg(msgid=self.websocket.key_change_nickname_request, msg=_nickname, prediction=prediction)
-                
-        else:
-            if data.cmd == 0x040003 or data.cmd == 0x041003:
-                _msg = data.msg
-            elif data.cmd == 0x040007:
-                _msg = data.nickname
-            else:
-                _msg = 'None'
-
-            self.service_instance.saveRecord(prediction, _msg)
-            
-            logging.error('Websocket is Not Working. [txt: {}] [{}]'.format(_msg, prediction))
-
-    
-    def handle_tcp_open(self):
-        self.is_tcp_connecting = True
-
-
-    def handle_tcp_close(self):
-        self.is_tcp_connecting = False
-
-
-    def on_websocket_message(self, msgid, message):
-        logging.debug('on_websocket_message msgid: {}'.format(msgid))
-    
 
     def start(self):
         try:
@@ -113,11 +54,6 @@ class LaunchTrainingService():
 
                 logging.info('TCP Socket connect to Websocket done.')
 
-                if self.websocket_host != '127.0.0.1':
-
-                    self.service_instance.fetch_ai_model_data(remote_ip=self.websocket_host, port=self.websocket_port)
-            
-            
             self.service_instance.open_mind()
             
             self.nickname_filter_instance = instance.get_nickname_filter()

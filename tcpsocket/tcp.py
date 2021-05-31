@@ -167,6 +167,8 @@ class socketTcp(Tcp):
                 else:
                     ai_results = self.service_instance.think(message=_msg, room=unpacked_data.roomid)
                     prediction = ai_results.get('prediction', None)
+            else:
+                logging.error('Parse Failed Message Id = {} Txt = {}'.format(unpacked_data.msgid, unpacked_data.msg))
             
             if prediction and prediction > 0:
                 status_code = 5
