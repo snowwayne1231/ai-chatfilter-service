@@ -211,7 +211,10 @@ class socketTcp(Tcp):
             return False
         
         try:
-            logging.debug('test unpack before send: {}'.format(packed_res.decode("utf-8", errors='ignore')))
+            _, _left = unpack(packed_res)
+            if _.cmd == 0x040004:
+                logging.debug('Test pack before send byte: [ {} ]'.format(packed_res))
+                logging.debug('Before Unpack cmd: [ {} ] msgid: [ {} ] code: [ {} ]'.format(_.cmd, _.msgid, _.code))
             self.request.sendall(packed_res)
             if self.callback and prediction is not None:
                 self.callback(unpacked_data, int(prediction), status_code)
