@@ -280,7 +280,8 @@ class ChatFilterResponsePackage(BasicStructPackage):
     code = 0x000000 # 0:normal; 1:ads; 2:dirty words; 3:system failure
 
     def parse(self, buffer):
-        cmd, size, msgid, code = struct.unpack(self.fmt, buffer)
+        buffer_size = struct.calcsize(self.fmt)
+        cmd, size, msgid, code = struct.unpack(self.fmt, buffer[:buffer_size])
         self.cmd = cmd
         self.size = size
         self.msgid = msgid

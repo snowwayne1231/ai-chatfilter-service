@@ -13,7 +13,7 @@ MAX_TIMEOUT_TIMES = 3
 class Command(BaseCommand):
     help = 'train models'
     client = None
-    bufsize = 8192
+    bufsize = 1024
     spend_recv_second = 0
     length_right = 0
     length_timeout_no_recv = 0
@@ -71,7 +71,7 @@ class Command(BaseCommand):
             if _trying_unpacked.size == 0:
                 print('recv_data: ', recv_data)
                 print('_left_buffer: ', _left_buffer)
-                return _left_buffer
+                return b''
             
             _msgidx = _trying_unpacked.msgid - BIAS_MSGID
             _is_deleted = _trying_unpacked.code > 0
