@@ -211,6 +211,7 @@ class socketTcp(Tcp):
             return False
         
         try:
+            logging.debug('test unpack before send: {}'.format(packed_res.decode("utf-8", errors='ignore')))
             self.request.sendall(packed_res)
             if self.callback and prediction is not None:
                 self.callback(unpacked_data, int(prediction), status_code)

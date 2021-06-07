@@ -175,8 +175,7 @@ class Command(BaseCommand):
                     time.sleep(time_gap)
                 else:
                     if is_multiple:
-                        pass
-                        # time.sleep(0.01)
+                        time.sleep(0.001)
                     else:
                         time.sleep(0.1)
                 
