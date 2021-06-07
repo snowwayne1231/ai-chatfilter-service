@@ -13,11 +13,12 @@ MAX_TIMEOUT_TIMES = 3
 class Command(BaseCommand):
     help = 'train models'
     client = None
-    bufsize = 1024
+    bufsize = 8192
     spend_recv_second = 0
     length_right = 0
     length_timeout_no_recv = 0
     timeout_times = 0
+    left_byte = b''
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -45,6 +46,10 @@ class Command(BaseCommand):
                 _recv_time = time.time()
                 _spend_recv_second = _recv_time - _start_time
                 self.spend_recv_second += _spend_recv_second
+                if self.left_byte:
+                    recv_data = self.left_byte + recv_data
+                    self.left_byte = b''
+                
                 while recv_data:
                     _total_length -= 1
                     recv_data = self.handle_recv_data(recv_data, statuses, messages)
@@ -63,6 +68,11 @@ class Command(BaseCommand):
     def handle_recv_data(self, recv_data, statuses, messages):
         try:
             _trying_unpacked, _left_buffer = unpack(recv_data)
+            if _trying_unpacked.size == 0:
+                print('recv_data: ', recv_data)
+                print('_left_buffer: ', _left_buffer)
+                return _left_buffer
+            
             _msgidx = _trying_unpacked.msgid - BIAS_MSGID
             _is_deleted = _trying_unpacked.code > 0
             _is_right = False
@@ -78,14 +88,12 @@ class Command(BaseCommand):
                 self.length_right += 1
             else:
                 logging.warning('Wrong Predict :: txt = [{}]   ans = [{}]'.format(messages[_msgidx], statuses[_msgidx]))
-
             statuses[_msgidx] = -1
+            
             return _left_buffer
 
         except Exception as exp:
             logging.error(exp)
-            print('_msgidx: ', _msgidx)
-            print('_trying_unpacked: ', _trying_unpacked.msgid, _trying_unpacked.code)
             raise Exception(exp)
 
 

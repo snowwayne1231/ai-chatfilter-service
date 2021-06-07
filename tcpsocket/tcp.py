@@ -211,12 +211,11 @@ class socketTcp(Tcp):
             return False
         
         try:
-            # _, _left = unpack(packed_res)
-            # if _.cmd == 0x040004:
-            #     logging.debug('Test pack before send byte: [ {} ]'.format(packed_res))
-            #     logging.debug('Before Unpack cmd: [ {} ] msgid: [ {} ] code: [ {} ]'.format(_.cmd, _.msgid, _.code))
-            # self.request.sendall(packed_res)
-            self.request.send(packed_res)
+            _, _left = unpack(packed_res)
+            if _.cmd == 0x040004:
+                logging.debug('Test pack before send byte: [ {} ]'.format(packed_res))
+                logging.debug('Before Unpack cmd: [ {} ] msgid: [ {} ] code: [ {} ]'.format(_.cmd, _.msgid, _.code))
+            self.request.sendall(packed_res)
             if self.callback and prediction is not None:
                 self.callback(unpacked_data, int(prediction), status_code)
         except Exception as exp:
