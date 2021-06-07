@@ -10,6 +10,7 @@ import os, time, json, threading
 
 SOCKET_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SOCKET_DIR)
+MAX_SOCKET_SIZE = 2048
 
 config_setting = RawConfigParser()
 config_setting.read(BASE_DIR+'/setting.ini')
@@ -96,6 +97,7 @@ class socketTcp(Tcp):
     on_client_close = None
     service_instance = None
     nickname_filter_instance = None
+    left_byte = b''
     # thread_queue = Queue(4)
     
 
@@ -114,13 +116,39 @@ class socketTcp(Tcp):
 
         status_code = -1
         prediction = None
+        if unpacked_data.size == 0:
+            self.left_byte = unpacked_left_buffer
+            logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), len(unpacked_left_buffer)))
+            return False
 
         if unpacked_data.cmd == 0x000001:
-            logging.debug('Recived Package is [ Check Hearting ]')
+            logging.debug('Recived [ Check Hearting ]')
             packed_res = pack(0x000001) # hearting
 
+        elif unpacked_data.cmd == 0x041003:
+            logging.debug('Recived [ChatJson]  id: {} msg: {} room: {}'.format(unpacked_data.msgid, unpacked_data.msg, unpacked_data.roomid))
+            # logging.debug('json string: {}'.format(unpacked_data.jsonstr))
+
+            status_code = 0
+            _msg = unpacked_data.msg
+
+            if isinstance(unpacked_data.msgid, int) and _msg:
+                if directly_reject:
+                    prediction = 99
+                else:
+                    ai_results = self.service_instance.think(message=_msg, room=unpacked_data.roomid)
+                    prediction = ai_results.get('prediction', None)
+            else:
+                logging.error('Parse Failed msgid = {} Txt = {}'.format(unpacked_data.msgid, unpacked_data.msg))
+            
+            if prediction and prediction > 0:
+                status_code = 5
+                logging.info('Message be Blocked id: {} msg: {}'.format(unpacked_data.msgid, _msg))
+            
+            packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
+
         elif unpacked_data.cmd == 0x040001:
-            logging.debug('Recived Package is [ Login ]')
+            logging.debug('Recived [ Login ]')
             
             is_matched = serverid == unpacked_data.serverid and sig == unpacked_data.sig
 
@@ -134,11 +162,11 @@ class socketTcp(Tcp):
             packed_res = pack(0x040002, code=server_code)
 
         elif unpacked_data.cmd == 0x040002:
-            logging.debug('Recived Package is [ Login Response ]')
+            logging.debug('Recived [ Login Response ]')
             packed_res = pack(0x000001)
 
         elif unpacked_data.cmd == 0x040003:
-            logging.debug('Recived Package is [ Chat ] msg: {}'.format(unpacked_data.msg))
+            logging.debug('Recived [Chat] msg: {}'.format(unpacked_data.msg))
 
             status_code = 0
             _msg = unpacked_data.msg
@@ -153,37 +181,14 @@ class socketTcp(Tcp):
 
             packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
 
-        elif unpacked_data.cmd == 0x041003:
-            logging.debug('Recived Package is [ Chat Json ] msg: {} | room: {}'.format(unpacked_data.msg, unpacked_data.roomid))
-            # logging.debug('json string: {}'.format(unpacked_data.jsonstr))
-
-            status_code = 0
-            _msg = unpacked_data.msg
-
-            if isinstance(unpacked_data.msgid, int) and _msg:
-
-                if directly_reject:
-                    prediction = 99
-                else:
-                    ai_results = self.service_instance.think(message=_msg, room=unpacked_data.roomid)
-                    prediction = ai_results.get('prediction', None)
-            else:
-                logging.error('Parse Failed Message Id = {} Txt = {}'.format(unpacked_data.msgid, unpacked_data.msg))
-            
-            if prediction and prediction > 0:
-                status_code = 5
-                logging.info('Message be blocked = id: {} msg: {}'.format(unpacked_data.msgid, _msg))
-            
-            packed_res = pack(0x040004, msgid=unpacked_data.msgid, code=status_code)
-
         elif unpacked_data.cmd == 0x040004:
-            logging.debug('Recived Package is [ Chat Response ]')
+            logging.debug('Recived [ Chat Response ]')
             logging.debug('msgid: {}'.format(unpacked_data.msgid))
             logging.debug('code: {}'.format(unpacked_data.code))
             packed_res = pack(0x000001)
 
         elif unpacked_data.cmd == 0x040007:
-            logging.debug('Recived Package is [ Nickname Change Request ] id: {} | name: {} | size: {}'.format(unpacked_data.reqid, unpacked_data.nickname, unpacked_data.size))
+            logging.debug('Recived [ Nickname Change Request ] id: {} | name: {} | size: {}'.format(unpacked_data.reqid, unpacked_data.nickname, unpacked_data.size))
 
             if self.nickname_filter_instance:
 
@@ -214,7 +219,6 @@ class socketTcp(Tcp):
             print(exp)
         
         if unpacked_left_buffer:
-            logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), len(unpacked_left_buffer)))
             return unpacked_left_buffer
         else:
             return False
@@ -224,19 +228,28 @@ class socketTcp(Tcp):
     def handle(self):
         logging.info('**TCPSocket Version[{}] clinet has connected, address: {}'.format(version, self.client_address))
         self.on_client_open()
+        _is_holding_size = True
+        _half_size = MAX_SOCKET_SIZE / 2
         while True:
             
-            recived = self.request.recv(2048)
+            recived = self.request.recv(MAX_SOCKET_SIZE)
             if not recived:
                 logging.error('Not Recived [ {} ]'.format(recived.decode("utf-8", errors='ignore')))
                 break
             _start_handle_recived_time = time.time()
             # _thread = LockThread(target = self.handle_recive_threading, args = (recived,))
             # _thread.start()
+            if self.left_byte:
+                recived = self.left_byte + recived
+                self.left_byte = b''
+
+            _is_holding_size = len(recived) < _half_size
+            _not_holding = not _is_holding_size
+            
             while recived:
                 _inner_recived_time = time.time()
                 _is_over_time = (_inner_recived_time - _start_handle_recived_time) > SECOND_TIMEOUT_THREADING
-                recived = self.handle_recive_threading(recived, _is_over_time)
+                recived = self.handle_recive_threading(recived, _not_holding or _is_over_time)
         
         logging.info('**TCPSocket clinet disconnected, address: {}'.format(self.client_address))
         self.on_client_close()

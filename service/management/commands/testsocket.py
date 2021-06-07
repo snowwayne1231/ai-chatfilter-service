@@ -8,6 +8,7 @@ from dataparser.apps import ExcelParser
 import os, sys, socket, time, threading
 
 BIAS_MSGID = 100000000
+MAX_TIMEOUT_TIMES = 3
 
 class Command(BaseCommand):
     help = 'train models'
@@ -16,6 +17,7 @@ class Command(BaseCommand):
     spend_recv_second = 0
     length_right = 0
     length_timeout_no_recv = 0
+    timeout_times = 0
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -50,6 +52,9 @@ class Command(BaseCommand):
                 # print('Recv Data Timeout. txt: {}'.format(messages[msgidx]))
                 self.length_timeout_no_recv += 1
                 logging.warning('Recv Timeout Length: {}'.format(self.length_timeout_no_recv))
+                if self.length_timeout_no_recv >= MAX_TIMEOUT_TIMES:
+                    self.length_timeout_no_recv = _total_length
+                    break
                 _total_length -= 1
             except Exception:
                 _total_length -= 1
@@ -170,7 +175,8 @@ class Command(BaseCommand):
                     time.sleep(time_gap)
                 else:
                     if is_multiple:
-                        time.sleep(0.01)
+                        pass
+                        # time.sleep(0.01)
                     else:
                         time.sleep(0.1)
                 

@@ -269,6 +269,8 @@ class ChatWithJSONPackage(BasicStructPackage):
             logging.error(traceback.format_exc())
             self.json = {}
             self.msg = '[Parsing Byte Failed]'
+            self.msgid = -1
+            self.size = 0
 
 
 class ChatFilterResponsePackage(BasicStructPackage):
