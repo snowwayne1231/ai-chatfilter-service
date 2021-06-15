@@ -87,9 +87,9 @@ class PreFilter():
     
         for u in _text_:
             if self.is_number(u):
-                if '0' not in next_char:
-                    number_size += 1
-                    # print('is number: ', u)
+                if '0' in next_char and u == '0':
+                    continue
+                number_size += 1
             elif self.is_english(u):
                 eng_size += 1
                 if u in 'vVwW':
@@ -103,7 +103,7 @@ class PreFilter():
 
         _NE_ratio = _NE_size / length_char
         
-        is_many_asci = (_NE_size >= 6 and number_size >= 2) or number_size > 5
+        is_many_asci = (_NE_size >= 6 and number_size >= 2) or number_size > 4
 
         is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and (number_size > 0 or eng_size > 0)
 
@@ -184,7 +184,7 @@ class PreFilter():
             u'\u5348', u'\u821e', u'\u516d', u'\u9678', u'\u4e03', u'\u67d2', u'\u516b', u'\u5df4', u'\u53ed', u'\u634c', 
             u'\u6252', u'\u4e5d', u'\u4e45', u'\u7396', u'\u9152', u'\u96f6', u'\u9748', '扒', '凌', '陵', '仁', '巴', '仇',
             '灵', '漆', '舞', '武', '医', '陆', '司', '饿', '久', '删', '酒', '林', '腰', '兰', '溜', '临', '寺', '期', '铃', '衫',
-            '要', '山', '遛', '摇', 
+            '要', '山', '遛', '摇', '思', '妖', '贰', '玲', '是', '午', '妻', '跋', '衣', '似', '伶', '疤', '韭', '镹', '聆',
         ]
         return uchar >= u'\u0030' and uchar <= u'\u0039' or uchar in chineses
 

@@ -1,4 +1,5 @@
-FROM python:3.7
+# syntax=docker/dockerfile:1
+FROM centos/python-38-centos7
 WORKDIR /usr/src/docker-django
 RUN pip3 install --upgrade setuptools pip
 
@@ -12,13 +13,14 @@ RUN pip3 install --upgrade setuptools pip
 #         postgresql-client \
 #     && rm -rf /var/lib/apt/lists/*
 
-# RUN yum update
-# RUN yum -y install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gcc make libffi-devel
-# RUN yum -y install epel-release
-# RUN yum -y install python-pip
-# RUN apt-get install -y python-apt
-# RUN apt-get install -y python3-pip
-# RUN apt-get install -y python-dev python3.7-dev python-levenshtein
+RUN yum update
+RUN yum -y install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gcc make libffi-devel
+RUN yum -y install epel-release
+RUN yum -y install python-pip
+# RUN yum -y install python-devel python3-devel python-Levenshtein
+RUN apt-get install -y python-apt
+RUN apt-get install -y python3-pip
+RUN apt-get install -y python-dev python3.7-dev python-levenshtein
 
 
 RUN pip3 install tensorflow
