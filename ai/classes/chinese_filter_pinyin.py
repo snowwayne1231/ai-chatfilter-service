@@ -487,6 +487,10 @@ class PinYinFilter(BasicChineseFilter):
                 encoded_words = _[1]
 
         if encoded_words:
+            if prediction == self.STATUS_SEPCIFY_BLOCK:
+                reason = self.find_block_word(self.transform(text), text)
+                return reason
+            
             _res = self.model.predict(encoded_words)
             _i = 0
             # print('encoded_words: ', encoded_words)
