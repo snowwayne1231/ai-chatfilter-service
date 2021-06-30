@@ -9,7 +9,7 @@ DEFAULT_REMOTE_WEBSOCKET_PORT = 8000
 class Command(BaseCommand):
     help = 'train models'
     client = None
-    bufsize = 1024
+    bufsize = 1024 
     spend_recv_second = 0
     length_right = 0
     length_timeout_no_recv = 0

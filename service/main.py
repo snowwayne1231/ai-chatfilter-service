@@ -15,9 +15,8 @@ from os import path, listdir
 from .classes.prefilter import PreFilter
 # from .classes.fuzzycenter import FuzzyCenter
 from .classes.chatstore import ChatStore
-from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, ChangeNicknameRequest
+from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, ChangeNicknameRequest, Blockword
 from ai.models import TextbookSentense
-
 
 
 
