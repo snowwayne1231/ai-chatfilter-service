@@ -37,10 +37,34 @@ class Command(BaseCommand):
 
         if check_file_path:
             _jp = JsonParser(file=check_file_path)
-            result_list = _jp.load()
-
+            _old_json = _jp.load()
+            _length_json = len(_old_json)
+            _j_idx = 0
+            print('')
+            for _oj in _old_json:
+                weight = int(_oj[1]) if _oj[1] else 1
+                msg = _oj[4] if len(_oj)>4 else _oj[2]
+                status = int(_oj[3])
+                
+                _finded = False
+                _r_idx = 0
+                for _ in result_list:
+                    if _[2] == msg:
+                        _finded = True
+                        break
+                    _r_idx += 1
+                
+                if _finded:
+                    result_list[_r_idx][1] += 1
+                else:
+                    result_list.append([_oj[0], weight, msg, status])
+                
+                _j_idx += 1
+                if _j_idx % 100 ==0:
+                    print('Handle Old Json.. [{:.2f}]'.format(_j_idx / _length_json), end='\r')
 
         try:
+            print('Start Handle Excel.')
             _ep = ExcelParser(file=input_file)
             _basic_model_columns = [['VID', '房號'], ['WEIGHT', '權重'], ['MESSAGE', '聊天信息', '禁言内容', '发言内容'], ['STATUS', '審核結果', '状态']]
             _excel_data = _ep.get_row_list(column=_basic_model_columns)
@@ -58,10 +82,6 @@ class Command(BaseCommand):
                 status = int(_data[3])
                 is_deleted = status > 0 if status else False
                 text, lv, anchor = _message_parser.parse(msg)
-
-                _data.append(text)
-                _data.append(lv)
-                _data.append(anchor)
 
                 if anchor == 0:
                     _transed = translate_by_string(text)
@@ -87,10 +107,7 @@ class Command(BaseCommand):
                         
                         _checking_map[_pinyin_text] = [_idx, msg, is_deleted]
 
-                    result_list.append(_data)
-                    if weight > 1:
-                        for i in range(weight *2):
-                            result_list.append(_data)
+                    result_list.append([_data[0], weight, text, status])
 
                 _idx += 1
 

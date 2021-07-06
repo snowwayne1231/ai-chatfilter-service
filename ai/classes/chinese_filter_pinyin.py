@@ -2,6 +2,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import re
+
+from numpy.core.fromnumeric import product
 from .translator_pinyin import translate_by_string, traceback_by_stringcode
 from .chinese_filter_basic import BasicChineseFilter
 from dataparser.apps import JieBaDictionary, EnglishParser
@@ -152,41 +154,45 @@ class PinYinFilter(BasicChineseFilter):
             self.set_data(train_data)
 
         # return exit(2)
-        batch_train_data = self.get_train_batchs()
+        batch_data = self.get_train_batchs()
 
         _length_of_data = self.length_x
 
-        BUFFER_SIZE = _length_of_data + 1
+        BUFFER_SIZE = _length_of_data
         BATCH_SIZE = self.full_words_length
         VALIDATION_SIZE = int(_length_of_data / 8) if _length_of_data > 5000 else int(_length_of_data / 2)
+        TRAIN_SIZE = _length_of_data - VALIDATION_SIZE
+
+        batch_data = batch_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=True)
 
         if validation_data is None:
 
-            batch_train_data = batch_train_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=True).repeat(epochs)
-            batch_test_data = batch_train_data.take(VALIDATION_SIZE).shuffle(VALIDATION_SIZE, reshuffle_each_iteration=True)
+            batch_train_data = batch_data.take(TRAIN_SIZE).repeat(epochs)
+            batch_test_data = batch_data.skip(TRAIN_SIZE).take(VALIDATION_SIZE)
 
         else:
             print('Can Not Give Validation Data.')
             exit(2)
 
         history = None
-        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
-        batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[]))
+        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[],[]))
+        batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[],[]))
 
         # print(batch_train_data)
         # for __ in batch_train_data.take(1):
         #     print(__)
 
         print('==== batch_train_data ====')
-        print('Length of Data :: ', _length_of_data)
         print('BUFFER_SIZE :: ', BUFFER_SIZE)
         print('BATCH_SIZE :: ', BATCH_SIZE)
+        print('TRAIN_SIZE :: ', TRAIN_SIZE)
         print('VALIDATION_SIZE :: ', VALIDATION_SIZE)
 
         # exit(2)
 
-        steps = int(_length_of_data / BATCH_SIZE)
-        vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE)
+        steps = int(TRAIN_SIZE / BATCH_SIZE)
+        vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE / epochs)
+        # print('steps [{}]  val steps [{}]'.format(steps, vaildation_steps))
 
         try:
             _start = datetime.now()
@@ -217,8 +223,9 @@ class PinYinFilter(BasicChineseFilter):
                 
         except KeyboardInterrupt:
             print('Keyboard pressed. Stop Tranning.')
-        except Exception:
+        except Exception as err:
             print('Exception on Fit model.')
+            print(err)
         
         return history
 
@@ -258,12 +265,15 @@ class PinYinFilter(BasicChineseFilter):
                 print(" {:.2f}%".format(_percent), end="\r")
 
             _list, _has_unknown = self.get_encode_word(words)
+            if len(_list) ==0:
+                continue
+            _ary = np.asarray(_list).astype(np.int32)
 
-            tokenized.append(_list)
+            tokenized.append(_ary)
         
         print('Tokenize Done.')
         
-        return tokenized
+        return np.asarray(tokenized)
 
 
     def find_block_word(self, word_list = [], text_string = ''):
@@ -336,33 +346,46 @@ class PinYinFilter(BasicChineseFilter):
         return possible
 
 
-    def bathchs_labeler(self, x, y):
+    def bathchs_labeler(self, x, y, w):
         assert len(x) == len(y)
         # encoder = self.encoder
         full_words_length = self.full_words_length
 
-        def gen():
-            for idx, texts in enumerate(x):
-                _len = len(texts)
-                if _len == 0:
-                    continue
+        # def gen():
+        #     for idx, texts in enumerate(x):
+        #         _len = len(texts)
+        #         if _len == 0:
+        #             continue
 
-                st = y[idx] if y[idx] else 0
-                npts = np.pad(texts, (0, full_words_length - _len), 'constant')
+        #         st = y[idx] if y[idx] else 0
+        #         weight = w[idx] if w[idx] else 1
+        #         npts = np.pad(texts, (0, full_words_length - _len), 'constant')
 
-                yield npts, np.int64(st)
-                # yield npts, [0,0,0,0,0,0,0,0]
+        #         yield npts, np.int64(st)
         
-        dataset = tf.data.Dataset.from_generator(
-            gen,
-            ( tf.int64, tf.int64 ),
-            ( tf.TensorShape([full_words_length]), tf.TensorShape([]) ),
-        )
+        # dataset = tf.data.Dataset.from_generator(
+        #     gen,
+        #     ( tf.int64, tf.int64 ),
+        #     ( tf.TensorShape([full_words_length]), tf.TensorShape([])),
+        # )
 
-        # print(dataset)
-        # for __ in dataset.take(10):
-        #     print(__)
-        # exit(2)
+        x_list = []
+        y_list = []
+        w_list = []
+
+        for idx, texts in enumerate(x):
+            _len = len(texts)
+
+            st = y[idx] if y[idx] else 0
+            weight = w[idx] if w[idx] else 1
+            npts = np.pad(texts, (0, full_words_length - _len), 'constant')
+            
+            x_list.append(npts)
+            y_list.append(np.int64(st))
+            w_list.append(np.int64(weight))
+
+        dataset = tf.data.Dataset.from_tensor_slices((x_list, y_list, w_list))
+        
         return dataset
 
 
@@ -400,7 +423,9 @@ class PinYinFilter(BasicChineseFilter):
     # override
     def get_train_batchs(self, check_duplicate= True):
         
-        x, y = self.get_xy_data()
+        x, y, w = self.get_xyw_data(to_numpy=True)
+
+        # print('[get_train_batchs] x length: ', len(x))
 
         tokenized_list = self.tokenize_data(x)
 
@@ -446,10 +471,11 @@ class PinYinFilter(BasicChineseFilter):
         if _basic >= 1:
             tokenized_list = tokenized_list * (_basic+1)
             y = y * (_basic+1)
+            w = w * (_basic+1)
 
         self.length_x = len(tokenized_list)
 
-        labeled_dataset = self.bathchs_labeler(tokenized_list, y)
+        labeled_dataset = self.bathchs_labeler(tokenized_list, y, w)
 
         return labeled_dataset
 

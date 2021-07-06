@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
+import ast
 
 # from copy import deepcopy
 
@@ -15,7 +16,8 @@ class BasicChineseFilter():
     """
     """
 
-    columns = ['ROOM', 'ACCOUNT', 'MESSAGE', 'STATUS', 'TEXT', 'LV', 'ANCHOR']
+    # columns = ['ROOM', 'ACCOUNT', 'MESSAGE', 'STATUS', 'TEXT', 'LV', 'ANCHOR']
+    columns = ['ROOM', 'WEIGHT', 'TEXT', 'STATUS']
     appended_columns = ['TRANSFORMED_WORD']
     data = []
     data_length = 0
@@ -62,6 +64,7 @@ class BasicChineseFilter():
 
             self.data = data
             self.data_length = len(data)
+            print('[Set Data] Length: ', self.data_length)
 
             # self.split_word('TEXT')
             self.transform_column('TEXT')
@@ -149,7 +152,7 @@ class BasicChineseFilter():
         elif type(column) is str:
             column_idx = _full_columns.index(column) if column in _full_columns else -1
 
-        assert column_idx >= 0
+        assert column_idx >= 0 and column_idx < len(_full_columns)
 
         _transformed_idx = _full_columns.index('TRANSFORMED_WORD')
         _length_of_columns = len(_full_columns)
@@ -168,7 +171,7 @@ class BasicChineseFilter():
                 d.append(_transformed_words)
 
             _i += 1
-            if _i % 200 == 0:
+            if _i % 500 == 0:
                 print(' {:.2f}%'.format(_i / _length_of_data * 100), end='\r')
 
         print('Transform Data Done.')
@@ -285,7 +288,6 @@ class BasicChineseFilter():
         _full_columns = self.columns + self.appended_columns
         # x_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
         x_idx = _full_columns.index('TRANSFORMED_WORD') if 'TRANSFORMED_WORD' in _full_columns else -1
-        vip_lv_idx = _full_columns.index('LV') if 'LV' in _full_columns else -1
         y_idx = _full_columns.index('STATUS') if 'STATUS' in _full_columns else -1
         new_x = []
         new_y = []
@@ -303,8 +305,7 @@ class BasicChineseFilter():
                     _status = int(_status)
                 else:
                     continue
-                _vip_lv = _d[vip_lv_idx]
-                # if _vip_lv < self.avoid_lv or _status > 0:
+
                 new_x.append(_t)
                 new_y.append(_status if _status != '' else __auto_human_delete_if_not)
             else:
@@ -323,29 +324,69 @@ class BasicChineseFilter():
         return new_x, new_y
 
 
+    def get_xyw_data(self, to_numpy=False):
+        print('Starting get XYW data..')
+        _full_columns = self.columns + self.appended_columns
+        # x_idx = self.columns.index('TEXT') if 'TEXT' in self.columns else -1
+        x_idx = _full_columns.index('TRANSFORMED_WORD') if 'TRANSFORMED_WORD' in _full_columns else -1
+        y_idx = _full_columns.index('STATUS') if 'STATUS' in _full_columns else -1
+        w_idx = _full_columns.index('WEIGHT') if 'WEIGHT' in _full_columns else -1
+        assert w_idx >= 0 and y_idx >= 0 and x_idx >= 0
+        new_x = []
+        new_y = []
+        new_w = []
+        data_length = self.data_length
+        _i = 0
+
+        for _d in self.data:
+            _t = _d[x_idx]
+            if _t:
+                _status = int(_d[y_idx])
+                _weight = _d[w_idx]
+                if _status >= 0:
+                    new_x.append(_t)
+                    new_y.append(_status)
+                    new_w.append(_weight)
+            else:
+                print('[get_xyw_data] Not Found data: ', _d)
+                exit(2)
+
+            if _i % 1000 == 0:
+                _percent = _i / data_length
+                print("Getting XYW data processing [{:2.1%}]".format(_percent), end="\r")
+
+            _i += 1
+        
+        print("Getting XYW data sets is done. Total count: ", len(new_x))
+        if to_numpy:
+            return np.asarray(new_x), np.asarray(new_y).astype(np.int32), np.asarray(new_w).astype(np.float64)
+        return new_x, new_y, new_w
+
+
     # could be override
     def get_train_batchs(self):
         
-        x, y = self.get_xy_data()
+        x, y, w = self.get_xyw_data(to_numpy=True)
         length_x = len(x)
         assert length_x > 0
         self.length_x = length_x
 
-        def gen():
-            for idx, texts in enumerate(x):
-                next_texts = []
-                st = y[idx] if y[idx] else 0
+        # def gen():
+        #     for idx, texts in enumerate(x):
+        #         next_texts = []
+        #         st = y[idx] if y[idx] else 0
 
-                for text in texts:
-                    next_texts.append(text)
+        #         for text in texts:
+        #             next_texts.append(text)
                     
-                yield next_texts, st
+        #         yield next_texts, st
 
-        dataset = tf.data.Dataset.from_generator(
-            gen,
-            ( tf.int64, tf.int64 ),
-            ( tf.TensorShape([None]), tf.TensorShape([]) ),
-        )
+        # dataset = tf.data.Dataset.from_generator(
+        #     gen,
+        #     ( tf.int64, tf.int64 ),
+        #     ( tf.TensorShape([None]), tf.TensorShape([]) ),
+        # )
+        dataset = tf.data.Dataset.from_tensor_slices((x, y, w))
 
         return dataset
 
