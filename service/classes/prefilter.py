@@ -89,7 +89,7 @@ class PreFilter():
             if self.is_number(u):
                 if '0' in next_char and u == '0':
                     continue
-                number_size += 1
+                number_size += 1 if u < u'\u0039' else 2 if len(next_char)==0 else 3
             elif self.is_english(u):
                 eng_size += 1
                 if u in 'vVwW':
@@ -177,7 +177,7 @@ class PreFilter():
         # return (uchar >= u'\uff00' and uchar <= u'\uff65') or (uchar >= u'\ufe30' and uchar <= u'\ufe6a')
         return uchar >= u'\ufe30' and uchar <= u'\uff65'
 
-    def is_number(self, uchar):
+    def is_number(self, uchar, chinese=False):
         # return (uchar >= u'\u0030' and uchar <= u'\u0039') or (uchar >= u'\uff10' and uchar <= u'\uff19')
         chineses = [
             u'\u4e00', u'\u58f9', u'\u4e8c', u'\u8cb3', u'\u4e09', u'\u53c1', u'\u56db', u'\u8086', u'\u4e94', u'\u4f0d', 
@@ -186,9 +186,11 @@ class PreFilter():
             '灵', '漆', '舞', '武', '医', '陆', '司', '饿', '久', '删', '酒', '林', '腰', '兰', '溜', '临', '寺', '期', '铃', '衫',
             '要', '山', '遛', '摇', '思', '妖', '贰', '玲', '是', '午', '妻', '跋', '衣', '似', '伶', '疤', '韭', '镹', '聆', '易',
             '死', '世', '芭', '令', '依', '市', '士', '吧', '伊', '柳', '斯', '珊', '流', '奇', '数', '趴', '灸', '凄', '淋', '耙',
-            '两', 
+            '两', '留', '耳', '儿', '羚', '鈴', '义', '把', '旧', '帕', '兒', '霸', '韭', '琳', '双', '俩', '爸', '龄', '乙', '以'
         ]
-        return uchar >= u'\u0030' and uchar <= u'\u0039' or uchar in chineses
+        if chinese:
+            return uchar in chineses
+        return (uchar >= u'\u0030' and uchar <= u'\u0039') or uchar in chineses
 
     def is_english(self, uchar):
         # return (uchar >= u'\u0041' and uchar <= u'\u0039') or (uchar >= u'\u0061' and uchar <= u'\u007a')
