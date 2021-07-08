@@ -23,6 +23,16 @@ class Command(BaseCommand):
             help='json file path for check.',
         )
 
+    def find_index_of_rlist(self, msg, list):
+        _finded = False
+        _r_idx = 0
+        for _ in list:
+            if _[2] == msg:
+                _finded = True
+                break
+            _r_idx += 1
+        return _r_idx if _finded else -1
+
     def handle(self, *args, **options):
         input_file = options.get('input_file')
         output_path = options.get('output_path', None)
@@ -42,26 +52,24 @@ class Command(BaseCommand):
             _j_idx = 0
             print('')
             for _oj in _old_json:
+                _j_idx += 1
+                if _j_idx % 100 ==0:
+                    print('Handle Old Json.. [ {:.1%} ]'.format(_j_idx / _length_json), end='\r')
+                _length_oj = len(_oj)
+                if _oj[1] == 1 and _length_oj == 4:
+                    result_list.append(_oj)
+                    continue
                 weight = int(_oj[1]) if _oj[1] else 1
-                msg = _oj[4] if len(_oj)>4 else _oj[2]
+                msg = _oj[4] if _length_oj>4 else _oj[2]
                 status = int(_oj[3])
+
+                _r_idx = self.find_index_of_rlist(msg, result_list)
                 
-                _finded = False
-                _r_idx = 0
-                for _ in result_list:
-                    if _[2] == msg:
-                        _finded = True
-                        break
-                    _r_idx += 1
-                
-                if _finded:
-                    result_list[_r_idx][1] += 1
+                if _r_idx >= 0:
+                    result_list[_r_idx][1] += weight
                 else:
                     result_list.append([_oj[0], weight, msg, status])
                 
-                _j_idx += 1
-                if _j_idx % 100 ==0:
-                    print('Handle Old Json.. [{:.2f}]'.format(_j_idx / _length_json), end='\r')
 
         try:
             print('Start Handle Excel.')
@@ -77,7 +85,7 @@ class Command(BaseCommand):
 
             _excel_data.reverse()
             for _data in _excel_data:
-                weight = int(_data[1]) if _data[1] else 0
+                weight = int(_data[1]) if _data[1] else 1
                 msg = _data[2]
                 status = int(_data[3])
                 is_deleted = status > 0 if status else False
@@ -107,7 +115,20 @@ class Command(BaseCommand):
                         
                         _checking_map[_pinyin_text] = [_idx, msg, is_deleted]
 
-                    result_list.append([_data[0], weight, text, status])
+                    _r_idx = self.find_index_of_rlist(msg, result_list)
+                    
+                    if _r_idx >= 0:
+                        if result_list[_r_idx][3] == status:
+                            result_list[_r_idx][1] += weight
+                        else:
+                            print('Confusion Data Index: {} Msg: {}'.format(_r_idx, result_list[_r_idx][2]))
+                            print('::  Override By Result: [{}] [{}] Weight: {}'.format(msg, status, weight))
+                            # _has_duplicate = True
+                            # 後來的資料蓋前面 再增強
+                            result_list[_r_idx][3] = status
+                            result_list[_r_idx][1] = weight * weight
+                    else:
+                        result_list.append([_oj[0], weight, msg, status])
 
                 _idx += 1
 
