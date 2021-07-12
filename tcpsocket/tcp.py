@@ -117,8 +117,12 @@ class socketTcp(Tcp):
         status_code = -1
         prediction = None
         if unpacked_data.size == 0:
-            self.left_byte = unpacked_left_buffer
-            logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), len(unpacked_left_buffer)))
+            _length_unpacked_left_buffer = len(unpacked_left_buffer)
+            if _length_unpacked_left_buffer > 256:
+                self.left_byte = b''
+            else:
+                self.left_byte = unpacked_left_buffer
+            logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), _length_unpacked_left_buffer))
             return False
 
         if unpacked_data.cmd == 0x000001:

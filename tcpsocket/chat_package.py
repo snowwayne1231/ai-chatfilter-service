@@ -260,7 +260,7 @@ class ChatWithJSONPackage(BasicStructPackage):
         
         try:
             self.jsonstr = self.jsonbuffer.decode('utf-8')
-            self.json = json.loads(self.jsonstr.strip())
+            self.json = json.loads(self.jsonstr.strip(), strict=False)
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
         except Exception as e:
@@ -269,8 +269,8 @@ class ChatWithJSONPackage(BasicStructPackage):
             logging.error(traceback.format_exc())
             self.json = {}
             self.msg = '[Parsing Byte Failed]'
-            self.msgid = -1
-            self.size = 0
+            self.msgid = msgid if msgid > 0 else -1
+            self.size = size if size > 0 else 0
 
 
 class ChatFilterResponsePackage(BasicStructPackage):
