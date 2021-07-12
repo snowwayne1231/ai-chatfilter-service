@@ -270,7 +270,10 @@ class ChatWithJSONPackage(BasicStructPackage):
             self.json = {}
             self.msg = '[Parsing Byte Failed]'
             self.msgid = msgid if msgid > 0 else -1
-            self.size = size if size > 0 else 0
+            if jsonsize and len(buffer) < 256:
+                self.size = 0
+            else:
+                self.size = size
 
 
 class ChatFilterResponsePackage(BasicStructPackage):

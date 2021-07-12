@@ -118,12 +118,13 @@ class socketTcp(Tcp):
         prediction = None
         if unpacked_data.size == 0:
             _length_unpacked_left_buffer = len(unpacked_left_buffer)
+            logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), _length_unpacked_left_buffer))
             if _length_unpacked_left_buffer > 256:
                 self.left_byte = b''
+                prediction = 98
             else:
                 self.left_byte = unpacked_left_buffer
-            logging.debug('Handle Recived Stream Byte Again Threading Count: ( {} )  Left Buffer Size: ( {} )'.format(threading.active_count(), _length_unpacked_left_buffer))
-            return False
+                return False
 
         if unpacked_data.cmd == 0x000001:
             logging.debug('Recived [ Check Hearting ]')
@@ -139,7 +140,7 @@ class socketTcp(Tcp):
             if isinstance(unpacked_data.msgid, int) and _msg:
                 if directly_reject:
                     prediction = 99
-                else:
+                elif prediction is None:
                     ai_results = self.service_instance.think(message=_msg, room=unpacked_data.roomid)
                     prediction = ai_results.get('prediction', None)
             else:
