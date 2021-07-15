@@ -11,10 +11,10 @@ allowed_character_regexies = [
     (u'\u3001', u'\u3002'), # dot symbol
     # (u'\u3105', u'\u3129'), # zuyin
     (u'\u4e00', u'\u9fa5'), # chinese
-    (u'\u3041', u'\u30ff'), # japanese
+    # (u'\u3041', u'\u30ff'), # japanese
     # (u'\u1100', u'\u11f9'), # korea yin
     # (u'\u3131', u'\u318e'), # korea yin 2
-    (u'\uac00', u'\ud7a3'), # korea
+    # (u'\uac00', u'\ud7a3'), # korea
     (u'\uff01', u'\uff65'), # full type of english, digits and symbol
     # (u'\U0001f600', u'\U0001f64f'), # faces
     # (u'\U0001f910', u'\U0001f9ff'), # faces
@@ -188,7 +188,7 @@ class PreFilter():
             '死', '世', '芭', '令', '依', '市', '士', '吧', '伊', '柳', '斯', '珊', '流', '奇', '数', '趴', '灸', '凄', '淋', '耙',
             '两', '留', '耳', '儿', '羚', '鈴', '义', '把', '旧', '帕', '兒', '霸', '韭', '琳', '双', '俩', '爸', '龄', '乙', '以',
             '究', '耀', '拔', '邻', '恶', '而', '姍', '事', '试', '伤', '叄', '澪', '無', '麟', '式', '舅', '臼', '启', '吾', '辆',
-            
+            '无', '撕', '噩',
         ]
         if chinese:
             return uchar in chineses

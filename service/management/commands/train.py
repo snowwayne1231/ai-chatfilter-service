@@ -7,7 +7,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-i', dest='input_excel_path', required=False,
+            '-i', dest='input_json_path', required=False,
             help='the path of excel file.',
         )
         parser.add_argument(
@@ -26,13 +26,18 @@ class Command(BaseCommand):
             '-eng', dest='english_mode', required=False, action='store_true',
             help='whether engilsh mode is on.',
         )
+        parser.add_argument(
+            '-vre', dest='version_of_re', required=False, action='store_true',
+            help='whether version of mode is RE.',
+        )
 
 
     def handle(self, *args, **options):
-        path = options.get('input_excel_path', None)
+        path = options.get('input_json_path', None)
         final_accuracy = options.get('final_accuracy', None)
         grammar_mode = options.get('grammar_mode', False)
         english_mode = options.get('english_mode', False)
+        pinyin_re_mode = options.get('version_of_re', False)
         max_spend_time = options.get('time', 0)
     
         self.stdout.write('Handle AI training... ')
@@ -44,6 +49,8 @@ class Command(BaseCommand):
                 train_grammar_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
             elif english_mode:
                 train_english_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
+            elif pinyin_re_mode:
+                train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, is_re_mode=True)
             else:
                 train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
         else:

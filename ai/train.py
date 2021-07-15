@@ -10,10 +10,12 @@ from datetime import datetime
 from dataparser.apps import ExcelParser, MessageParser
 from dataparser.jsonparser import JsonParser
 from dataparser.classes.store import ListPickle
-from .classes.chinese_filter_pinyin import PinYinFilter
+from .classes.chinese_filter_pinyin import PinYinFilter, PinYinReverseStateFilter
 from .classes.chinese_filter_grammar import GrammarFilter
 from .classes.english_filter_basic import BasicEnglishFilter
-from .helper import print_spend_time, get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_multiple_version_path
+from .helper import print_spend_time, get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_multiple_version_path, get_pinyin_re_path
+
+STATE_RE_VERSION_PASS = 7
 
 
 
@@ -61,19 +63,24 @@ def train_pinyin_by_excel_path(excel_file_path = None, final_accuracy = None, ma
 
 
 
-def train_pinyin_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0):
+def train_pinyin_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0, is_re_mode=False):
     result_list = get_row_list_by_json_path(json_file_path)
-    train_pinyin_by_list(result_list, final_accuracy, max_spend_time)
+    train_pinyin_by_list(result_list, final_accuracy, max_spend_time, is_re_mode)
 
 
 
-def train_pinyin_by_list(train_data_list, final_accuracy = None, max_spend_time=0):
+def train_pinyin_by_list(train_data_list, final_accuracy = None, max_spend_time=0, is_re_mode=False):
 
     _st_time = datetime.now() #
 
-    pinyin_saved_folder = get_pinyin_path()
+    if is_re_mode:
 
-    piny = PinYinFilter(load_folder=pinyin_saved_folder)
+        train_data_list = [[_[0], _[1], _[2], _[3] if _[3]>0 else STATE_RE_VERSION_PASS] for _ in train_data_list]
+        piny = PinYinReverseStateFilter(load_folder=get_pinyin_re_path())
+
+    else:
+
+        piny = PinYinFilter(load_folder=get_pinyin_path())
 
     history = piny.fit_model(train_data=train_data_list, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
 
