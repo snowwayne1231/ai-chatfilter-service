@@ -131,7 +131,7 @@ class socketTcp(Tcp):
             packed_res = pack(0x000001) # hearting
 
         elif unpacked_data.cmd == 0x041003:
-            logging.debug('Recived [ChatJson]  id: {} msg: {} room: {}'.format(unpacked_data.msgid, unpacked_data.msg, unpacked_data.roomid))
+            logging.debug('Recived [ChatJson]  id: {} json: {}'.format(unpacked_data.msgid, unpacked_data.jsonstr))
             # logging.debug('json string: {}'.format(unpacked_data.jsonstr))
 
             status_code = 0

@@ -48,8 +48,9 @@ def pack(cmd = 0x000000, **options):
         msgid = options.get('msgid', 0x000000)
         msgtxt = json_data.get('msg', '')
         roomid = json_data.get('roomid', 'none')
+        loginname = json_data.get('loginname', 'none')
 
-        json_byte = bytes(json.dumps({'msg': msgtxt, 'roomid': roomid}), 'utf-8')
+        json_byte = bytes(json.dumps({'msg': msgtxt, 'roomid': roomid, 'loginname': loginname}), 'utf-8')
         jsonsize = len(json_byte)
 
         size = struct.calcsize(ChatWithJSONPackage.fmt) + jsonsize

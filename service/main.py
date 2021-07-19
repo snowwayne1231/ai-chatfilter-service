@@ -190,7 +190,6 @@ class MainService():
             if self.pre_filter.check_loginname_shorttime_saying(user):
                 reason_char = 'Speak Too Quickly'
                 prediction = self.STATUS_PREDICTION_SAME_LOGINNAME_IN_SHORTTIME
-                print('reason_char: ', reason_char)
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             #main ai
@@ -267,7 +266,7 @@ class MainService():
         result['spend_time'] = ed_time - st_time
         if result['spend_time'] > 0.2:
             logging.error('Spend Time Of Think Result = '.format(result['spend_time']))
-        logging.debug('Think Result [ msg: {} txt: {} prediction: {} time: {} ] '.format(result['message'], result['text'], result['prediction'], result['spend_time']))
+        logging.debug('Think Result [ msg: {} prediction: {} time: {} ] '.format(result['message'], result['prediction'], result['spend_time']))
         return result
 
 
