@@ -265,7 +265,7 @@ class MainService():
         result['detail'] = detail_data
         result['spend_time'] = ed_time - st_time
         if result['spend_time'] > 0.2:
-            logging.error('Spend Time Of Think Result = '.format(result['spend_time']))
+            logging.error('Spend Time Of Think Result = {}'.format(result['spend_time']))
         logging.debug('Think Result [ msg: {} prediction: {} time: {} ] '.format(result['message'], result['prediction'], result['spend_time']))
         return result
 
