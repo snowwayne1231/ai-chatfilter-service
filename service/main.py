@@ -44,12 +44,15 @@ class MainService():
     STATUS_PREDICTION_HUMAN_DELETE = 3
     STATUS_PREDICTION_DIRTY_WORD = 4
     STATUS_PREDICTION_OTHER_AI = 5
+    STATUS_PREDICTION_SEPCIFY_BLOCK = 8
     STATUS_PREDICTION_SPECIAL_CHAR = 11
     STATUS_PREDICTION_NONSENSE = 12
     STATUS_PREDICTION_WEHCAT_SUSPICION = 13
     STATUS_PREDICTION_BLOCK_WORD = 14
     STATUS_PREDICTION_SUSPECT_WATER_ARMY = 15
     STATUS_PREDICTION_NOT_ALLOW = 16
+    STATUS_PREDICTION_SAME_LOGINNAME_IN_SHORTTIME = 17
+    STATUS_PREDICTION_GRAMMARLY = 21
 
     STATUS_MODE_CHINESE = 1
     STATUS_MODE_ENGLISH = 2
@@ -177,18 +180,21 @@ class MainService():
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
             
             # check same room conversation
-            room_texts = self.chat_store.get_texts_by_room(room)
-            reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
+            # room_texts = self.chat_store.get_texts_by_room(room)
+            # reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
+            reason_char = self.chat_store.check_same_room_conversation(text, room)
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
+            if self.pre_filter.check_loginname_shorttime_saying(user):
+                reason_char = 'Speak Too Quickly'
+                prediction = self.STATUS_PREDICTION_SAME_LOGINNAME_IN_SHORTTIME
+                print('reason_char: ', reason_char)
+                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+
             #main ai
-            # _before_ai_time = time.time() - st_time
             prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
-            # _after_ai_time = time.time() - (st_time + _before_ai_time)
-            # if _before_ai_time > 0.3 or _after_ai_time > 0.3:
-            #     logging.info('All before ai predict spend time: {:.2f} | After predict spend time {:.2f}'.format(_before_ai_time, _after_ai_time))
             
             # save message to room store
             if prediction == 0:

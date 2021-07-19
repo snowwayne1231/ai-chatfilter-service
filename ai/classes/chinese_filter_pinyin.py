@@ -552,87 +552,26 @@ class PinYinReverseStateFilter(PinYinFilter):
         Add State Code Reverse To Cover Unknow Prediction to 0
         And Give a New State to return result
     """
-
+    STATE_OF_PASS = 7
     # override
-    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None):
-        if save_folder is not None:
-            self.saved_folder = save_folder
-        
-        if train_data is not None:
-            self.set_data(train_data)
+    def set_data(self, data):
+        if self.check_data_shape(data):
+            # data = [[_ for _ in d] for d in data]
+            self.data = data
+            self.data_length = len(data)
 
-        # return exit(2)
-        batch_data = self.get_train_batchs()
-
-        _length_of_data = self.length_x
-
-        BUFFER_SIZE = _length_of_data
-        BATCH_SIZE = self.full_words_length
-        VALIDATION_SIZE = int(_length_of_data / 8) if _length_of_data > 5000 else int(_length_of_data / 2)
-        TRAIN_SIZE = _length_of_data - VALIDATION_SIZE
-
-        batch_data = batch_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=True)
-
-        if validation_data is None:
-
-            batch_train_data = batch_data.take(TRAIN_SIZE).repeat(epochs)
-            batch_test_data = batch_data.skip(TRAIN_SIZE).take(VALIDATION_SIZE)
+            # self.split_word('TEXT')
+            self.transform_column('TEXT')
 
         else:
-            print('Can Not Give Validation Data.')
-            exit(2)
+            
+            print('Set data failed.')
+            return False
 
-        history = None
-        batch_train_data = batch_train_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[],[]))
-        batch_test_data = batch_test_data.padded_batch(BATCH_SIZE, padded_shapes=([-1],[],[]))
+        return self
 
-        # print(batch_train_data)
-        # for __ in batch_train_data.take(1):
-        #     print(__)
-
-        print('==== batch_train_data ====')
-        print('BUFFER_SIZE :: ', BUFFER_SIZE)
-        print('BATCH_SIZE :: ', BATCH_SIZE)
-        print('TRAIN_SIZE :: ', TRAIN_SIZE)
-        print('VALIDATION_SIZE :: ', VALIDATION_SIZE)
-
-        # exit(2)
-
-        steps = int(TRAIN_SIZE / BATCH_SIZE)
-        vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE / epochs)
-        # print('steps [{}]  val steps [{}]'.format(steps, vaildation_steps))
-
-        try:
-            _start = datetime.now()
-            if stop_hours:
-                _end = _start + timedelta(hours=stop_hours)
-            while True:
-                history = self.model.fit(
-                    batch_train_data,
-                    epochs=epochs,
-                    verbose=verbose,
-                    validation_data=batch_test_data,
-                    steps_per_epoch=steps,
-                    validation_steps=vaildation_steps,
-                )
-                self.save()
-
-                acc = history.history.get('accuracy')[-1]
-                
-                if stop_accuracy:
-                    print('Now Accuracy: {:.4f} / Target Accuracy: {:.4f}'.format(acc, stop_accuracy))
-                    if acc >= stop_accuracy:
-                        break
-                    
-                if stop_hours:
-                    _now = datetime.now()
-                    if _now > _end:
-                        break
-                
-        except KeyboardInterrupt:
-            print('Keyboard pressed. Stop Tranning.')
-        except Exception as err:
-            print('Exception on Fit model.')
-            print(err)
-        
-        return history
+    # override
+    def predictText(self, text):
+        predicted = self.model.predict([text])[0]
+        passible = np.argmax(predicted)
+        return passible

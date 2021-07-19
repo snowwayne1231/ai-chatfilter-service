@@ -141,7 +141,7 @@ class socketTcp(Tcp):
                 if directly_reject:
                     prediction = 99
                 elif prediction is None:
-                    ai_results = self.service_instance.think(message=_msg, room=unpacked_data.roomid)
+                    ai_results = self.service_instance.think(message=_msg, user=unpacked_data.loginname, room=unpacked_data.roomid)
                     prediction = ai_results.get('prediction', None)
             else:
                 logging.error('Parse Failed msgid = {} Txt = {}'.format(unpacked_data.msgid, unpacked_data.msg))

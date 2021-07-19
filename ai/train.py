@@ -15,8 +15,6 @@ from .classes.chinese_filter_grammar import GrammarFilter
 from .classes.english_filter_basic import BasicEnglishFilter
 from .helper import print_spend_time, get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_multiple_version_path, get_pinyin_re_path
 
-STATE_RE_VERSION_PASS = 7
-
 
 
 def get_row_list_by_excel_path(excel_file_path):
@@ -75,7 +73,7 @@ def train_pinyin_by_list(train_data_list, final_accuracy = None, max_spend_time=
 
     if is_re_mode:
 
-        train_data_list = [[_[0], _[1], _[2], _[3] if _[3]>0 else STATE_RE_VERSION_PASS] for _ in train_data_list]
+        # train_data_list = [[_[0], _[1], _[2], _[3] if _[3]>0 else STATE_RE_VERSION_PASS] for _ in train_data_list]
         piny = PinYinReverseStateFilter(load_folder=get_pinyin_re_path())
 
     else:

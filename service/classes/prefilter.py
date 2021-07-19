@@ -1,4 +1,5 @@
 import re
+import time
 
 
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
@@ -23,14 +24,18 @@ allowed_character_regexies = [
 
 
 class PreFilter():
-    temporary_messages = []
-    max_same_room_word = 2
+    """
+    
+    """
+    SECOND_QUICK_SAYING = 5
+    map_loginname_timestamp = {}
+
 
     def __init__(self):
-        self.temporary_messages = []
+        pass
 
-    
-    
+
+
     def find_not_allowed_chat(self, text):
         next_char = ''
 
@@ -188,7 +193,7 @@ class PreFilter():
             '死', '世', '芭', '令', '依', '市', '士', '吧', '伊', '柳', '斯', '珊', '流', '奇', '数', '趴', '灸', '凄', '淋', '耙',
             '两', '留', '耳', '儿', '羚', '鈴', '义', '把', '旧', '帕', '兒', '霸', '韭', '琳', '双', '俩', '爸', '龄', '乙', '以',
             '究', '耀', '拔', '邻', '恶', '而', '姍', '事', '试', '伤', '叄', '澪', '無', '麟', '式', '舅', '臼', '启', '吾', '辆',
-            '无', '撕', '噩',
+            '无', '撕', '噩', '琦', 
         ]
         if chinese:
             return uchar in chineses
@@ -234,44 +239,11 @@ class PreFilter():
         return _text
 
 
-    def check_same_room_conversation(self, _text, _before_room_texts):
-        _num_matched = 0
-
-        english_text = self.replace_only_left_english(_text)
-        if english_text:
-            if len(english_text) >= 4:
-                for _rt in _before_room_texts:
-                    if self.replace_only_left_english(_rt) == english_text:
-                        return 'not allow same English keep typing'
-
-        
-        digital_text = self.replace_only_left_digital(_text)
-        if digital_text and len(digital_text) >= 3:
-            for _rt in _before_room_texts:
-                if len(_rt) < 12:
-                    _before_digital_text = self.replace_only_left_digital(_rt)
-                    if len(_before_digital_text) >= 3:
-                        return 'suspect digital merged wechat number'
-                        
-
-        bankerplayer_text = self.replace_only_left_bankerplayer(_text)
-        if bankerplayer_text:
-            for _rt in _before_room_texts:
-                # if len(_rt) >= 10:
-                #     continue
-                if self.replace_only_left_bankerplayer(_rt):
-                    _num_matched += 1
-                    if _num_matched > self.max_same_room_word:
-                        return 'too many talked on banker and player'
-
-        return ''
-
-
-    def replace_only_left_english(self, _text):
-        return re.sub(r'[^(a-zA-Z)]+', '', _text)
-
-    def replace_only_left_bankerplayer(self, _text):
-        return re.sub(r'[^(莊庄装閒閑闲贤)]+', '', _text)
-
-    def replace_only_left_digital(self, _text):
-        return re.sub(r'[^(0-9)]+', '', _text)
+    def check_loginname_shorttime_saying(self, loginname=''):
+        if loginname:
+            _now = time.time()
+            _before = self.map_loginname_timestamp.get(loginname, 0)
+            self.map_loginname_timestamp[loginname] = _now
+            if _before > 0:
+                return _now - _before < self.SECOND_QUICK_SAYING
+        return False

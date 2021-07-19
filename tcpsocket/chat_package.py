@@ -236,6 +236,7 @@ class ChatWithJSONPackage(BasicStructPackage):
     fmt = '!4i'
     msgid = 0x040000
     roomid = 'none'
+    loginname = ''
     msg = ''
     jsonsize = 0x000000
     jsonstr = ''
@@ -263,6 +264,7 @@ class ChatWithJSONPackage(BasicStructPackage):
             self.json = json.loads(self.jsonstr.strip(), strict=False)
             self.roomid = self.json.get('roomid', 'none')
             self.msg = self.json.get('msg', '')
+            self.loginname = self.json.get('loginname', '')
         except Exception as e:
             afterignorejson = self.jsonbuffer.decode('utf-8', "ignore")
             logging.error('ChatWithJSONPackage :: Unpack Failed (JSON= {},  ignoreJSON= {}, jsonsize= {})'.format(self.jsonstr, afterignorejson, jsonsize))
