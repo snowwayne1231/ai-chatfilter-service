@@ -223,3 +223,6 @@ CACHES = {
 #         'DB': 0,
 #     }
 # }
+
+PINYIN_REVERSE = config.get('MODEL', 'PINYIN_REVERSE')
+

@@ -40,6 +40,7 @@ class PinYinFilter(BasicChineseFilter):
     alphabet_position = 0
 
     should_block_list = []
+    should_block_pinyin_map = {}
     should_block_shap_list = []
     STATUS_SEPCIFY_BLOCK = 8
     
@@ -60,6 +61,7 @@ class PinYinFilter(BasicChineseFilter):
             # print('========', _, ' :: ', _py)
             if _py not in self.should_block_list:
                 self.should_block_list.append(_py)
+                self.should_block_pinyin_map[_py] = _
 
         # print('should_block_list: ', self.should_block_list)
 
@@ -281,7 +283,7 @@ class PinYinFilter(BasicChineseFilter):
         _sbsl = self.should_block_shap_list
         for _w in word_list:
             if _w in _sbl:
-                return _w
+                return self.should_block_pinyin_map.get(_w, _w)
 
         for _ in _sbsl:
             if isinstance(_, list):
@@ -553,10 +555,17 @@ class PinYinReverseStateFilter(PinYinFilter):
         And Give a New State to return result
     """
     STATE_OF_PASS = 7
+    STATE_UNKNOWN_MEANING = 9
     # override
     def set_data(self, data):
         if self.check_data_shape(data):
-            # data = [[_ for _ in d] for d in data]
+            index_status = self.columns.index('STATUS')
+            # _new_data = []
+            _state_of_pass = self.STATE_OF_PASS
+            for d in data:
+                 if d[index_status] == 0:
+                    d[index_status] = _state_of_pass
+
             self.data = data
             self.data_length = len(data)
 
@@ -571,7 +580,42 @@ class PinYinReverseStateFilter(PinYinFilter):
         return self
 
     # override
-    def predictText(self, text):
-        predicted = self.model.predict([text])[0]
-        passible = np.argmax(predicted)
-        return passible
+    def predictText(self, text, lv=0):
+        _words = self.transform(text)
+        if len(_words) == 0:
+            return 0
+        
+        _result_text, _has_unknown = self.get_encode_word(_words)
+
+        if len(self.tmp_encoded_text) >= 3:
+            self.tmp_encoded_text = self.tmp_encoded_text[-2:]
+
+        self.tmp_encoded_text.append([text, _result_text])
+
+        
+        if len(_result_text) == 0:
+            return 0
+        else:
+            _blocked_word = self.find_block_word(_words, text)
+            if _blocked_word:
+                return self.STATUS_SEPCIFY_BLOCK
+        
+        predicted = self.model(np.array([_result_text]))[0]
+        possible = np.argmax(predicted)
+
+        if possible == self.STATE_OF_PASS:
+            return 0
+        elif possible == 0 and lv < self.widen_lv:
+            return self.STATE_UNKNOWN_MEANING
+
+        _lv_disparity = lv - self.widen_lv + 1
+        _ratio_zero = predicted[self.STATE_OF_PASS]
+        _ratio_predict = predicted[possible]
+        if _lv_disparity > 0:
+            _ratio_lv_plus = _lv_disparity * 0.15
+
+            if (_ratio_zero + _ratio_lv_plus) > _ratio_predict:
+                possible = 0
+        return possible
+                
+        

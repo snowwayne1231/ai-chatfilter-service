@@ -1,13 +1,14 @@
 from django.apps import AppConfig
 from tensorflow import keras
-from .helper import get_pinyin_path, get_grammar_path, get_english_model_path
-from .classes.chinese_filter_pinyin import PinYinFilter
+from .helper import get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_re_path
+from .classes.chinese_filter_pinyin import PinYinFilter, PinYinReverseStateFilter
 from .classes.chinese_filter_grammar import GrammarFilter
 from .classes.english_filter_basic import BasicEnglishFilter
 
 import tensorflow as tf
 
 pinyin_model_path = get_pinyin_path()
+pinyin_model_re_path = get_pinyin_re_path()
 grammar_model_path = get_grammar_path()
 english_model_apth = get_english_model_path()
 
@@ -39,11 +40,17 @@ class MainAiApp():
         print('using tensorflow version: ', tf.__version__)
 
 
-    def load_pinyin(self, folder=None):
+    def load_pinyin(self, folder=None, is_version_of_reverse=False):
         _jieba_vocabulary = [_[0] for _ in self.pinyin_data]
         _jieba_freqs = [_[1] for _ in self.pinyin_data]
-        _pinyin_model_path = folder if folder else pinyin_model_path
-        self.pinyin_model = PinYinFilter(load_folder=_pinyin_model_path, jieba_vocabulary=_jieba_vocabulary, unknown_words=[], jieba_freqs=_jieba_freqs)
+        print('is_version_of_reverse: ', is_version_of_reverse)
+        if is_version_of_reverse:
+            _pinyin_model_path = folder if folder else pinyin_model_re_path
+            self.pinyin_model = PinYinReverseStateFilter(load_folder=_pinyin_model_path, jieba_vocabulary=_jieba_vocabulary, unknown_words=[], jieba_freqs=_jieba_freqs)
+        else:
+            _pinyin_model_path = folder if folder else pinyin_model_path
+            self.pinyin_model = PinYinFilter(load_folder=_pinyin_model_path, jieba_vocabulary=_jieba_vocabulary, unknown_words=[], jieba_freqs=_jieba_freqs)
+
         self.loaded_models.append(self.pinyin_model)
         self.loaded_model_names.append('pinyin')
 

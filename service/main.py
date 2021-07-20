@@ -45,6 +45,7 @@ class MainService():
     STATUS_PREDICTION_DIRTY_WORD = 4
     STATUS_PREDICTION_OTHER_AI = 5
     STATUS_PREDICTION_SEPCIFY_BLOCK = 8
+    STATUS_PREDICTION_UNKNOWN_MEANING = 9
     STATUS_PREDICTION_SPECIAL_CHAR = 11
     STATUS_PREDICTION_NONSENSE = 12
     STATUS_PREDICTION_WEHCAT_SUSPICION = 13
@@ -108,11 +109,10 @@ class MainService():
 
         self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english)
         
-
-
         if self.lang_mode == self.STATUS_MODE_CHINESE:
             #
-            self.ai_app.load_pinyin()
+            is_version_of_reverse = int(settings.PINYIN_REVERSE) == 1
+            self.ai_app.load_pinyin(is_version_of_reverse=is_version_of_reverse)
 
             self.ai_app.load_garmmar()
 
