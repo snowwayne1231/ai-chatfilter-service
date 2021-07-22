@@ -51,7 +51,17 @@ class BasicChineseFilter():
         _len_should = len(self.columns)
         _isright = len(data[0]) == _len_should
 
-        if _isright == False:
+        if _isright:
+            _idx_status = self.columns.index('STATUS')
+            _status_map = {}
+            for _ in data:
+                _s = _[_idx_status]
+                if _status_map.get(_s):
+                    _status_map[_s] += 1
+                else:
+                    _status_map[_s] = 1
+            print('status_map: ', _status_map)
+        else:
             print('Dataset length wrong of checking function. ')
             print('Dataset length should be ', _len_should)
             print('But ', len(data[0]))

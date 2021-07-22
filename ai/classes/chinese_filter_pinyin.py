@@ -556,7 +556,7 @@ class PinYinReverseStateFilter(PinYinFilter):
     """
     STATE_OF_PASS = 7
     STATE_UNKNOWN_MEANING = 9
-    PASS_RATIO = 0.9
+    PASS_RATIO = 0.999
     # override
     def set_data(self, data):
         if self.check_data_shape(data):
@@ -605,6 +605,10 @@ class PinYinReverseStateFilter(PinYinFilter):
         possible = np.argmax(predicted)
 
         if possible == self.STATE_OF_PASS and predicted[self.STATE_OF_PASS] > self.PASS_RATIO:
+            _others_ratio = 1 - self.PASS_RATIO
+            for _p in predicted[:self.STATE_OF_PASS]:
+                if _p > _others_ratio:
+                    return self.STATE_UNKNOWN_MEANING
             return 0
         elif possible == 0 and lv <= self.widen_lv:
             return self.STATE_UNKNOWN_MEANING

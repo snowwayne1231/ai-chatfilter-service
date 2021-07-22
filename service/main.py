@@ -57,6 +57,7 @@ class MainService():
 
     STATUS_MODE_CHINESE = 1
     STATUS_MODE_ENGLISH = 2
+    STATUS_MODE_BERT = 3
 
     REMOTE_ROUTE_PINYIN_MODEL = '/api/model/pinyin'
     REMOTE_ROUTE_GARMMAR_MODEL = '/api/model/grammar'
@@ -84,12 +85,15 @@ class MainService():
 
     def init_language(self):
         _setting = settings.LANGUAGE_MODE
+        logging.info('Service Main Language [ {} ]'.format(_setting))
         if _setting == 'EN':
             self.lang_mode = self.STATUS_MODE_ENGLISH
-        else:
+        elif _setting == 'CH' or _setting == 'ZH':
             self.lang_mode = self.STATUS_MODE_CHINESE
-
-        logging.info('Service Main Language [{}]'.format(_setting))
+        elif _setting == 'BERT':
+            self.lang_mode = self.STATUS_MODE_BERT
+        else:
+            raise Exception('No Specify Right Language')
 
 
     def open_mind(self):
@@ -119,6 +123,10 @@ class MainService():
         elif self.lang_mode == self.STATUS_MODE_ENGLISH:
             #
             self.ai_app.load_english()
+
+        elif self.lang_mode == self.STATUS_MODE_BERT:
+            
+            self.ai_app.load_bert()
 
         else:
 

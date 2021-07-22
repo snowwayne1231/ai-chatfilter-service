@@ -69,6 +69,13 @@ class MainAiApp():
         self.english_model = BasicEnglishFilter(load_folder=_english_model_apth, english_vocabulary=_english_vocabulary)
         self.loaded_models.append(self.english_model)
         self.loaded_model_names.append('english')
+
+
+    def load_bert(self, folder=None):
+        # _path = folder if folder else model_apth
+        model = None
+        self.loaded_models.append(model)
+        self.loaded_model_names.append('bert')
     
 
     def predict(self, txt, lv=0, with_reason=False):
