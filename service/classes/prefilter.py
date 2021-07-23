@@ -7,7 +7,7 @@ regex_korea = re.compile('[\uac00-\ud7a3]+')
 # single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ', '〇']
 allowed_character_regexies = [
     (u'\u0020', u'\u0082'), # general english, digits and symbol
-    (u'\u23e9', u'\u23f9'), # symbol
+    # (u'\u23e9', u'\u23f9'), # symbol
     # (u'\u26bd', u'\u270d'), # symbol
     (u'\u3001', u'\u3002'), # dot symbol
     # (u'\u3105', u'\u3129'), # zuyin
@@ -164,6 +164,14 @@ class PreFilter():
         return ''
 
 
+    def find_suspect_digits_symbol(self, text):
+        regex = r'[\（\）\！\!\(\)\d]'
+        searched = re.findall(regex, text)
+        if searched and len(searched) > 3:
+            return ''.join(searched)
+        return ''
+
+
 
     def is_chinese(self, uchar):
         return (uchar >= u'\u4e00' and uchar <= u'\u9fa5') or (uchar >= u'\uf970' and uchar <= u'\ufa6d')
@@ -193,7 +201,7 @@ class PreFilter():
             '死', '世', '芭', '令', '依', '市', '士', '吧', '伊', '柳', '斯', '珊', '流', '奇', '数', '趴', '灸', '凄', '淋', '耙',
             '两', '留', '耳', '儿', '羚', '鈴', '义', '把', '旧', '帕', '兒', '霸', '韭', '琳', '双', '俩', '爸', '龄', '乙', '以',
             '究', '耀', '拔', '邻', '恶', '而', '姍', '事', '试', '伤', '叄', '澪', '無', '麟', '式', '舅', '臼', '启', '吾', '辆',
-            '无', '撕', '噩', '琦', '琪', '洞', '亿', '柿',
+            '无', '撕', '噩', '琦', '琪', '洞', '亿', '柿', '侍', '丸', '琉', '厄',
         ]
         if chinese:
             return uchar in chineses

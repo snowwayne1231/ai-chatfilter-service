@@ -280,18 +280,29 @@ class MainService():
 
     def find_prefilter_reject_reason_with_nonparsed_msg(self, msg):
         # print('find_prefilter_reject_reason_with_nonparsed_msg: ', msg)
-        reason_char = self.pre_filter.find_not_allowed_chat(msg)
-        if reason_char:
-            return reason_char
-        reason_char = self.pre_filter.find_korea_mixed(msg)
-        if reason_char:
-            return reason_char
-        reason_char = self.pre_filter.find_emoji_word_mixed(msg)
-        if reason_char:
-            return reason_char
-        reason_char = self.pre_filter.find_unallow_eng(msg)
-        if reason_char:
-            return reason_char
+        methods = [
+            self.pre_filter.find_suspect_digits_symbol,
+            self.pre_filter.find_not_allowed_chat,
+            self.pre_filter.find_korea_mixed,
+            self.pre_filter.find_emoji_word_mixed,
+            self.pre_filter.find_unallow_eng,
+        ]
+        for m in methods:
+            r = m(msg)
+            if r:
+                return r
+        # reason_char = self.pre_filter.find_not_allowed_chat(msg)
+        # if reason_char:
+        #     return reason_char
+        # reason_char = self.pre_filter.find_korea_mixed(msg)
+        # if reason_char:
+        #     return reason_char
+        # reason_char = self.pre_filter.find_emoji_word_mixed(msg)
+        # if reason_char:
+        #     return reason_char
+        # reason_char = self.pre_filter.find_unallow_eng(msg)
+        # if reason_char:
+        #     return reason_char
 
         return False
     
