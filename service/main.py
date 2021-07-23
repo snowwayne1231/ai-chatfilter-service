@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from http.client import HTTPConnection
 from ai.apps import MainAiApp
 from ai.service_impact import get_all_vocabulary_from_models
-from ai.helper import get_pinyin_path, get_grammar_path, get_english_model_path, get_vocabulary_dictionary_path
+from ai.helper import get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_re_path, get_vocabulary_dictionary_path
 from dataparser.apps import MessageParser, EnglishParser
 from dataparser.classes.store import ListPickle
 
@@ -557,7 +557,8 @@ class MainService():
             if _http_res.status == 200:
 
                 # _save_file_by_http_response(response=_http_res, path=get_pinyin_path()+'/model.h5')
-                _save_file_by_http_response(response=_http_res, path=get_pinyin_path()+'/model.remote.h5')
+                _chinese_model_path = get_pinyin_re_path() if int(settings.PINYIN_REVERSE) == 1 else get_pinyin_path()
+                _save_file_by_http_response(response=_http_res, path=_chinese_model_path+'/model.remote.h5')
                 logging.info('[fetch_ai_model_data] Download Remote Pinyin Model Done.')
 
             else:
