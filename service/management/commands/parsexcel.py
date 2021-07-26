@@ -87,6 +87,8 @@ class Command(BaseCommand):
             for _data in _excel_data:
                 weight = int(_data[1]) if _data[1] else 1
                 msg = _data[2]
+                if not msg:
+                    continue
                 status = int(_data[3])
                 is_deleted = status > 0 if status else False
                 text, lv, anchor = _message_parser.parse(msg)
