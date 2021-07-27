@@ -264,7 +264,7 @@ class MessageParser():
 
 
         text = self.regex_bracket_digits.sub("", text)
-        text = self.trim_only_general_and_chinese(text)
+        # text = self.trim_only_general_and_chinese(text)
         
         # print(text, lv, anchor)
 

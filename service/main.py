@@ -145,6 +145,10 @@ class MainService():
         return _, lv, ac
 
 
+    def trim_text(self, text):
+        return self.message_parser.trim_only_general_and_chinese(text)
+
+
     def think(self, message, user = '', room = '', silence=False, detail=False):
         st_time = time.time()
         if not self.is_open_mind:
@@ -158,14 +162,18 @@ class MainService():
 
         if message:
 
+            text, lv, anchor = self.parse_message(message)
+            # print('message: ', message)
+            # print('text: ', text)
+
             # check if mix some unknown message
-            reason_char = self.find_prefilter_reject_reason_with_nonparsed_msg(message)
+            reason_char = self.find_prefilter_reject_reason_with_nonparsed_msg(text)
             if reason_char:
                 prediction = self.STATUS_PREDICTION_NOT_ALLOW
                 return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
-            # parse
-            text, lv, anchor = self.parse_message(message)
+            # parse to general text
+            text = self.trim_text(text)
 
             # is not general player
             if anchor > 0 or len(text) == 0 or lv >= self.service_avoid_filter_lv:
