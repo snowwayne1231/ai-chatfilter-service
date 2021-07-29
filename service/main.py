@@ -156,15 +156,15 @@ class MainService():
             return self.return_reslut(0, message=message, st_time=st_time)
         
         text = ''
+        lv = 0
+        anchor = 0
         reason_char = ''
         prediction = 0
         # print('receive message :', message)
-
         if message:
-
             text, lv, anchor = self.parse_message(message)
-            # print('message: ', message)
-            # print('text: ', text)
+
+        if text:
 
             # check if mix some unknown message
             reason_char = self.find_prefilter_reject_reason_with_nonparsed_msg(text)
