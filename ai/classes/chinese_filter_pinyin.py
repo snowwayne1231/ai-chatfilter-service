@@ -24,7 +24,6 @@ class PinYinFilter(BasicChineseFilter):
     digital_vocabulary_map = {}
     tokenizer_vocabularies = []
     english_vocabularies = []
-    num_status_classs = 8
     full_vocab_size = 65536
     jieba_dict = None
     english_parser = None
@@ -98,12 +97,7 @@ class PinYinFilter(BasicChineseFilter):
                 if _uw not in self.unknown_words:
                     self.unknown_words.append(_uw)
                     self.unknown_words_new_full_message.append([_uw, _string])
-                    # _new = NewVocabulary(pinyin=_uw, text=_string[:64])
-                    # _new.save()
-                    # print('_string: ', _string)
-                    # print("Pinyin Filter: transform_str [] unknown word found: ", _uw, ' | ', _string)
-        # print(_pinyin)
-        # print(words)
+                    
         return words
 
 
@@ -115,36 +109,6 @@ class PinYinFilter(BasicChineseFilter):
             return [self.transform_back_str(_) for _ in _encoded]
         else:
             return _encoded
-
-
-    # override
-    def build_model(self):
-        full_words_length = self.full_words_length
-        all_scs = self.num_status_classs
-
-        model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length, mask_zero=True))
-        # model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
-        # model.add(tf.keras.layers.GlobalAveragePooling1D())
-        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
-        # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
-        model.add(tf.keras.layers.Dense(all_scs, activation=tf.nn.softmax))
-
-        model.summary()
-        
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001, amsgrad=True)
-
-        model.compile(
-            optimizer=optimizer,
-            loss='sparse_categorical_crossentropy',
-            metrics=['accuracy'],
-        )
-
-        self.model = model
-
-        return self
 
 
     # override
@@ -309,22 +273,22 @@ class PinYinFilter(BasicChineseFilter):
         if len(_words) == 0:
             return 0
         
+        # check static block word list
+        _blocked_word = self.find_block_word(_words, text)
+        if _blocked_word:
+            return self.STATUS_SEPCIFY_BLOCK
+        
         _result_text, _has_unknown = self.get_encode_word(_words)
 
-        if len(self.tmp_encoded_text) >= 3:
-            self.tmp_encoded_text = self.tmp_encoded_text[-2:]
-
-        self.tmp_encoded_text.append([text, _result_text])
-
-        
         if len(_result_text) == 0:
             return 0
-        else:
-            _blocked_word = self.find_block_word(_words, text)
-            if _blocked_word:
-                return self.STATUS_SEPCIFY_BLOCK
-        # _first_now = datetime.now()
-        # predicted = self.model.predict([_result_text])[0]
+
+        # save to tmp do not need reencode when get details
+        if len(self.tmp_encoded_text) >= 3:
+            self.tmp_encoded_text = self.tmp_encoded_text[-2:]
+        self.tmp_encoded_text.append([text, _result_text])
+
+           
         predicted = self.model(np.array([_result_text]))[0]
         # print('predicted: ', predicted)
 
@@ -616,6 +580,7 @@ class PinYinReverseStateFilter(PinYinFilter):
         _lv_disparity = lv - self.widen_lv + 1
         _ratio_zero = predicted[self.STATE_OF_PASS]
         _ratio_predict = predicted[possible]
+
         if _lv_disparity > 0:
             _ratio_lv_plus = _lv_disparity * 0.15
 

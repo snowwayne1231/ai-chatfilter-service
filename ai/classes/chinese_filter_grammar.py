@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .chinese_filter_basic import BasicChineseFilter
+from .basic_filter import BasicFilter
 
 import tensorflow as tf
 import os, re
@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 
 
-class GrammarFilter(BasicChineseFilter):
+class GrammarFilter(BasicFilter):
     """
     """
 
@@ -29,9 +29,9 @@ class GrammarFilter(BasicChineseFilter):
     CODE_DELETED = 21
 
     status_classsets = 2
-    full_words_length = 64
 
     basic_num_dataset = 5000
+    avoid_lv = 3
     
 
     # override return list
