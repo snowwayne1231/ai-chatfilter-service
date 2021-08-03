@@ -173,10 +173,10 @@ class MainService():
                 return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             # parse to general text
-            text = self.trim_text(text)
+            trimed_text = self.trim_text(text)
 
             # is not general player
-            if anchor > 0 or len(text) == 0 or lv >= self.service_avoid_filter_lv:
+            if anchor > 0 or len(trimed_text) == 0 or lv >= self.service_avoid_filter_lv:
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
 
@@ -198,28 +198,28 @@ class MainService():
             # check same room conversation
             # room_texts = self.chat_store.get_texts_by_room(room)
             # reason_char = self.pre_filter.check_same_room_conversation(text, room_texts)
-            reason_char = self.chat_store.check_same_room_conversation(text, room)
+            reason_char = self.chat_store.check_same_room_conversation(trimed_text, room)
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
-                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             if self.pre_filter.check_loginname_shorttime_saying(user):
                 reason_char = 'Speak Too Quickly'
                 prediction = self.STATUS_PREDICTION_SAME_LOGINNAME_IN_SHORTTIME
-                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             #main ai
-            prediction, reason_char = self.ai_app.predict(text, lv=lv, with_reason=self.is_admin_server)
+            prediction, reason_char = self.ai_app.predict(trimed_text, lv=lv, with_reason=self.is_admin_server)
             
             # save message to room store
             if prediction == 0:
                 self.store_temporary_text(
-                    text=text,
+                    text=trimed_text,
                     user=user,
                     room=room,
                 )
 
-            return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+            return self.return_reslut(prediction, message=message, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
                 
         else:
 
