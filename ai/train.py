@@ -35,9 +35,11 @@ def get_row_list_by_excel_path(excel_file_path):
 
 
 
-def get_row_list_by_json_path(json_file_path):
+def get_row_list_by_json_path(json_file_path, allowed_weight=0):
     _jp = JsonParser(file=json_file_path)
     data_list = _jp.load()
+    if allowed_weight > 0:
+        data_list = [_ for _ in data_list if _[1] >= allowed_weight]
     return data_list
 
 
@@ -61,8 +63,8 @@ def train_pinyin_by_excel_path(excel_file_path = None, final_accuracy = None, ma
 
 
 
-def train_pinyin_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0, is_re_mode=False):
-    result_list = get_row_list_by_json_path(json_file_path)
+def train_pinyin_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0 ,allowed_weight=0 , is_re_mode=False):
+    result_list = get_row_list_by_json_path(json_file_path, allowed_weight=allowed_weight)
     train_pinyin_by_list(result_list, final_accuracy, max_spend_time, is_re_mode)
 
 
@@ -100,8 +102,8 @@ def train_grammar_by_excel_path(excel_file_path = None, final_accuracy = None, m
 
 
 
-def train_grammar_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0):
-    result_list = get_row_list_by_json_path(json_file_path)
+def train_grammar_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0 ,allowed_weight=0):
+    result_list = get_row_list_by_json_path(json_file_path, allowed_weight=allowed_weight)
     train_grammar_by_list(result_list, final_accuracy, max_spend_time)
 
 
@@ -122,8 +124,8 @@ def train_grammar_by_list(train_data_list = None, final_accuracy = None, max_spe
 
 
 
-def train_english_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0):
-    result_list = get_row_list_by_json_path(json_file_path)
+def train_english_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0 ,allowed_weight=0):
+    result_list = get_row_list_by_json_path(json_file_path, allowed_weight=allowed_weight)
     train_english_by_list(result_list, final_accuracy, max_spend_time)
 
 

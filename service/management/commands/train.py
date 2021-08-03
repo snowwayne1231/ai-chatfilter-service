@@ -30,6 +30,10 @@ class Command(BaseCommand):
             '-vre', dest='version_of_re', required=False, action='store_true',
             help='whether version of mode is RE.',
         )
+        parser.add_argument(
+            '-weight', dest='allowed_weight', required=False, type=int,
+            help='data filter for weight.',
+        )
 
 
     def handle(self, *args, **options):
@@ -39,6 +43,7 @@ class Command(BaseCommand):
         english_mode = options.get('english_mode', False)
         pinyin_re_mode = options.get('version_of_re', False)
         max_spend_time = options.get('time', 0)
+        allowed_weight = options.get('allowed_weight', 0)
     
         self.stdout.write('Handle AI training... ')
 
@@ -46,13 +51,13 @@ class Command(BaseCommand):
             full_file_path = os.getcwd() + '/' + path
             self.stdout.write('Full input excel path: ' + full_file_path)
             if grammar_mode:
-                train_grammar_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
+                train_grammar_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, allowed_weight=allowed_weight)
             elif english_mode:
-                train_english_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
+                train_english_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, allowed_weight=allowed_weight)
             elif pinyin_re_mode:
-                train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, is_re_mode=True)
+                train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, allowed_weight=allowed_weight, is_re_mode=True)
             else:
-                train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time)
+                train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, allowed_weight=allowed_weight)
         else:
             print('No File Path Input.')
         
