@@ -7,6 +7,7 @@ from dataparser.jsonparser import JsonParser
 from dataparser.apps import JieBaDictionary
 from ai.classes.translator_pinyin import translate_by_string
 from ai.models import SoundVocabulary
+from ai.service_impact import get_all_vocabulary_from_models
 
 import os, time
 

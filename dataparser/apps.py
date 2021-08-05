@@ -3,10 +3,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from django.apps import AppConfig
 
 from datetime import datetime
+
+from numpy.core.fromnumeric import product
 from .classes.map_hex import mapHexes
 from .models import CustomDictionaryWord
 from service.models import Blockword
-from ai.service_impact import get_all_vocabulary_from_models
 from ai.models import SoundVocabulary, NewVocabulary, DigitalVocabulary, Vocabulary, Language
 from ai.classes.translator_pinyin import translate_by_string
 
@@ -334,7 +335,7 @@ class JieBaDictionary():
     freq_additional = 750
 
 
-    def __init__(self, vocabulary=[], freqs=[], appended_vocabulary=[]):
+    def __init__(self, vocabulary=[], freqs=[]):
         self.origin_vocabulary = [self.pad_character, self.unknown_character, self.number_character, self.alphabet_character, self.reserve_character]
         jieba.re_eng = self.re_eng
         jieba.initialize(dictionary=self.folder + '/assets/jieba.txt')
@@ -342,20 +343,12 @@ class JieBaDictionary():
         if not os.path.isdir(self.pickle_folder):
             os.mkdir(self.pickle_folder)
 
-        if len(vocabulary) == 0:
-            self.refresh_dictionary(appended_vocabulary=appended_vocabulary)
-        else:
-            for _av in appended_vocabulary:
-                if _av in vocabulary:
-                    _idx = vocabulary.index(_av)
-                    freqs[_idx] = self.freq_additional
-                else:
-                    vocabulary.append(_av)
-                    freqs.append(self.freq_additional)
-
+        if len(freqs) > 0:
+            assert len(freqs) == len(vocabulary)
             self.load_vocabularies(vocabulary=vocabulary, freqs=freqs)
             self.save_vocabularies()
-        
+        else:
+            self.load_vocabularies(vocabulary=vocabulary)
         
         print('JieBaDictionary Initial Done.')
 
@@ -380,7 +373,6 @@ class JieBaDictionary():
                     if __[:-1].isdigit():
                         # print('[split_word] [isdigit] number_character __: ', __)
                         _none_tone_words = self.get_none_tone_word(__)
-                        # print('[split_word] [isdigit] _none_tone_words: ', _none_tone_words)
                         if _none_tone_words:
                             results += _none_tone_words
                         else:
@@ -391,7 +383,6 @@ class JieBaDictionary():
                     _none_tone_words = self.get_none_tone_word(__)
                     # print('[split_word] _none_tone_words: ', _none_tone_words)
                     if _none_tone_words:
-                        # print('_none_tone_words: {},  origin: {}'.format(_none_tone_words, __))
                         results += _none_tone_words
                     else:
                         if __.count(self.split_character) > 1:
@@ -583,45 +574,19 @@ class JieBaDictionary():
         return route_list
 
 
-    def refresh_dictionary(self, appended_vocabulary):
-        print('JieBaDictionary: Start Refresh Dictionary Observed Data Source By Database.')
-        _older_v_size = len(self.vocabularies)
-
-        vocabulary_data = get_all_vocabulary_from_models(english=False)
-        pinyin_data = vocabulary_data['pinyin']
-
-        _total = len(pinyin_data)
-        _i = 0
-
-        for pdata in pinyin_data:
-            _pinyin_txt = pdata[0]
-            _freq = pdata[1]
-            self.add_word(_pinyin_txt, freq=_freq)
-
-            if _i % 500 == 0:
-                _percent = _i / _total * 100
-                print(' {:.2f}%'.format(_percent), end="\r")
-            _i += 1
-
-
+    def append_vocabularies(self, appended_vocabulary):
         for _av in appended_vocabulary:
             self.add_word(_av, freq=self.freq_additional)
 
-
-        if len(self.vocabularies) > _older_v_size:
-            self.save_vocabularies()
-            print('Refreshed Vocabulary Last 10: ', self.vocabularies[-10:])
-        
         print('FREQ Length: ', len(jieba.dt.FREQ), ', Vocabulary Length: ', len(self.vocabularies))
-        # print(len(self.none_tone_map))
-
-        return self
 
 
     def add_word(self, word, freq = None):
         if self.is_allowed_word(word):
             _is_new_word = self.is_new_word(word)
-            _freq = int(freq) if freq else 1
+            _freq = int(freq) if freq else 0
+            if _freq < 0:
+                _freq = self.freq_additional
             
             if _is_new_word:
                 
@@ -791,26 +756,27 @@ class JieBaDictionary():
     
     def load_vocabularies(self, vocabulary=None, freqs=None):
         _list = []
+        _freqs = freqs
         if isinstance(vocabulary, list) and len(vocabulary) >0:
             _list = vocabulary
-            _freqs = freqs
 
-            if len(_list) != len(_freqs):
-                print('[ERROR][JieBaDictionary][load_vocabularies] Wrong Length Between Vocabulary and Freqs. v: {} , f: {}'.format(len(_list), len(_freqs)))
+            if _freqs and len(_list) == len(_freqs):
+                print('===========[load_vocabularies] by Vocabulary Data: ', vocabulary[-10:], _freqs[-10:] ,' Length: ', len(vocabulary), flush=True)
             else:
-                print('===========[load_vocabularies] by Vocabulary Data: ', vocabulary[-10:], len(vocabulary), _freqs[-10:], flush=True)
+                _freqs = [2 for _ in _list]
 
         else:
 
-            print('[ERROR][JieBaDictionary][load_vocabularies] Failed.')
+            with open(self.pickle_folder + '/tokenizer_vocabularies.pickle', 'rb') as handle:
+                _pickled = pickle.load(handle, protocol=pickle.HIGHEST_PROTOCOL)
+                _list = _pickled[0]
+                _freqs = _pickled[1]
         
 
         for _idx, _ in enumerate(_list):
             # self.add_word(_, freq=_freq)
             _freq = _freqs[_idx]
             self.add_word(_, freq=_freq)
-        
-        # self.vocabularies = _list
 
 
     def save_vocabularies(self):

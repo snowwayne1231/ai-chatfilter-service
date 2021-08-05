@@ -44,6 +44,7 @@ class Command(BaseCommand):
         pinyin_re_mode = options.get('version_of_re', False)
         max_spend_time = options.get('time', 0)
         allowed_weight = options.get('allowed_weight', 0)
+        print('allowed_weight: ', allowed_weight)
     
         self.stdout.write('Handle AI training... ')
 

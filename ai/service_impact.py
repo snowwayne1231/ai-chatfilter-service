@@ -23,11 +23,6 @@ def get_all_vocabulary_from_models(pinyin=True, english=True):
 
     if pinyin:
 
-        # if _i % 500 == 0:
-        #     _percent = _i / _total * 100
-        #     print(' {:.2f}%'.format(_percent), end="\r")
-        # _i += 1
-
         sound_vocabularies = SoundVocabulary.objects.filter(status=1)
 
         for sv in sound_vocabularies:

@@ -38,7 +38,7 @@ def get_row_list_by_excel_path(excel_file_path):
 def get_row_list_by_json_path(json_file_path, allowed_weight=0):
     _jp = JsonParser(file=json_file_path)
     data_list = _jp.load()
-    if allowed_weight > 0:
+    if allowed_weight and allowed_weight > 0:
         data_list = [_ for _ in data_list if _[1] >= allowed_weight]
     return data_list
 
