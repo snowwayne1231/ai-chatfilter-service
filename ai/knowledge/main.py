@@ -114,6 +114,8 @@ class KnowledgeCenter():
                             _v.part.add(code)
             
                 vocabulary_set.update({word})
+            else:
+                _v = False
             
             # sound
 
@@ -131,11 +133,13 @@ class KnowledgeCenter():
                         break
                 
                 if _not_duplicate:
-                    sv_instance.vocabulary.add(_v)
-                    _new_freq = max(_v.freq, freq)
-                    sv_instance.freq = _new_freq
+                    if _v:
+                        sv_instance.vocabulary.add(_v)
+                        _new_freq = max(_v.freq, freq)
+                        sv_instance.freq = _new_freq
+                    else:
+                        sv_instance.freq = 5
                     sv_instance.save()
-
             else:
 
                 new_sv = SoundVocabulary(pinyin=word_pinyin, freq=freq)
