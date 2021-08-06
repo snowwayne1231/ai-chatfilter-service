@@ -80,8 +80,10 @@ class PreFilter():
     def find_wechat_char(self, text, lowercase_only = True):
         number_size = 0
         eng_size = 0
-        qk_size = 0
         next_char = ''
+        _idx = 0
+        _last_number_idx = 0
+        _dobule_scored_number_range = 3
         _text_ = text.replace(' ', '')
         _has_wv = False
         
@@ -91,10 +93,17 @@ class PreFilter():
             return ''
     
         for u in _text_:
+            _idx += 1
             if self.is_number(u):
                 if '0' in next_char and u == '0':
                     continue
-                number_size += 1 if u < u'\u0039' else 2 if len(next_char)==0 else 3
+                _number_scored = 1
+                if number_size > 0 and (_idx - _last_number_idx) <= _dobule_scored_number_range:
+                    _number_scored += 1
+                    if u > u'\u0039':
+                        _number_scored += 1
+                number_size += _number_scored
+                _last_number_idx = _idx
             elif self.is_english(u):
                 eng_size += 1
                 if u in 'vVwW':

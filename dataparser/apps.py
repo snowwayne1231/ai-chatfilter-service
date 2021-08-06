@@ -370,20 +370,23 @@ class JieBaDictionary():
                 if _buf:
                     __ = _buf + _
                     _buf = ''
-                    if __[:-1].isdigit():
-                        # print('[split_word] [isdigit] number_character __: ', __)
-                        _none_tone_words = self.get_none_tone_word(__)
-                        if _none_tone_words:
-                            results += _none_tone_words
-                        else:
-                            results.append(self.number_character)
-                        
-                        continue
-
                     _none_tone_words = self.get_none_tone_word(__)
+
+                    # if __[:-1].isdigit():
+                    #     if _none_tone_words:
+                    #         results += _none_tone_words
+                    #     else:
+                    #         results.append(self.number_character)
+                        
+                    #     continue
+                    
                     # print('[split_word] _none_tone_words: ', _none_tone_words)
                     if _none_tone_words:
                         results += _none_tone_words
+                    
+                    elif __[:-1].isdigit():
+                        results.append(self.number_character)
+
                     else:
                         if __.count(self.split_character) > 1:
                             __words = __.split(self.split_character)
@@ -392,6 +395,8 @@ class JieBaDictionary():
                                 if _word:
                                     if _map.get(_word, None):
                                         results.append(_word+self.split_character)
+                                    elif _word.isdigit():
+                                        results.append(self.number_character)
                                     else:
                                         results.append(self.unknown_character)
                                         unknowns.append(_word+self.split_character)

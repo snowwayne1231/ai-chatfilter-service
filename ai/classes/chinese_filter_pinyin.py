@@ -47,6 +47,8 @@ class PinYinFilter(BasicChineseFilter):
             if _py not in self.should_block_list:
                 self.should_block_list.append(_py)
                 self.should_block_pinyin_map[_py] = _
+            else:
+                print('double _ : {}  _py : {}'.format(_, _py))
 
         # print('should_block_list: ', self.should_block_list)
 

@@ -14,7 +14,9 @@ def get_all_vocabulary_from_models(pinyin=True, english=True):
             _text = v.context
             _freq = v.freq
             _englishs.append([_text, _freq])
-    
+
+        _englishs = sorted(_englishs, key=lambda _:_[0])
+
     # cdw_list = CustomDictionaryWord.objects.all()
     # for cdw in cdw_list:
     #     _cdw_pinyin = cdw.pinyin
@@ -38,6 +40,8 @@ def get_all_vocabulary_from_models(pinyin=True, english=True):
             _freq = 5
             _pinyins.append([digit, _freq])
             _pinyins.append([dv_pinyin, _freq])
+
+        _pinyins = sorted(_pinyins, key=lambda _:_[0])
 
 
     return {
