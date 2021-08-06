@@ -33,8 +33,22 @@ class Command(BaseCommand):
         _jp.load()
         data_list = _jp.get_data_only_text()
         trasnlated_list = [translate_by_string(_) for _ in data_list]
+
+
+        vocabulary_data = get_all_vocabulary_from_models()
+        jieba_vocabulary = []
+        jieba_freqs = []
+        pinyin_data = vocabulary_data['pinyin']
+        english_data = vocabulary_data['english']
+        for pdata in pinyin_data:
+            jieba_vocabulary.append(pdata[0])
+            jieba_freqs.append(pdata[1])
+        for edata in english_data:
+            jieba_vocabulary.append(edata[0])
+            jieba_freqs.append(edata[1])
     
-        _jbd = JieBaDictionary()
+        _jbd = JieBaDictionary(jieba_vocabulary, jieba_freqs)
+
 
         word_map = {}
 
@@ -53,8 +67,8 @@ class Command(BaseCommand):
         # print('word_map: ', word_map)
 
         result_list = sorted(word_map.items(), key=lambda x:x[1], reverse=True)
-
-        # print(result_list)
+        print('Top 10 Results: ')
+        print(result_list[:10])
 
         # new_json = JsonParser(file=os.path.dirname(json_file_path) + '/output.freq.json')
         # new_json.save(result_list)

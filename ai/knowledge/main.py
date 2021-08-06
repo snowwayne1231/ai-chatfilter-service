@@ -85,43 +85,35 @@ class KnowledgeCenter():
             # if word[0] < '\u4e00' or word[-1] < '\u4e00':
                 # continue # is not chinese word
 
-            if word in vocabulary_set:
-                # print('Duplicate word: ', word)
-                # _too_many_dup += 1
-                # if _too_many_dup > 10:
-                #     print('Too Many Duplicate Words Then Stop Upserting.')
-                #     return self
-                continue # already in database
-            # _too_many_dup = 0
+            if word not in vocabulary_set:
+                # insert
+                meaning = _[1]
+                if meaning:
+                    rex_search = re.search(self.dot_pattern, meaning)
+                    if rex_search:
+                        pos = rex_search.start()
+                        if pos > 0:
+                            meaning = meaning[:pos]
+
+
+                _v = Vocabulary(
+                    context=word,
+                    meaning=meaning,
+                    language=lan_code,
+                    freq=freq,
+                )
+                _v.save()
+
+                speech_code = _[2]
+                if speech_code:
+                    speech_codes = speech_code.split(',')
+                    for sc in speech_codes:
+                        sc = sc.strip().upper()
+                        code = part_map.get(sc, None)
+                        if code:
+                            _v.part.add(code)
             
-            # insert
-            meaning = _[1]
-            if meaning:
-                rex_search = re.search(self.dot_pattern, meaning)
-                if rex_search:
-                    pos = rex_search.start()
-                    if pos > 0:
-                        meaning = meaning[:pos]
-
-
-            _v = Vocabulary(
-                context=word,
-                meaning=meaning,
-                language=lan_code,
-                freq=freq,
-            )
-            _v.save()
-
-            speech_code = _[2]
-            if speech_code:
-                speech_codes = speech_code.split(',')
-                for sc in speech_codes:
-                    sc = sc.strip().upper()
-                    code = part_map.get(sc, None)
-                    if code:
-                        _v.part.add(code)
-            
-            vocabulary_set.update({word})
+                vocabulary_set.update({word})
             
             # sound
 

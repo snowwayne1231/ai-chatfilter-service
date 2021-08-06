@@ -66,9 +66,10 @@ class JsonParser():
     
     def get_data_only_text(self):
         # general json text position at 4
+        _TEXT_INDEX = 2
         if self.data:
             if type(self.data[0]) is list:
-                return [_[4] for _ in self.data]
+                return [_[_TEXT_INDEX] for _ in self.data]
             else:
                 return self.data
         else:
