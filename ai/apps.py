@@ -83,13 +83,9 @@ class MainAiApp():
         reason = ''
 
         for model in self.loaded_models:
-            _predict = model.predictText(txt, lv)
+            _predict, reason = model.predictText(txt, lv, with_reason=with_reason)
             if _predict > 0:
                 prediction = _predict
-                if with_reason:
-                    reason = model.get_reason(txt, _predict)
-                    if not reason:
-                        reason = txt
                 break
 
         return prediction, reason

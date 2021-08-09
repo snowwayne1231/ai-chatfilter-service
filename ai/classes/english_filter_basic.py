@@ -384,8 +384,6 @@ class BasicEnglishFilter(BasicChineseFilter):
             return 0
 
         _texts = self.get_encode_word(_words)[0]
-
-        # print('predictText  _words : ', _words, _words.shape)
         
         predicted = self.model.predict(np.array([_texts]))[0]
 
@@ -399,7 +397,9 @@ class BasicEnglishFilter(BasicChineseFilter):
     
 
     # override
-    def predictText(self, text, lv = 0):
+    def predictText(self, text, lv=0, with_reason=False):
+        reason = ''
+        passible = 0
         
         if lv < self.avoid_lv:
 
@@ -409,22 +409,14 @@ class BasicEnglishFilter(BasicChineseFilter):
                 return 0
 
             _words = self.get_encode_word(_words)[0]
-
-            # print('predictText  _words : ', _words)
             
             predicted = self.model.predict(np.array([_words]))[0]
             passible = np.argmax(predicted)
-        
-        else:
 
-            passible = 0
+        if passible > 0 and with_reason:
+            reason = 'Deleted by English filter.'
 
-        return passible
-
-    
-    # override
-    def get_reason(self, text, prediction):
-        return 'Deleted by English filter.'
+        return passible, reason
 
 
     def get_vocabulary(self, pure = False):

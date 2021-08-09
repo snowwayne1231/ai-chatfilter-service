@@ -354,16 +354,11 @@ class BasicFilter():
         return dataset
 
 
-    def predictText(self, text):
+    def predictText(self, text, lv=0, with_reason=False):
         predicted = self.model.predict([text])[0]
-        passible = np.argmax(predicted)
-        return passible
-
-
-
-    def get_reason(self, text, prediction):
         reason = ''
-        return reason
+        passible = np.argmax(predicted)
+        return passible, reason
 
 
     

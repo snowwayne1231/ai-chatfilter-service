@@ -8,7 +8,6 @@ import re
 import json
 import pickle
 
-
 class JsonParser():
     """
         get_row_list (column=[], limit=0)

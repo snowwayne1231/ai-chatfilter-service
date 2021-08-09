@@ -56,12 +56,17 @@ class Command(BaseCommand):
                 if _j_idx % 100 ==0:
                     print('Handle Old Json.. [ {:.1%} ]'.format(_j_idx / _length_json), end='\r')
                 _length_oj = len(_oj)
-                if _oj[1] == 1 and _length_oj == 4:
+                
+                status = int(_oj[3])
+                if status == 5:
+                    continue
+
+                if _length_oj == 4:
                     result_list.append(_oj)
                     continue
-                weight = int(_oj[1]) if _oj[1] else 1
+                
                 msg = _oj[4] if _length_oj>4 else _oj[2]
-                status = int(_oj[3])
+                weight = int(_oj[1]) if _oj[1] else 1
 
                 _r_idx = self.find_index_of_rlist(msg, result_list)
                 

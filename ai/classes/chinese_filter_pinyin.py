@@ -18,7 +18,6 @@ class PinYinFilter(BasicChineseFilter):
     """
 
     widen_lv = 3
-    tmp_encoded_text = []
 
     unknown_words = []
     unknown_words_new_full_message = []
@@ -131,25 +130,25 @@ class PinYinFilter(BasicChineseFilter):
 
     
     # override
-    def predictText(self, text, lv = 0):
+    def predictText(self, text, lv = 0, with_reason=False):
+        possible = 0
+        reason = ''
+
         _words = self.transform(text)
         if len(_words) == 0:
-            return 0
+            return possible, reason
+
+        reason = self.find_block_word(_words, text)
         
         # check static block word list
-        _blocked_word = self.find_block_word(_words, text)
-        if _blocked_word:
-            return self.STATUS_SEPCIFY_BLOCK
+        if reason:
+            possible = self.STATUS_SEPCIFY_BLOCK
+            return possible, reason
         
         _result_text, _has_unknown = self.get_encode_word(_words)
 
         if len(_result_text) == 0:
-            return 0
-
-        # save to tmp do not need reencode when get details
-        if len(self.tmp_encoded_text) >= 3:
-            self.tmp_encoded_text = self.tmp_encoded_text[-2:]
-        self.tmp_encoded_text.append([text, _result_text])
+            return possible, reason
 
            
         predicted = self.model(np.array([_result_text]))[0]
@@ -160,29 +159,22 @@ class PinYinFilter(BasicChineseFilter):
         # should be delete and lv over power
         if possible > 0:
             _lv_disparity = lv - self.widen_lv + 1
-            _ratio_zero = predicted[0]
-            _ratio_predict = predicted[possible]
             if _lv_disparity > 0:
+                _ratio_zero = predicted[0]
+                _ratio_predict = predicted[possible]
                 _ratio_lv_plus = _lv_disparity * 0.15
 
                 if (_ratio_zero + _ratio_lv_plus) > _ratio_predict:
                     possible = 0
                 
-            # elif len(_words) < 2:
-            #     _ratio_plus = 0.25
-            #     if (_ratio_zero + _ratio_plus) > _ratio_predict:
-            #         possible = 0
-        return possible
+        return possible, reason
 
 
 
     # override
     def get_details(self, text):
-        tmp = self.tmp_encoded_text
-        encoded_words = []
-        for _ in tmp:
-            if text == _[0]:
-                encoded_words = _[1]
+        transformed_words = self.transform(text)
+        encoded_words, _has_unknown = self.get_encode_word(transformed_words)
 
         if encoded_words:
             predicted = self.model.predict([encoded_words])[0]
@@ -195,38 +187,8 @@ class PinYinFilter(BasicChineseFilter):
             'decodes': [self.get_decode_str(_) for _ in encoded_words],
             'encoded_words': encoded_words,
             'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
-            'transformed_words': self.transform(text)
+            'transformed_words': transformed_words
         }
-    
-
-    # override
-    def get_reason(self, text, prediction):
-        reason = ''
-        tmp = self.tmp_encoded_text
-        encoded_words = []
-        for _ in tmp:
-            if text == _[0]:
-                encoded_words = _[1]
-
-        if encoded_words:
-            if prediction == self.STATUS_SEPCIFY_BLOCK:
-                reason = self.find_block_word(self.transform(text), text)
-                return reason
-            
-            _res = self.model.predict(encoded_words)
-            _i = 0
-            # print('encoded_words: ', encoded_words)
-            for _ in _res:
-                _max = np.argmax(_)
-                if _max == prediction:
-                    # vocabulary = _words[_i]
-                    # reason = self.transform_back_str(vocabulary)
-                    _icode = encoded_words[_i]
-                    reason = self.get_decode_str(_icode)
-                    break
-                _i += 1
-        
-        return reason
 
 
     def get_decode_str(self, code):
@@ -250,7 +212,8 @@ class PinYinReverseStateFilter(PinYinFilter):
     """
     STATE_OF_PASS = 7
     STATE_UNKNOWN_MEANING = 9
-    PASS_RATIO = 0.999
+    PASS_RATIO = 0.95
+    PASS_RATIO_SINGLE = 0.6
     # override
     def set_data(self, data):
         if self.check_data_shape(data):
@@ -275,37 +238,40 @@ class PinYinReverseStateFilter(PinYinFilter):
         return self
 
     # override
-    def predictText(self, text, lv=0):
+    def predictText(self, text, lv=0, with_reason=False):
+        possible = 0
+        reason = ''
         _words = self.transform(text)
         if len(_words) == 0:
-            return 0
+            return possible, reason
         
         _result_text, _has_unknown = self.get_encode_word(_words)
 
-        if len(self.tmp_encoded_text) >= 3:
-            self.tmp_encoded_text = self.tmp_encoded_text[-2:]
-
-        self.tmp_encoded_text.append([text, _result_text])
-
-        
         if len(_result_text) == 0:
-            return 0
+            return possible, reason
         else:
-            _blocked_word = self.find_block_word(_words, text)
-            if _blocked_word:
-                return self.STATUS_SEPCIFY_BLOCK
+            reason = self.find_block_word(_words, text)
+            if reason:
+                return self.STATUS_SEPCIFY_BLOCK, reason
         
         predicted = self.model(np.array([_result_text]))[0]
         possible = np.argmax(predicted)
 
-        if possible == self.STATE_OF_PASS and predicted[self.STATE_OF_PASS] > self.PASS_RATIO:
-            _others_ratio = 1 - self.PASS_RATIO
-            for _p in predicted[:self.STATE_OF_PASS]:
-                if _p > _others_ratio:
-                    return self.STATE_UNKNOWN_MEANING
-            return 0
+        if possible == self.STATE_OF_PASS:
+            if predicted[self.STATE_OF_PASS] > self.PASS_RATIO:
+                _others_ratio = 1 - self.PASS_RATIO
+                for _p in predicted[:self.STATE_OF_PASS]:
+                    if _p > _others_ratio:
+                        return self.STATE_UNKNOWN_MEANING, reason
+                return 0, reason
+            elif predicted[self.STATE_OF_PASS] > self.PASS_RATIO_SINGLE and len(_result_text) == 1:
+                return 0, reason
+            else:
+                reason = 'It Seems Not Enough Determined.'
+                return self.STATE_UNKNOWN_MEANING, reason
         elif possible == 0 and lv <= self.widen_lv:
-            return self.STATE_UNKNOWN_MEANING
+            reason = 'Unknown Meaning'
+            return self.STATE_UNKNOWN_MEANING, reason
 
         _lv_disparity = lv - self.widen_lv + 1
         _ratio_zero = predicted[self.STATE_OF_PASS]
@@ -316,6 +282,6 @@ class PinYinReverseStateFilter(PinYinFilter):
 
             if (_ratio_zero + _ratio_lv_plus) > _ratio_predict:
                 possible = 0
-        return possible
+        return possible, reason
                 
         

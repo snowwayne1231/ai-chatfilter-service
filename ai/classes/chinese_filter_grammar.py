@@ -203,7 +203,6 @@ class GrammarFilter(BasicFilter):
                         _against = self.data[_against_idx][2]
                         print('[Grammarly Filter][get_train_batchs] Duplicate Data: {} | Idx: {} | against: {} | {}'.format(_origin, _i, _against_idx, _against))
                         
-                    
                 else:
                     _check_map[_zip_str] = _y_value
                     _check_map_idx[_zip_str] = _i
@@ -268,12 +267,8 @@ class GrammarFilter(BasicFilter):
             return 0
 
         _texts = self.parse_texts(_words)
-
-        # print('predictText  _words : ', _words, _words.shape)
         
         predicted = self.model.predict(np.array([_texts]))[0]
-
-        # print('grammar predicted: ', predicted)
 
         return {
             'grammar_words': _words,
@@ -282,7 +277,9 @@ class GrammarFilter(BasicFilter):
     
 
     # override
-    def predictText(self, text, lv = 0):
+    def predictText(self, text, lv, with_reason):
+        reason = ''
+        passible = 0
         
         if lv < self.avoid_lv:
 
@@ -292,25 +289,13 @@ class GrammarFilter(BasicFilter):
                 return 0
 
             _words = self.parse_texts(_words)
-
-            # print('predictText  _words : ', _words, _words.shape)
             
             predicted = self.model.predict(np.array([_words]))[0]
             passible = np.argmax(predicted)
             
             if passible > 0:
                 passible = self.CODE_DELETED
+                reason = 'Deleted By Grammarly'
 
-            # print('predicted: ', predicted)
-            # print('passible: ', passible)
-        
-        else:
+        return passible, reason
 
-            passible = 0
-
-        return passible
-
-    
-    # override
-    def get_reason(self, text, prediction):
-        return 'Deleted by grammar filter.'

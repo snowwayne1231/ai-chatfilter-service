@@ -100,8 +100,7 @@ class PreFilter():
                 _number_scored = 1
                 if number_size > 0 and (_idx - _last_number_idx) <= _dobule_scored_number_range:
                     _number_scored += 1
-                    if u > u'\u0039':
-                        _number_scored += 1
+                
                 number_size += _number_scored
                 _last_number_idx = _idx
             elif self.is_english(u):
@@ -112,6 +111,8 @@ class PreFilter():
                 continue
 
             next_char += u
+
+        print('number_size: ', number_size)
 
         _NE_size = number_size + eng_size
 
@@ -144,7 +145,7 @@ class PreFilter():
         # print('[find_wechat_char] _NE_ratio: ', _NE_ratio, ' | length_char: ', length_char, eng_size, number_size)
         
         # all is english and digits
-        if _NE_ratio == 1 and number_size > 0 and length_char >= 3 and length_char <= 12:
+        if _NE_ratio == 1 and number_size > 0 and length_char > 3 and length_char <= 12:
            return next_char
 
         # print('[find_wechat_chat] _words:', _words)
@@ -211,7 +212,7 @@ class PreFilter():
             '两', '留', '耳', '儿', '羚', '鈴', '义', '把', '旧', '帕', '兒', '霸', '韭', '琳', '双', '俩', '爸', '龄', '乙',
             '究', '耀', '拔', '邻', '恶', '而', '姍', '试', '伤', '叄', '澪', '無', '麟', '式', '舅', '臼', '启', '吾', '辆',
             '无', '撕', '噩', '琦', '琪', '洞', '亿', '柿', '侍', '丸', '琉', '厄', '吐', '兔', '訕', '倆', '伺', '骑', '棋',
-            '巴', '仇',
+            '巴', '仇', '杂', '怡', '丝', '棱', '仪', '欺',
         ]
         if chinese:
             return uchar in chineses
