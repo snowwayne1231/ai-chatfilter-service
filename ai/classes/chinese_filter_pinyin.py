@@ -264,7 +264,7 @@ class PinYinReverseStateFilter(PinYinFilter):
                     if _p > _others_ratio:
                         return self.STATE_UNKNOWN_MEANING, reason
                 return 0, reason
-            elif predicted[self.STATE_OF_PASS] > self.PASS_RATIO_SINGLE and len(_result_text) == 1:
+            elif predicted[self.STATE_OF_PASS] > self.PASS_RATIO_SINGLE and len(_result_text) <= 2:
                 return 0, reason
             else:
                 reason = 'It Seems Not Enough Determined.'
