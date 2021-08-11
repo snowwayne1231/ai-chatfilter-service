@@ -299,18 +299,6 @@ class MainService():
             r = m(msg)
             if r:
                 return r
-        # reason_char = self.pre_filter.find_not_allowed_chat(msg)
-        # if reason_char:
-        #     return reason_char
-        # reason_char = self.pre_filter.find_korea_mixed(msg)
-        # if reason_char:
-        #     return reason_char
-        # reason_char = self.pre_filter.find_emoji_word_mixed(msg)
-        # if reason_char:
-        #     return reason_char
-        # reason_char = self.pre_filter.find_unallow_eng(msg)
-        # if reason_char:
-        #     return reason_char
 
         return False
     

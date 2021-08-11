@@ -217,14 +217,14 @@ python manage.py collectstatic
 > before you train you may need to check your vocabulary dictionary
 ```Shell
 python manage.py knowledge -i ai/assets/chinese/dict_taiwan.xlsx -lan TW -f 2
-python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN -f 100
-python manage.py knowledge -di ai/assets/chinese_digits/dict.xls
 python manage.py knowledge -i ai/assets/english/dict.xls -lan EN -f 3
+python manage.py knowledge -di ai/assets/chinese_digits/dict.xls
+python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN -f 100
+python manage.py freq -i ai/assets/textbook/json/pinyin/2020-08-31.json
 ```
 
 > start training
 ```Shell
-python manage.py freq -i ai/assets/textbook/json/pinyin/2020-08-31.json
 python manage.py train -i ai/assets/textbook/json/grammar/2020-08-05.json -f 0.9985 -grm -t 3
 python manage.py train -i ai/assets/textbook/json/pinyin/2020-08-31.json -f 0.9987 -t 12
 python manage.py train -i ai/assets/textbook/json/english/2020-09-08.json -eng -t 1

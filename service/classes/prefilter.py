@@ -112,8 +112,6 @@ class PreFilter():
 
             next_char += u
 
-        print('number_size: ', number_size)
-
         _NE_size = number_size + eng_size
 
         _NE_ratio = _NE_size / length_char

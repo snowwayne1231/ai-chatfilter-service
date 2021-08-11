@@ -59,6 +59,8 @@ class ExcelParser():
                 for _file in os.listdir(self.file):
 
                     if self.file_extension.search(_file):
+                        if '~' in _file:
+                            continue
 
                         _file_path = '{}/{}'.format(self.file, _file)
                         print('ExcelParser Open File Path: ', _file_path)
