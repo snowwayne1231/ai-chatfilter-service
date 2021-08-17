@@ -212,7 +212,7 @@ class PinYinReverseStateFilter(PinYinFilter):
     """
     STATE_OF_PASS = 7
     STATE_UNKNOWN_MEANING = 9
-    PASS_RATIO = 0.95
+    PASS_RATIO = 0.92
     PASS_RATIO_SINGLE = 0.6
     # override
     def set_data(self, data):
