@@ -73,6 +73,8 @@ class Command(BaseCommand):
                 if _r_idx >= 0:
                     result_list[_r_idx][1] += weight
                 else:
+                    if weight > 2:
+                        weight -= 1
                     result_list.append([_oj[0], weight, msg, status])
                 
 
@@ -135,6 +137,7 @@ class Command(BaseCommand):
                             result_list[_r_idx][3] = status
                             result_list[_r_idx][1] = weight * weight
                     else:
+                        weight += 3
                         result_list.append([_oj[0], weight, msg, status])
 
                 _idx += 1
