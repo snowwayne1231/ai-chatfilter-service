@@ -114,9 +114,14 @@ class PinYinFilter(BasicChineseFilter):
         for _ in _sbsl:
             if isinstance(_, list):
                 _num_matched = 0
+                _text_idx = 0
+                _text_length = len(text_string)
                 for __ in _:
-                    if __ in text_string:
-                        _num_matched += 1
+                    while _text_idx < _text_length:
+                        if __ == text_string[_text_idx]:
+                            _num_matched += 1
+                            break
+                        _text_idx += 1
                 
                 if _num_matched == len(_):
                     return ''.join(_)
@@ -212,8 +217,8 @@ class PinYinReverseStateFilter(PinYinFilter):
     """
     STATE_OF_PASS = 7
     STATE_UNKNOWN_MEANING = 9
-    PASS_RATIO = 0.92
-    PASS_RATIO_SINGLE = 0.6
+    PASS_RATIO = 0.90
+    PASS_RATIO_SINGLE = 0.51
     # override
     def set_data(self, data):
         if self.check_data_shape(data):
