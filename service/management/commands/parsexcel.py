@@ -61,9 +61,9 @@ class Command(BaseCommand):
                 if status == 5:
                     continue
 
-                if _length_oj == 4:
-                    result_list.append(_oj)
-                    continue
+                # if _length_oj == 4:
+                #     result_list.append(_oj)
+                #     continue
                 
                 msg = _oj[4] if _length_oj>4 else _oj[2]
                 weight = int(_oj[1]) if _oj[1] else 1
@@ -72,6 +72,7 @@ class Command(BaseCommand):
                 
                 if _r_idx >= 0:
                     result_list[_r_idx][1] += weight
+                    result_list[_r_idx][3] = status
                 else:
                     if weight > 2:
                         weight -= 1
