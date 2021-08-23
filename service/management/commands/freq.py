@@ -10,6 +10,7 @@ from ai.models import SoundVocabulary
 from ai.service_impact import get_all_vocabulary_from_models
 
 import os, time
+import math
 
 
 class Command(BaseCommand):
@@ -33,7 +34,9 @@ class Command(BaseCommand):
         _jp.load()
         data_list = _jp.get_data_only_text()
         trasnlated_list = [translate_by_string(_) for _ in data_list]
-
+        # print('data_list[10] : ', data_list[10])
+        # print('trasnlated_list[10] : ', trasnlated_list[10])
+        # exit(2)
 
         vocabulary_data = get_all_vocabulary_from_models()
         jieba_vocabulary = []
@@ -57,18 +60,19 @@ class Command(BaseCommand):
             for _word in _all_words:
                 _num = word_map.get(_word)
                 if _num:
-                    word_map[_word] += 1
+                    word_map[_word] += 1 / round(math.log(word_map[_word], 2))
                 else:
-                    word_map[_word] = 1
+                    word_map[_word] = 2
             
             # print('[]translated sentence: {}  |  _all_words: {}'.format(_translated, _all_words))
-
 
         # print('word_map: ', word_map)
 
         result_list = sorted(word_map.items(), key=lambda x:x[1], reverse=True)
         print('Top 10 Results: ')
         print(result_list[:10])
+        print('Bottom 10 Results: ')
+        print(result_list[-10:])
 
         # new_json = JsonParser(file=os.path.dirname(json_file_path) + '/output.freq.json')
         # new_json.save(result_list)
@@ -79,12 +83,12 @@ class Command(BaseCommand):
             _sv_map_instances[_sv.pinyin] = _sv
 
 
-        _max_freq = 3000
+        _max_freq = 500
         _pr = 0
 
         for _r in result_list:
             _word = _r[0]
-            _freq = _r[1]
+            _freq = round(_r[1])
             _instance = _sv_map_instances[_word]
             _next_freq = min(_freq, _max_freq)
             _instance.freq = _next_freq
@@ -97,7 +101,7 @@ class Command(BaseCommand):
                 _pr = _next_pr
                 print(' {:2.2f}%'.format(_pr * 100), end='\r')
 
-            if _freq <= 5:
+            if _freq <= 4:
                 break
         
         _ed_time = datetime.now()
