@@ -27,6 +27,7 @@ class Command(BaseCommand):
         # )
 
     def handle(self, *args, **options):
+        _split_char = '_'
         _st_time = datetime.now()
         json_file_path = options.get('input_json')
 
@@ -59,10 +60,15 @@ class Command(BaseCommand):
             _all_words = _jbd.get_cut_all(_translated, min_length=2)
             for _word in _all_words:
                 _num = word_map.get(_word)
+                _split_length = _word.count(_split_char)
+                _word_length = _split_length if _split_length > 0 else len(_word)
                 if _num:
-                    word_map[_word] += 1 / round(math.log(word_map[_word], 2))
+                    if _word_length <= 2:
+                        word_map[_word] += 1 / round(math.log(word_map[_word], 2))
+                    else:
+                        word_map[_word] += _word_length - 2
                 else:
-                    word_map[_word] = 2
+                    word_map[_word] = 1+(2**(_word_length-1))
             
             # print('[]translated sentence: {}  |  _all_words: {}'.format(_translated, _all_words))
 
