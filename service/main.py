@@ -106,14 +106,15 @@ class MainService():
         _voca_pinyin = _voca_data.get('pinyin', [])
 
         _vocabulary_english = _voca_data.get('english', [])
-        _vocabulary_chinese = _voca_data.get('chinese', [])
+        # _vocabulary_chinese = _voca_data.get('chinese', [])
         # print('_vocabulary_chinese length: ', len(_vocabulary_chinese))
         _unknowns = _voca_data.get('unknowns', [])
         # _unknown_words = [_[0] for _ in _unknowns]
 
         self.english_parser.set_vocabulary(_vocabulary_english)
 
-        self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english, chinese_data=_vocabulary_chinese)
+        self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english)
+        # self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english, chinese_data=_vocabulary_chinese)
         
         if self.lang_mode == self.STATUS_MODE_CHINESE:
             #
