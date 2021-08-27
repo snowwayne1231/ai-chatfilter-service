@@ -1,11 +1,15 @@
+from numpy.core.fromnumeric import product
 from ai.models import Vocabulary, SoundVocabulary, DigitalVocabulary, Language
+from opencc import OpenCC
 
 
 
-def get_all_vocabulary_from_models(pinyin=True, english=True):
+def get_all_vocabulary_from_models(pinyin=True, english=True, chinese=False):
 
     _pinyins = []
     _englishs = []
+    _chinese = []
+    cc = OpenCC('t2s')
 
     if english:
         lan_en = Language.objects.filter(code='EN').first()
@@ -43,8 +47,27 @@ def get_all_vocabulary_from_models(pinyin=True, english=True):
 
         _pinyins = sorted(_pinyins, key=lambda _:_[0])
 
+    if chinese:
+        _single_word_map = {}
+        for v in Vocabulary.objects.filter(language__code__in=['CN','TW']):
+            _text = v.context
+            _freq = v.freq
+            _cc_text = cc.convert(_text)
+            if _cc_text != _text:
+                _chinese.append([_cc_text, _freq])
+                for _word in _cc_text:
+                    if _single_word_map.get(_word):
+                        pass
+                    else:
+                        _single_word_map[_word] = 1
+                        _chinese.append([_word, 1])
+
+            _chinese.append([_text, _freq])
+
+        _chinese = sorted(_chinese, key=lambda _:_[0])
 
     return {
         'pinyin': _pinyins,
         'english': _englishs,
+        'chinese': _chinese,
     }

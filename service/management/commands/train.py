@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from ai.train import train_pinyin_by_json_path, train_grammar_by_json_path, train_english_by_json_path
+from ai.train import train_pinyin_by_json_path, train_grammar_by_json_path, train_english_by_json_path, train_chinese_by_json_path
 import os
 
 class Command(BaseCommand):
@@ -31,6 +31,10 @@ class Command(BaseCommand):
             help='whether version of mode is RE.',
         )
         parser.add_argument(
+            '-chi', dest='chinese_mode', required=False, action='store_true',
+            help='whether chinese mode is on.',
+        )
+        parser.add_argument(
             '-weight', dest='allowed_weight', required=False, type=int,
             help='data filter for weight.',
         )
@@ -41,6 +45,7 @@ class Command(BaseCommand):
         final_accuracy = options.get('final_accuracy', None)
         grammar_mode = options.get('grammar_mode', False)
         english_mode = options.get('english_mode', False)
+        chinese_mode = options.get('chinese_mode', False)
         pinyin_re_mode = options.get('version_of_re', False)
         max_spend_time = options.get('time', 0)
         allowed_weight = options.get('allowed_weight', 0)
@@ -57,6 +62,8 @@ class Command(BaseCommand):
                 train_english_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, allowed_weight=allowed_weight)
             elif pinyin_re_mode:
                 train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, allowed_weight=allowed_weight, is_re_mode=True)
+            elif chinese_mode:
+                train_chinese_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, allowed_weight=allowed_weight)
             else:
                 train_pinyin_by_json_path(full_file_path, final_accuracy=final_accuracy, max_spend_time=max_spend_time, allowed_weight=allowed_weight)
         else:

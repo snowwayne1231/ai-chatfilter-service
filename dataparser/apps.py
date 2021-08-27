@@ -208,6 +208,7 @@ class MessageParser():
         lv = 0
         anchor = 0
         repres_msg = None
+        text = ''
         # try:
         #     repres_msg = self.regex_msg.match(string)
         # except Exception as ex:
@@ -215,58 +216,65 @@ class MessageParser():
         #     print(ex)
         repres_msg = self.regex_msg.match(string)
 
-        if repres_msg:
+        try:
 
-            text = repres_msg.group(1)
-            text = self.regex_xml_clean_at.sub("", text)
-            # print('string: ', string)
-            # print('text: ', text)
+            if repres_msg:
 
-            repres_xml_lv = self.regex_xml_lv.search(text)
-            if repres_xml_lv:
-                lv = int(repres_xml_lv.group(1))
-
-            repres_xml_anchor = self.regex_xml_anchor.search(text)
-            if repres_xml_anchor:
-                anchor = int(repres_xml_anchor.group(1))
-            else:
-                repres_xml_anchor = self.regex_xml_anchor_2.search(text)
-                if repres_xml_anchor:
-                    anchor = int(repres_xml_anchor.group(1))
-                elif self.regex_xml_anchor_3.search(text):
-                    anchor = 1
-            
-            # at_msg = self.regex_xml_at(text)
-            # if at_msg:
-            #     text = at_msg.group(1)
-            # else:
-
-            text = self.regex_xml_tag.sub("", text)
-            
-        else:
-
-            text = string.strip()
-
-            repres_bracket_lv = self.regex_bracket_lv.match(text)
-
-            if repres_bracket_lv:
-                
-                lv = int(repres_bracket_lv.group(1))
-                text = self.regex_bracket_lv.sub("", text)
-
-            else:
+                text = repres_msg.group(1)
+                text = self.regex_xml_clean_at.sub("", text)
+                # print('string: ', string)
+                # print('text: ', text)
 
                 repres_xml_lv = self.regex_xml_lv.search(text)
                 if repres_xml_lv:
-                    # broke message..
                     lv = int(repres_xml_lv.group(1))
-                    text = self.regex_xml_clean_at.sub("", text)
-                    text = self.regex_xml_tag.sub("", text)
-                    text = self.regex_xml_broke_start.sub("", text)
-                    text = self.regex_xml_broke_end.sub("", text)
+
+                repres_xml_anchor = self.regex_xml_anchor.search(text)
+                if repres_xml_anchor:
+                    anchor = int(repres_xml_anchor.group(1))
+                else:
+                    repres_xml_anchor = self.regex_xml_anchor_2.search(text)
+                    if repres_xml_anchor:
+                        anchor = int(repres_xml_anchor.group(1))
+                    elif self.regex_xml_anchor_3.search(text):
+                        anchor = 1
+                
+                # at_msg = self.regex_xml_at(text)
+                # if at_msg:
+                #     text = at_msg.group(1)
+                # else:
+
+                text = self.regex_xml_tag.sub("", text)
+                
+            else:
+
+                text = string.strip()
+
+                repres_bracket_lv = self.regex_bracket_lv.match(text)
+
+                if repres_bracket_lv:
+                    
+                    lv = int(repres_bracket_lv.group(1))
+                    text = self.regex_bracket_lv.sub("", text)
+
+                else:
+
+                    repres_xml_lv = self.regex_xml_lv.search(text)
+                    if repres_xml_lv:
+                        # broke message..
+                        lv = int(repres_xml_lv.group(1))
+                        text = self.regex_xml_clean_at.sub("", text)
+                        text = self.regex_xml_tag.sub("", text)
+                        text = self.regex_xml_broke_start.sub("", text)
+                        text = self.regex_xml_broke_end.sub("", text)
 
 
-        text = self.regex_bracket_digits.sub("", text)
+            text = self.regex_bracket_digits.sub("", text)
+
+        except Exception as err:
+
+            text = '[Err○r] {}'.format(err)
+        
         # text = self.trim_only_general_and_chinese(text)
         
         # print(text, lv, anchor)
@@ -355,96 +363,77 @@ class JieBaDictionary():
         print('JieBaDictionary Initial Done.')
 
 
-    def split_word(self, text=''):
-        # _list = jieba.cut(text, HMM=False, cut_all=False) if text else []
+    def split_word(self, text='', is_pinyin=False):
         results = []
         unknowns = []
         _buf = ''
 
-        _list = self.__cut_DAG_NO_HMM(text)
+        if is_pinyin:
 
-        for _ in _list:
-            # print('[split_word] _: ', _)
-            if not _:
-                continue
-            elif  _[-1] == self.split_character:
+            _list = self.__cut_DAG_NO_HMM(text)
+            for _ in _list:
+                if not _:
+                    continue
+                elif  _[-1] == self.split_character:
 
-                if _buf:
-                    __ = _buf + _
-                    _buf = ''
-                    _none_tone_words = self.get_none_tone_word(__)
+                    if _buf:
+                        __ = _buf + _
+                        _buf = ''
+                        _none_tone_words = self.get_none_tone_word(__)
 
-                    # if __[:-1].isdigit():
-                    #     if _none_tone_words:
-                    #         results += _none_tone_words
-                    #     else:
-                    #         results.append(self.number_character)
+                        if _none_tone_words:
+                            results += _none_tone_words
                         
-                    #     continue
-                    
-                    # print('[split_word] _none_tone_words: ', _none_tone_words)
-                    if _none_tone_words:
-                        results += _none_tone_words
-                    
-                    elif __[:-1].isdigit():
-                        results.append(self.number_character)
+                        elif __[:-1].isdigit():
+                            results.append(self.number_character)
 
-                    else:
-                        if __.count(self.split_character) > 1:
-                            __words = __.split(self.split_character)
-                            _map = self.none_tone_map
-                            for _word in __words:
-                                if _word:
-                                    if _map.get(_word, None):
-                                        results.append(_word+self.split_character)
-                                    elif _word.isdigit():
-                                        results.append(self.number_character)
-                                    else:
-                                        results.append(self.unknown_character)
-                                        unknowns.append(_word+self.split_character)
                         else:
-                            results.append(self.unknown_character)
-                            unknowns.append(__)
-                    
-                else:
-                    __ = _
-
-                    if len(__) > 1:
-                        if __[:-1].isdigit():
-                            # print('[split_word] number_character __: ', __)
-                            _none_tone_words = self.get_none_tone_word(__)
-                            # print('[split_word] [isdigit] _none_tone_words: ', _none_tone_words)
-                            if _none_tone_words:
-                                results += _none_tone_words 
+                            if __.count(self.split_character) > 1:
+                                __words = __.split(self.split_character)
+                                _map = self.none_tone_map
+                                for _word in __words:
+                                    if _word:
+                                        if _map.get(_word, None):
+                                            results.append(_word+self.split_character)
+                                        elif _word.isdigit():
+                                            results.append(self.number_character)
+                                        else:
+                                            results.append(self.unknown_character)
+                                            unknowns.append(_word+self.split_character)
                             else:
-                                results.append(self.number_character)
-                            
-                        else:
-                            results.append(__)
+                                results.append(self.unknown_character)
+                                unknowns.append(__)
+                        
+                    else:
+                        __ = _
 
-            else:
-                _buf += _
-                # print('split_word buffer add: ', _buf)
-                # print('text: ', text)
+                        if len(__) > 1:
+                            if __[:-1].isdigit():
+                                _none_tone_words = self.get_none_tone_word(__)
+                                if _none_tone_words:
+                                    results += _none_tone_words 
+                                else:
+                                    results.append(self.number_character)
+                                
+                            else:
+                                results.append(__)
 
-        if _buf:
-            print('split_word [] Why left _buf: ', _buf)
-            print('split_word [] text: ', text)
-            unknowns.append(_buf)
+                else:
+                    _buf += _
+
+            if _buf:
+                print('split_word [] Why left _buf: {} , text: {}'.format(_buf, text))
+                unknowns.append(_buf)
+        else:
+            _list = jieba.cut(text, HMM=False, cut_all=False) if text else []
+            results = [_ for _ in _list]
         
-        # print('[split_word] origin text: ', text)
-        # print('[split_word] results: ', results)
-        # print('[split_word] unknowns: ', unknowns)
         return results, unknowns
 
 
     def __cut_DAG_NO_HMM(self, sentence):
         _DAG = jieba.get_DAG(sentence)
-        # print('[__cut_DAG_NO_HMM] sentence: ', sentence)
-        # print('[__cut_DAG_NO_HMM] DAG: ', _DAG)
-
         my_route = self.get_route(sentence, _DAG)
-        # print('[__cut_DAG_NO_HMM] my_route: ', my_route)
 
         if len(my_route) > 1:
             _tmp_freq = 0
@@ -460,8 +449,7 @@ class JieBaDictionary():
                 for __ in _list:
                     yield __
             else:
-                print('[__cut_DAG_NO_HMM] sentence: ', sentence)
-                print('[__cut_DAG_NO_HMM] my_route: ', my_route)
+                print('[__cut_DAG_NO_HMM] With No List sentence: {} , route: {}'.format(sentence, my_route))
 
         else:
             route = {}
@@ -516,7 +504,7 @@ class JieBaDictionary():
 
                     for _end_idx in dag_list:
                         _end_idx_warped = _end_idx
-                        while sentence[_end_idx_warped] != _split_char and _end_idx_warped < N:
+                        while _end_idx_warped < N and sentence[_end_idx_warped] != _split_char:
                             _end_idx_warped += 1
 
                         _end_idx_warped += 1
@@ -525,7 +513,7 @@ class JieBaDictionary():
                         _freq_ = _FREQ.get(_sen, 0)
                         _num_splited = _sen.count(_split_char)
                         if _num_splited > 1:
-                            _freq_ = pow(_freq_, _num_splited)
+                            _freq_ *= _num_splited
 
                         __next_end = _end_idx_warped - 1
 
@@ -550,14 +538,8 @@ class JieBaDictionary():
 
                 elif _route_next_start < start_idx:
                     print('[WARNING][JiebaDictionary][__cut_DAG_NO_HMM] has gap  : {} ,  start_idx: {}'.format(_, start_idx))
-                    print('          sentence: ', sentence)
+                    # print('          sentence: ', sentence)
                     return []
-
-                # else:
-                #     print('[WARNING][JiebaDictionary][__cut_DAG_NO_HMM] sentence: ', sentence)
-                #     print('start_idx: ', start_idx)
-                #     print('_route_next_start: ', _route_next_start)
-                #     print('_end_idx_warped: ', _end_idx_warped)
             
             if next_r_list:
                 route_list += next_r_list
@@ -758,7 +740,15 @@ class JieBaDictionary():
 
     
     def is_allowed_word(self, _word):
-        return len(_word) > 1 and _word[-1] == self.split_character
+        if _word:
+            if _word[-1] == self.split_character:
+                return len(_word) > 1
+            else:
+                for _ in _word:
+                    if _ < u'\u4e00' or _ > u'\u9fa5':
+                        return False
+                return True
+        return  False
 
     
     def load_vocabularies(self, vocabulary=None, freqs=None):
@@ -768,7 +758,9 @@ class JieBaDictionary():
             _list = vocabulary
 
             if _freqs and len(_list) == len(_freqs):
-                print('===========[load_vocabularies] by Vocabulary Data: ', vocabulary[-10:], _freqs[-10:] ,' Length: ', len(vocabulary), flush=True)
+                print('===========[load_vocabularies] by Vocabulary Data Length: ', len(vocabulary), flush=True)
+                print('====Beginning Data: ',  vocabulary[:10], flush=True)
+                print('====Ending Data: ',  vocabulary[-10:], _freqs[-10:], flush=True)
             else:
                 _freqs = [2 for _ in _list]
 

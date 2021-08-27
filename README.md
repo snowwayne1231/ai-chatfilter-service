@@ -190,6 +190,7 @@ pip install django-import-export
 pip install grpcio
 pip install grpcio-tools
 pip install djangogrpcframework
+pip install opencc-python-reimplemented
 ```
 
 

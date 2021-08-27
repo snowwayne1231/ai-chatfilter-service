@@ -75,7 +75,7 @@ class PinYinFilter(BasicChineseFilter):
         # print('transform str: ', _string)
         _pinyin = translate_by_string(_string)
         
-        words, unknowns = self.jieba_dict.split_word(_pinyin)
+        words, unknowns = self.jieba_dict.split_word(_pinyin ,is_pinyin=True)
         # print(_string, ', ', words, ', uk: ' , unknowns)
         
         if unknowns:
@@ -217,8 +217,8 @@ class PinYinReverseStateFilter(PinYinFilter):
     """
     STATE_OF_PASS = 7
     STATE_UNKNOWN_MEANING = 9
-    PASS_RATIO = 0.90
-    PASS_RATIO_SINGLE = 0.51
+    PASS_RATIO = 0.875
+    PASS_RATIO_SINGLE = 0.52
     # override
     def set_data(self, data):
         if self.check_data_shape(data):
@@ -232,7 +232,6 @@ class PinYinReverseStateFilter(PinYinFilter):
             self.data = data
             self.data_length = len(data)
 
-            # self.split_word('TEXT')
             self.transform_column('TEXT')
 
         else:

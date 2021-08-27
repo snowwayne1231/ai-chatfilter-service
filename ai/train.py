@@ -13,7 +13,8 @@ from dataparser.classes.store import ListPickle
 from .classes.chinese_filter_pinyin import PinYinFilter, PinYinReverseStateFilter
 from .classes.chinese_filter_grammar import GrammarFilter
 from .classes.english_filter_basic import BasicEnglishFilter
-from .helper import print_spend_time, get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_multiple_version_path, get_pinyin_re_path
+from .classes.chinese_filter_basic import BasicChineseFilter
+from .helper import print_spend_time, get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_multiple_version_path, get_pinyin_re_path, get_chinese_path
 
 
 
@@ -155,3 +156,21 @@ def train_pinyin_to_next_version(train_data_list, jieba_vocabulary, jieba_freqs,
     history = piny.fit_model(train_data=train_data_list, stop_hours=stop_hours, save_folder=next_version_saved_folder)
 
     return history
+
+
+def train_chinese_by_json_path(json_file_path, final_accuracy = None, max_spend_time=0 ,allowed_weight=0):
+    result_list = get_row_list_by_json_path(json_file_path, allowed_weight=allowed_weight)
+    train_chinese_by_list(result_list, final_accuracy, max_spend_time)
+
+
+def train_chinese_by_list(train_data_list = None, final_accuracy = None, max_spend_time=0):
+
+    _st_time = datetime.now() #
+
+    model = BasicChineseFilter(load_folder=get_chinese_path())
+
+    history = model.fit_model(train_data=train_data_list, stop_accuracy=final_accuracy, stop_hours=max_spend_time)
+
+    print('=== history ===')
+    print(history)
+    print_spend_time(_st_time)

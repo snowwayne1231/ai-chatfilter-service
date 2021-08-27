@@ -54,6 +54,12 @@ def get_english_model_path():
     _path = os.path.dirname(os.path.abspath(__file__)) + '/_models/english_model'
     return check_path(_path)
 
+def get_chinese_path(is_version=False):
+    _path = os.path.dirname(os.path.abspath(__file__)) + '/_models/chinese_model'
+    if is_version:
+        _path += '/vers'
+    return check_path(_path)
+
 def get_vocabulary_dictionary_path():
     _path = os.path.dirname(os.path.abspath(__file__)) + '/_pickles/vocabulary'
     return check_path(_path)

@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 from tensorflow import keras
-from .helper import get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_re_path
+from .helper import get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_re_path, get_chinese_path
+from .classes.chinese_filter_basic import BasicChineseFilter
 from .classes.chinese_filter_pinyin import PinYinFilter, PinYinReverseStateFilter
 from .classes.chinese_filter_grammar import GrammarFilter
 from .classes.english_filter_basic import BasicEnglishFilter
@@ -10,7 +11,8 @@ import tensorflow as tf
 pinyin_model_path = get_pinyin_path()
 pinyin_model_re_path = get_pinyin_re_path()
 grammar_model_path = get_grammar_path()
-english_model_apth = get_english_model_path()
+english_model_path = get_english_model_path()
+chinese_model_path = get_chinese_path()
 
 class AiConfig(AppConfig):
     name = 'ai'
@@ -24,11 +26,12 @@ class MainAiApp():
 
     pinyin_data = []
     english_data = []
+    chinese_data = []
 
     loaded_models = []
     loaded_model_names = []
 
-    def __init__(self, pinyin_data=[], english_data=[]):
+    def __init__(self, pinyin_data=[], english_data=[], chinese_data=[]):
         print('=============  A.I Init  =============')
 
         if pinyin_data:
@@ -36,6 +39,9 @@ class MainAiApp():
 
         if english_data:
             self.english_data = english_data
+
+        if chinese_data:
+            self.chinese_data = chinese_data
         
         print('using tensorflow version: ', tf.__version__)
 
@@ -64,9 +70,9 @@ class MainAiApp():
 
     def load_english(self, folder=None):
         # print('[load_english]: english_data: ', self.english_data)
-        _english_model_apth = folder if folder else english_model_apth
+        _english_model_path = folder if folder else english_model_path
         _english_vocabulary = [_[0] for _ in self.english_data]
-        self.english_model = BasicEnglishFilter(load_folder=_english_model_apth, english_vocabulary=_english_vocabulary)
+        self.english_model = BasicEnglishFilter(load_folder=_english_model_path, english_vocabulary=_english_vocabulary)
         self.loaded_models.append(self.english_model)
         self.loaded_model_names.append('english')
 
@@ -76,6 +82,18 @@ class MainAiApp():
         model = None
         self.loaded_models.append(model)
         self.loaded_model_names.append('bert')
+
+
+    def load_chinese(self, folder=None):
+        _model_path = folder if folder else chinese_model_path
+        _vocabularies = []
+        _freqs = []
+        for _ in self.chinese_data:
+            _vocabularies.append(_[0])
+            _freqs.append(_[1])
+        self.chinese_model = BasicChineseFilter(load_folder=_model_path, jieba_vocabulary=_vocabularies ,jieba_freqs=_freqs)
+        self.loaded_models.append(self.chinese_model)
+        self.loaded_model_names.append('chinese')
     
 
     def predict(self, txt, lv=0, with_reason=False):

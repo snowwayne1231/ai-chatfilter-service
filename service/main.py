@@ -169,7 +169,7 @@ class MainService():
         if message:
             text, lv, anchor = self.parse_message(message)
         
-        if anchor > 0 and user[:3] == 'TST':
+        if anchor > 0 and user[:3] == 'TST' or lv >= self.service_avoid_filter_lv:
             return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
         if text:
@@ -182,9 +182,7 @@ class MainService():
 
             # parse to general text
             trimed_text = self.trim_text(text)
-
-            # is not general player
-            if len(trimed_text) == 0 or lv >= self.service_avoid_filter_lv:
+            if len(trimed_text) == 0 :
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
 

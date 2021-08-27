@@ -8,6 +8,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import os
 from ai.classes.basic_filter import BasicFilter
+from ai.service_impact import get_all_vocabulary_from_models
 from datetime import datetime, timedelta
 from dataparser.apps import JieBaDictionary
 
@@ -31,6 +32,13 @@ class BasicChineseFilter(BasicFilter):
     # override
     def __init__(self, data = [], load_folder=None, jieba_vocabulary=[], jieba_freqs=[]):
         super().__init__(data=data, load_folder=load_folder)
+        if len(jieba_vocabulary) == 0:
+            vocabulary_data = get_all_vocabulary_from_models(english=False, pinyin=False, chinese=True)
+            _data = vocabulary_data['chinese']
+            for _d in _data:
+                jieba_vocabulary.append(_d[0])
+                jieba_freqs.append(_d[1])
+
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs)
         self.unknown_position = self.jieba_dict.get_unknown_position() + 1
         self.alphabet_position = self.jieba_dict.get_alphabet_position() + 1
@@ -47,6 +55,12 @@ class BasicChineseFilter(BasicFilter):
 
 
     # override
+    def transform_str(self, _string):
+        words, unknowns = self.jieba_dict.split_word(_string)
+        return words
+
+
+    # override
     def build_model(self):
         full_words_length = self.full_words_length
         all_scs = self.num_status_classs
@@ -54,7 +68,7 @@ class BasicChineseFilter(BasicFilter):
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length, mask_zero=True))
         # model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
+        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
         # model.add(tf.keras.layers.GlobalAveragePooling1D())
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
@@ -190,11 +204,6 @@ class BasicChineseFilter(BasicFilter):
                         _origin = self.data[_i][2]
                         _against_idx = _check_map_idx[_zip_str]
                         _against_data = self.data[_against_idx][2]
-                        # _before_against_data = self.data[_against_idx-1][2] if _against_idx > 0 else 'None'
-                        print('[Pinyin Filter][get_train_batchs] Duplicate Data::  _origin: ', _origin," idx: ", _i)
-                        print('---against data: ', _against_data, ' idx: ', _against_idx)
-                        # print('---zip_str: ', _zip_str)
-                        # print('      _before_against_data: ', _before_against_data)
                     
                 else:
                     _check_map[_zip_str] = _y_value
@@ -254,7 +263,6 @@ class BasicChineseFilter(BasicFilter):
         _found_other_unknown = False
 
         for _ in _words:
-            # print('[get_encode_word] _: ', _)
             _loc = _encoder.encode(_)
             
             if len(_loc) > 0:
