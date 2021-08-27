@@ -106,15 +106,19 @@ class MainService():
         _voca_pinyin = _voca_data.get('pinyin', [])
 
         _vocabulary_english = _voca_data.get('english', [])
+        _vocabulary_chinese = _voca_data.get('chinese', [])
+        # print('_vocabulary_chinese length: ', len(_vocabulary_chinese))
         _unknowns = _voca_data.get('unknowns', [])
         # _unknown_words = [_[0] for _ in _unknowns]
 
         self.english_parser.set_vocabulary(_vocabulary_english)
 
-        self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english)
+        self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english, chinese_data=_vocabulary_chinese)
         
         if self.lang_mode == self.STATUS_MODE_CHINESE:
             #
+            # self.ai_app.load_chinese()
+
             is_version_of_reverse = int(settings.PINYIN_REVERSE) == 1
             self.ai_app.load_pinyin(is_version_of_reverse=is_version_of_reverse)
 
@@ -163,6 +167,9 @@ class MainService():
         # print('receive message :', message)
         if message:
             text, lv, anchor = self.parse_message(message)
+        
+        if anchor > 0 and user[:3] == 'TST':
+            return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
         if text:
 
@@ -170,13 +177,13 @@ class MainService():
             reason_char = self.find_prefilter_reject_reason_with_nonparsed_msg(text)
             if reason_char:
                 prediction = self.STATUS_PREDICTION_NOT_ALLOW
-                return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             # parse to general text
             trimed_text = self.trim_text(text)
 
             # is not general player
-            if anchor > 0 or len(trimed_text) == 0 or lv >= self.service_avoid_filter_lv:
+            if len(trimed_text) == 0 or lv >= self.service_avoid_filter_lv:
                 return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
 

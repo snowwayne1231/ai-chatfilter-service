@@ -134,7 +134,7 @@
         if (window.conn) {
             window.conn.send(JSON.stringify({
                 'msgid': 1234,
-                'user': randomUsers[Math.floor(Math.random() * randomUsers.length)],
+                'user': 'TST'+randomUsers[Math.floor(Math.random() * randomUsers.length)],
                 // 'room': randomRooms[Math.floor(Math.random() * randomRooms.length)],
                 'room': 'localhot_test',
                 'message': message.replace(/\ /g, ''),

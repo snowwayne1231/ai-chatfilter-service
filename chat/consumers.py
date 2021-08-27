@@ -90,12 +90,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             result_next = {
                 'type': 'channel_chat_message',
                 'msgid': msgid,
+                'user': user,
                 # 'message': message,
             }
 
             if detail:
                 
-                results = self.main_service.think(message=message, room=room, detail=detail)
+                results = self.main_service.think(message=message, room=room, user=user, detail=detail)
                 result_next.update(results)
                 # printt('websocket ai think: ', results)
             elif isinstance(prediction, int):
