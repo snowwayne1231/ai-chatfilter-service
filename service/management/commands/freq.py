@@ -64,9 +64,12 @@ class Command(BaseCommand):
                 _word_length = _split_length if _split_length > 0 else len(_word)
                 if _num:
                     if _word_length <= 2:
-                        word_map[_word] += 1 / round(math.log(word_map[_word], 2))
+                        if _num > 64:
+                            word_map[_word] += 1 / round(math.log(word_map[_word], 2))
+                        else:
+                            word_map[_word] += 1
                     else:
-                        word_map[_word] += _word_length - 2
+                        word_map[_word] += _word_length
                 else:
                     word_map[_word] = 1+(2**(_word_length-1))
             
@@ -89,7 +92,7 @@ class Command(BaseCommand):
             _sv_map_instances[_sv.pinyin] = _sv
 
 
-        _max_freq = 500
+        _max_freq = 999
         _pr = 0
 
         for _r in result_list:
@@ -107,8 +110,6 @@ class Command(BaseCommand):
                 _pr = _next_pr
                 print(' {:2.2f}%'.format(_pr * 100), end='\r')
 
-            if _freq <= 4:
-                break
         
         _ed_time = datetime.now()
         print('Setting Vocabulary FREQ Success. Spend Time: ', _ed_time - _st_time)

@@ -498,6 +498,7 @@ class JieBaDictionary():
                 _is_route_first = True
                 _cloned_list = [__ for __ in _['list']]
                 _route_end = _['end']
+                _origin_freq = _['freq']
                 _route_next_start = _route_end + 1
 
                 if _route_next_start == start_idx:
@@ -512,9 +513,10 @@ class JieBaDictionary():
                         _sen = sentence[start_idx:_end_idx_warped]
                         _freq_ = _FREQ.get(_sen, 0)
                         _num_splited = _sen.count(_split_char)
+                        
                         if _num_splited > 1:
-                            _freq_ *= _num_splited
-
+                            _freq_ *= 2**_num_splited
+                        # print('=== _sen: {}  _freq_: {}'.format(_sen, _freq_))
                         __next_end = _end_idx_warped - 1
 
                         if _is_route_first:
@@ -530,7 +532,7 @@ class JieBaDictionary():
                             _new_route = {
                                 'end': __next_end,
                                 'list': _cloned_list + [_sen],
-                                'freq': _['freq'] + _freq_,
+                                'freq': _origin_freq + _freq_,
                             }
                             
                             next_r_list.append(_new_route)
@@ -560,6 +562,7 @@ class JieBaDictionary():
             if sentence[_last_idx] == _split_char:  # if this idx is the first character
                 route_list = adj_route(route_list, _idx)
         
+        print('route_list: ', route_list)
         return route_list
 
 
