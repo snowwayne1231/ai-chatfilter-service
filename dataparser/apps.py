@@ -562,7 +562,6 @@ class JieBaDictionary():
             if sentence[_last_idx] == _split_char:  # if this idx is the first character
                 route_list = adj_route(route_list, _idx)
         
-        print('route_list: ', route_list)
         return route_list
 
 
