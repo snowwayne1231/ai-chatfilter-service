@@ -204,6 +204,7 @@ class BasicChineseFilter(BasicFilter):
                         _origin = self.data[_i][2]
                         _against_idx = _check_map_idx[_zip_str]
                         _against_data = self.data[_against_idx][2]
+                        print('_origin: {}   _against_data: {}'.format(_origin, _against_data))
                     
                 else:
                     _check_map[_zip_str] = _y_value
