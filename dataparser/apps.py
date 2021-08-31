@@ -434,7 +434,7 @@ class JieBaDictionary():
     def __cut_DAG_NO_HMM(self, sentence):
         _DAG = jieba.get_DAG(sentence)
         my_route = self.get_route(sentence, _DAG)
-
+        # print('my_route: ', my_route)
         if len(my_route) > 1:
             _tmp_freq = 0
             _list = []
