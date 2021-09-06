@@ -151,7 +151,7 @@ class MainService():
 
 
     def trim_text(self, text):
-        return self.message_parser.trim_only_general_and_chinese(text)
+        return self.message_parser.trim_only_general_and_chinese(text).strip()
 
 
     def think(self, message, user = '', room = '', silence=False, detail=False):

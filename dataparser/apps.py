@@ -191,7 +191,7 @@ class MessageParser():
     regex_xml_anchor_3 = re.compile("<anchor>(.*)</anchor>", flags= re.IGNORECASE | re.DOTALL)
 
     regex_xml_tag = re.compile("<[^>]+?>[^<]*?</[^>]+?>")
-    # regex_xml_at = re.compile("<at>(.*)</at>", flags= re.IGNORECASE | re.DOTALL)
+    regex_xml_at = re.compile("<at>(.*)</at>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_broke_start = re.compile("(<msg>)|(<.*$)", flags= re.IGNORECASE)
     regex_xml_broke_end = re.compile("<[^>]+?$")
 
@@ -221,7 +221,8 @@ class MessageParser():
             if repres_msg:
 
                 text = repres_msg.group(1)
-                text = self.regex_xml_clean_at.sub("", text)
+                # text = self.regex_xml_clean_at.sub("", text)
+                # text = self.regex_xml_at.sub("", text)
                 # print('string: ', string)
                 # print('text: ', text)
 
@@ -242,7 +243,7 @@ class MessageParser():
                 # at_msg = self.regex_xml_at(text)
                 # if at_msg:
                 #     text = at_msg.group(1)
-                # else:
+                
 
                 text = self.regex_xml_tag.sub("", text)
                 
