@@ -173,9 +173,13 @@ class PreFilter():
 
 
     def find_suspect_digits_symbol(self, text):
-        regex = r'[\（\）\！\!\(\)\d\&\+]'
+        regex = r'[\（\）\！\!\(\)\d\&\+\＋]'
         searched = re.findall(regex, text)
         if searched and len(searched) > 3:
+            return ''.join(searched)
+        regex_2 = r'[\+\＋\&\＆]'
+        searched = re.findall(regex_2, text)
+        if len(searched) > 0 and len(re.sub(regex_2, '', text)) >= 3:
             return ''.join(searched)
         return ''
 
