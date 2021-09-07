@@ -168,6 +168,7 @@ class MainService():
         # print('receive message :', message)
         if message:
             text, lv, anchor = self.parse_message(message)
+            # print('parse_message text: ', text)
         
         if anchor > 0 and user[:3] == 'TST' or lv >= self.service_avoid_filter_lv:
             return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
