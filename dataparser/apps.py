@@ -240,10 +240,8 @@ class MessageParser():
                     elif self.regex_xml_anchor_3.search(text):
                         anchor = 1
                 
-                # at_msg = self.regex_xml_at(text)
-                # if at_msg:
-                #     text = at_msg.group(1)
-                
+                if self.regex_xml_at.search(text):
+                    text = self.regex_xml_at.sub("", text)
 
                 text = self.regex_xml_tag.sub("", text)
                 
