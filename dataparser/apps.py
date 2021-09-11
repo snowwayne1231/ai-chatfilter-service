@@ -804,8 +804,14 @@ class EnglishParser():
 
     def set_vocabulary(self, vocabularies = []):
         if vocabularies:
+            
+            if isinstance(vocabularies[0], str):
 
-            self._vocabularies = vocabularies
+                self._vocabularies = vocabularies
+            
+            else:
+
+                self._vocabularies = [v[0] for v in vocabularies]
 
         else:
 

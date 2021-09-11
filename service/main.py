@@ -112,6 +112,7 @@ class MainService():
         # _unknown_words = [_[0] for _ in _unknowns]
 
         self.english_parser.set_vocabulary(_vocabulary_english)
+        print('_vocabulary_english hihi in in: ', 'hi' in _vocabulary_english)
 
         self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english)
         # self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english, chinese_data=_vocabulary_chinese)
@@ -170,7 +171,7 @@ class MainService():
             text, lv, anchor = self.parse_message(message)
             # print('parse_message text: ', text)
         
-        if anchor > 0 and user[:3] == 'TST' or lv >= self.service_avoid_filter_lv:
+        if (anchor > 0 and user[:3] == 'TST') or lv >= self.service_avoid_filter_lv:
             return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
         if text:
@@ -259,9 +260,10 @@ class MainService():
         
         else:
             # wechat suspected english style
-            _trimed_engtxt = self.english_parser.trim(text).replace(' ', '')
+            _trimed_engtxt = self.english_parser.trim(text).replace(' ', '').lower()
             _len_eng = len(_trimed_engtxt)
-            if 0 < _len_eng <= 2 and not self.english_parser.is_vocabulary(_len_eng):
+            print('_trimed_engtxt: ', _trimed_engtxt)
+            if 0 < _len_eng <= 2 and not self.english_parser.is_vocabulary(_trimed_engtxt):
                 _len = len(text)
                 if  _len > 4:
                     return self.STATUS_PREDICTION_WEHCAT_SUSPICION, 'Wechat Suspected'
