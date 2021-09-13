@@ -79,6 +79,7 @@ class Command(BaseCommand):
 
         result_list = sorted(word_map.items(), key=lambda x:x[1], reverse=True)
         print('Top 10 Results: ')
+        
         print(result_list[:10])
         print('Bottom 10 Results: ')
         print(result_list[-10:])

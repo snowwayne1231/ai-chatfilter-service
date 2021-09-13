@@ -112,7 +112,6 @@ class MainService():
         # _unknown_words = [_[0] for _ in _unknowns]
 
         self.english_parser.set_vocabulary(_vocabulary_english)
-        print('_vocabulary_english hihi in in: ', 'hi' in _vocabulary_english)
 
         self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english)
         # self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english, chinese_data=_vocabulary_chinese)
