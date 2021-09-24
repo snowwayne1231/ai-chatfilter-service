@@ -704,6 +704,9 @@ class JieBaDictionary():
     def get_alphabet_position(self):
         return self.origin_vocabulary.index(self.alphabet_character)
 
+    def get_numeric_position(self):
+        return self.origin_vocabulary.index(self.number_character)
+
     def get_reserve_position(self):
         return self.origin_vocabulary.index(self.reserve_character)
 
