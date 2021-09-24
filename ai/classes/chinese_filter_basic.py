@@ -25,6 +25,7 @@ class BasicChineseFilter(BasicFilter):
     jieba_dict = None
     unknown_position = 0
     alphabet_position = 0
+    numeric_position = 0
     tokenizer_vocabularies = []
     encoder = None
     encoder_size = 0
@@ -42,6 +43,7 @@ class BasicChineseFilter(BasicFilter):
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs)
         self.unknown_position = self.jieba_dict.get_unknown_position() + 1
         self.alphabet_position = self.jieba_dict.get_alphabet_position() + 1
+        self.numeric_position = self.jieba_dict.get_numeric_position() + 1
         self.load_tokenizer_vocabularies()
 
     
@@ -56,7 +58,7 @@ class BasicChineseFilter(BasicFilter):
 
     # override
     def transform_str(self, _string):
-        words, unknowns = self.jieba_dict.split_word(_string)
+        words, unknowns = self.jieba_dict.split_word(_string.replace(' ', ''))
         return words
 
 
@@ -67,9 +69,9 @@ class BasicChineseFilter(BasicFilter):
 
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length, mask_zero=True))
-        model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
-        model.add(tf.keras.layers.GlobalAveragePooling1D())
+        # model.add(tf.keras.layers.Flatten())
+        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
+        # model.add(tf.keras.layers.GlobalAveragePooling1D())
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
         # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
@@ -274,15 +276,22 @@ class BasicChineseFilter(BasicFilter):
                     if len(_) <= 2 and _[0].isalpha():
 
                         _result_text.append(self.alphabet_position)
-                    
-                    else:
 
+                    elif _.isnumeric():
+
+                        _result_text.append(self.numeric_position)
+
+                    else:
+                        
                         # print('[Pinyin filter][get_encode_word] | unknown encode word: {},  _words: {}'.format(_, _words))
                         _found_other_unknown = True
                         _result_text.append(self.unknown_position)
                     
                 elif __code >= 0:
                     _result_text.append(__code)
+
+        # if _found_other_unknown:
+        #     print('_found_other_unknown: ', _words)
         
         return _result_text, _found_other_unknown
 
