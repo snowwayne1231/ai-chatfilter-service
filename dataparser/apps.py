@@ -515,6 +515,8 @@ class JieBaDictionary():
                         
                         if _num_splited > 1:
                             _freq_ *= 2**_num_splited
+                        else:
+                            _freq_ = min(_freq_, 64)
                         # print('=== _sen: {}  _freq_: {}'.format(_sen, _freq_))
                         __next_end = _end_idx_warped - 1
 
