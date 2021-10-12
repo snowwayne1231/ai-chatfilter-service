@@ -107,7 +107,7 @@ class PinYinFilter(BasicChineseFilter):
     def find_block_word(self, word_list = [], text_string = ''):
         _sbl = self.should_block_list
         _sbsl = self.should_block_shap_list
-        print('find_block_word: _sbsl: ', _sbsl)
+        
         for _w in word_list:
             if _w in _sbl:
                 return self.should_block_pinyin_map.get(_w, _w)
