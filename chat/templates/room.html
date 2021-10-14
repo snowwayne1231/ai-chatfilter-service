@@ -77,6 +77,14 @@
                 <label>只顯示刪除</label>
                 <input type="checkbox" id="checkbox-show-delete"></input>
             </dd>
+            <dd>
+                <label>自定義房號</label>
+                <input type="test" id="room-text" value="localhost_test"></input>
+            </dd>
+            <dd>
+                <label>名稱</label>
+                <input type="test" id="room-nickname" value="TST-test"></input>
+            </dd>
         </div>
         <table>
             <thead>
@@ -134,9 +142,9 @@
         if (window.conn) {
             window.conn.send(JSON.stringify({
                 'msgid': 1234,
-                'user': 'TST'+randomUsers[Math.floor(Math.random() * randomUsers.length)],
+                'user': (document.querySelector('#room-nickname').value || '').trim(),
                 // 'room': randomRooms[Math.floor(Math.random() * randomRooms.length)],
-                'room': 'localhot_test',
+                'room': (document.querySelector('#room-text').value || '').trim(),
                 'message': message.replace(/\ /g, ''),
                 'detail': 1,
             }));
