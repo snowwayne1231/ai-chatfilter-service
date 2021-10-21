@@ -231,7 +231,7 @@ class MainService():
                 )
 
             return self.return_reslut(prediction, message=message, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
-                
+
         else:
 
             prediction = self.STATUS_PREDICTION_NO_MSG
