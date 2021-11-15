@@ -170,7 +170,7 @@ class Command(BaseCommand):
                     # print('sending txt: ', msgtxt)
                     # packed = pack(command_hex, msgid=msgid+BIAS_MSGID, msgtxt=msgtxt)
                     # packed = pack(command_hex, msgid=msgid+BIAS_MSGID, json={'msg': msgtxt, 'roomid': 'localhost', 'loginname': 'testsocket-{}'.format(msgid)})
-                    packed = pack(command_hex, msgid=msgid+BIAS_MSGID, json={'msg': msgtxt, 'roomid': 'localhost'})
+                    packed = pack(command_hex, msgid=msgid+BIAS_MSGID, json={'msg': msgtxt, 'roomid': 'localhost', 'loginname': 'TST-testsocket-{}'.format(msgid)})
 
                     if msgid % 10 == 0:
                         print(' {:2.1%}'.format(msgid / length_messages), end="\r")
