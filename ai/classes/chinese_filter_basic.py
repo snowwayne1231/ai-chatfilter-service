@@ -6,7 +6,7 @@ import ast
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import os
+import os, re
 from ai.classes.basic_filter import BasicFilter
 from ai.service_impact import get_all_vocabulary_from_models
 from datetime import datetime, timedelta
@@ -29,6 +29,7 @@ class BasicChineseFilter(BasicFilter):
     tokenizer_vocabularies = []
     encoder = None
     encoder_size = 0
+    alpha_pattern = re.compile('[A-Za-z]+')
 
     # override
     def __init__(self, data = [], load_folder=None, jieba_vocabulary=[], jieba_freqs=[]):
@@ -193,6 +194,9 @@ class BasicChineseFilter(BasicFilter):
             _all_duplicate_zipstr = []
 
             for _ in tokenized_list:
+                if len(_)==0:
+                    _i += 1
+                    continue
                 _zip_str = '|'.join(str(__) for __ in _)
                 _map_value = _check_map.get(_zip_str, None)
                 _y_value = 0 if y[_i] == 0 else 1
@@ -206,7 +210,7 @@ class BasicChineseFilter(BasicFilter):
                         _origin = self.data[_i][2]
                         _against_idx = _check_map_idx[_zip_str]
                         _against_data = self.data[_against_idx][2]
-                        print('_origin: {}   _against_data: {}'.format(_origin, _against_data))
+                        print('_origin: {}   _against_data: {}  _zip_str: {}'.format(_origin, _against_data, _zip_str))
                     
                 else:
                     _check_map[_zip_str] = _y_value
@@ -248,8 +252,8 @@ class BasicChineseFilter(BasicFilter):
                 print(" {:.2f}%".format(_percent), end="\r")
 
             _list, _has_unknown = self.get_encode_word(words)
-            if len(_list) ==0:
-                continue
+            # if len(_list) ==0:
+            #     continue
             _ary = np.asarray(_list).astype(np.int32)
 
             tokenized.append(_ary)
@@ -259,13 +263,16 @@ class BasicChineseFilter(BasicFilter):
         return np.asarray(tokenized)
 
 
-    def get_encode_word(self, _words):
+    def get_encode_word(self, _words, ignore_english = True):
         _result_text = []
         _encoder = self.encoder
         _max_size = self.encoder_size
         _found_other_unknown = False
 
         for _ in _words:
+            if ignore_english and self.alpha_pattern.fullmatch(_):
+                _result_text = []
+                break
             _loc = _encoder.encode(_)
             
             if len(_loc) > 0:
@@ -273,7 +280,7 @@ class BasicChineseFilter(BasicFilter):
 
                 if __code > _max_size:
                     # find the new word
-                    if len(_) <= 2 and _[0].isalpha():
+                    if len(_) <= 2 and self.alpha_pattern.fullmatch(_):
 
                         _result_text.append(self.alphabet_position)
 
@@ -307,6 +314,8 @@ class BasicChineseFilter(BasicFilter):
 
         for idx, texts in enumerate(x):
             _len = len(texts)
+            if _len == 0:
+                continue
 
             st = y[idx] if y[idx] else 0
             weight = w[idx] if w[idx] else 1
@@ -315,6 +324,8 @@ class BasicChineseFilter(BasicFilter):
             x_list.append(npts)
             y_list.append(np.int64(st))
             w_list.append(np.int64(weight))
+
+        self.length_x = len(x_list)
 
         dataset = tf.data.Dataset.from_tensor_slices((x_list, y_list, w_list))
         

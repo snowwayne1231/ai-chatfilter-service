@@ -149,7 +149,7 @@ class PinYinFilter(BasicChineseFilter):
             possible = self.STATUS_SEPCIFY_BLOCK
             return possible, reason
         
-        _result_text, _has_unknown = self.get_encode_word(_words)
+        _result_text, _has_unknown = self.get_encode_word(_words, ignore_english=False)
 
         if len(_result_text) == 0:
             return possible, reason
@@ -178,7 +178,7 @@ class PinYinFilter(BasicChineseFilter):
     # override
     def get_details(self, text):
         transformed_words = self.transform(text)
-        encoded_words, _has_unknown = self.get_encode_word(transformed_words)
+        encoded_words, _has_unknown = self.get_encode_word(transformed_words, ignore_english=False)
 
         if encoded_words:
             predicted = self.model.predict([encoded_words])[0]
@@ -248,7 +248,7 @@ class PinYinReverseStateFilter(PinYinFilter):
         if len(_words) == 0:
             return possible, reason
         
-        _result_text, _has_unknown = self.get_encode_word(_words)
+        _result_text, _has_unknown = self.get_encode_word(_words, ignore_english=False)
 
         if len(_result_text) == 0:
             return possible, reason
