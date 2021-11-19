@@ -221,6 +221,7 @@ python manage.py knowledge -i ai/assets/chinese/dict_taiwan.xlsx -lan TW -f 2
 python manage.py knowledge -i ai/assets/english/dict.xls -lan EN -f 3
 python manage.py knowledge -di ai/assets/chinese_digits/dict.xls
 python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN -f 100
+python manage.py knowledge -i ai/assets/chinese/dict_china_single.xls -lan CN -f 5
 python manage.py freq -i ai/assets/textbook/json/pinyin/2020-08-31.json
 ```
 
