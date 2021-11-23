@@ -118,8 +118,9 @@ class PinYinFilter(BasicChineseFilter):
                 _text_idx = 0
                 _text_length = len(text_string)
                 for __ in _:
-                    while _text_idx < _text_length:
-                        if __ == text_string[_text_idx]:
+                    __length = len(__)
+                    while _text_idx <= _text_length - __length:
+                        if __ == text_string[_text_idx: _text_idx+__length]:
                             _num_matched += 1
                             break
                         _text_idx += 1
@@ -142,6 +143,7 @@ class PinYinFilter(BasicChineseFilter):
         if len(_words) == 0:
             return possible, reason
 
+        # print('predictText text: ', text)
         reason = self.find_block_word(_words, text)
         
         # check static block word list
