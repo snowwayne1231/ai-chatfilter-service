@@ -220,7 +220,11 @@ class BasicChineseFilter(BasicFilter):
 
             if len(_all_duplicate_zipstr) > 0:
                 print('[Error] Failed To Start Train Because Data is Confusion.')
-                exit(2)
+                my_input = input('Do you wanna continue?')
+                if my_input == 'y':
+                    pass
+                else:
+                    exit(2)
 
         _basic = int(self.basic_num_dataset / len(tokenized_list))
 
