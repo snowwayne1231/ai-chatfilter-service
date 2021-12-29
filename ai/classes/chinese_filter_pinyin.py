@@ -11,6 +11,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import numpy as np
 import json
+from dataparser.apps import JieBaDictionary
 
 
 class PinYinFilter(BasicChineseFilter):
@@ -55,7 +56,7 @@ class PinYinFilter(BasicChineseFilter):
         self.unknown_words = unknown_words
 
         if len(jieba_vocabulary) == 0:
-            vocabulary_data = get_all_vocabulary_from_models(english=False)
+            vocabulary_data = get_all_vocabulary_from_models(english=False, chinese=False)
             pinyin_data = vocabulary_data['pinyin']
             for pdata in pinyin_data:
                 jieba_vocabulary.append(pdata[0])
@@ -64,10 +65,24 @@ class PinYinFilter(BasicChineseFilter):
         for _sb in self.should_block_list:
             jieba_vocabulary.append(_sb)
             jieba_freqs.append(-1)
+
+        self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs)
         
-        super().__init__(data=data, load_folder=load_folder, jieba_vocabulary=jieba_vocabulary, jieba_freqs=jieba_freqs)
+        super().__init__(data=data, load_folder=load_folder, vocabulary=jieba_vocabulary)
         
 
+
+    def load_tokenizer_vocabularies(self, vocabulary_dataset = []):
+        if self.jieba_dict:
+            _vocabularies = self.jieba_dict.get_vocabulary()
+        elif len(vocabulary_dataset) > 0:
+            _vocabularies = vocabulary_dataset
+        vocabulary_length = len(_vocabularies)
+        print('vocabulary_length: ', vocabulary_length)
+        assert vocabulary_length > 0 and vocabulary_length < self.full_vocab_size
+        self.tokenizer_vocabularies = _vocabularies
+        self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)
+        self.encoder_size = vocabulary_length
 
 
     #override return list
@@ -120,8 +135,9 @@ class PinYinFilter(BasicChineseFilter):
                 for __ in _:
                     __length = len(__)
                     while _text_idx <= _text_length - __length:
-                        if __ == text_string[_text_idx: _text_idx+__length]:
+                        if __ == text_string[_text_idx: _text_idx+__length]  :
                             _num_matched += 1
+                            _text_idx += __length
                             break
                         _text_idx += 1
                 
@@ -220,6 +236,9 @@ class PinYinReverseStateFilter(PinYinFilter):
     STATE_UNKNOWN_MEANING = 9
     PASS_RATIO = 0.875
     PASS_RATIO_SINGLE = 0.52
+    SURE_RATIO = 0.95
+    SURE_REASON = 'SURE'
+
     # override
     def set_data(self, data):
         if self.check_data_shape(data):
@@ -268,6 +287,8 @@ class PinYinReverseStateFilter(PinYinFilter):
                 for _p in predicted[:self.STATE_OF_PASS]:
                     if _p > _others_ratio:
                         return self.STATE_UNKNOWN_MEANING, reason
+                if predicted[self.STATE_OF_PASS] > self.SURE_RATIO:
+                    reason = self.SURE_REASON
                 return 0, reason
             elif predicted[self.STATE_OF_PASS] > self.PASS_RATIO_SINGLE and len(_result_text) <= 2:
                 return 0, reason
