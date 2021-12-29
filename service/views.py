@@ -2,16 +2,17 @@ from rest_framework.parsers import JSONParser, FileUploadParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from django.http import Http404, JsonResponse, HttpResponseForbidden
+from django.http import Http404, JsonResponse, HttpResponseForbidden, HttpResponse
 from django.apps import apps
 from django.utils.timezone import datetime
 from django.core.paginator import Paginator
 from django import forms
 
 
-import xlrd
+import csv, codecs
 from dataparser.apps import ExcelParser
 from .instance import get_main_service
+from datetime import date
 
 
 
@@ -131,3 +132,61 @@ class ServiceRemoveAPIView(APIView):
         else:
 
             return JsonResponse({'name': 'none'}, safe=False)
+
+
+class ServicePinyinBlockListAPIView(APIView):
+    """
+    """
+    model = apps.get_model(app_label='service', model_name='DynamicPinyinBlock')
+
+    def get(self, request, id):
+        if id == 'list':
+            today = date.today()
+            _date = today.strftime("%Y%m%d")
+            filename = '{}_block_list.csv'.format(_date)
+            reslist = get_main_service(is_admin=True).get_dynamic_pinyin_block_list()
+            
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = "attachment; filename=" + filename
+            response.write(codecs.BOM_UTF8)
+            writer = csv.writer(response)
+            # writer.writeheader()
+            for r in reslist:
+                writer.writerow(r)
+            return response
+        
+        return HttpResponseForbidden('Add Failed.')
+
+    def post(self, request, id):
+        result = None
+        if id == 'add':
+            text = request.data.get('text', None)
+            # print('text: ', text)
+            if text:
+                result = get_main_service(is_admin=True).add_pinyin_block(text)
+
+            return JsonResponse({'result': result}, safe=False)
+        
+        elif id == 'file':
+            pass
+        
+        return HttpResponseForbidden('Add Failed.')
+        
+
+    def delete(self, request, id):
+        try:
+            id = int(id)
+            if id > 0:
+
+                _done = get_main_service(is_admin=True).remove_pinyin_block(id)
+
+                if not _done:
+                    return HttpResponseForbidden('Delete Failed.')
+
+            return JsonResponse({
+                'id': id,
+                'datetime': datetime.today(),
+            })
+            
+        except Exception as err:
+            return HttpResponseForbidden(str(err))

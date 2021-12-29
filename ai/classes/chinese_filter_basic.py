@@ -10,7 +10,6 @@ import os, re
 from ai.classes.basic_filter import BasicFilter
 from ai.service_impact import get_all_vocabulary_from_models
 from datetime import datetime, timedelta
-from dataparser.apps import JieBaDictionary
 
 
 
@@ -21,8 +20,8 @@ class BasicChineseFilter(BasicFilter):
     # columns = ['ROOM', 'ACCOUNT', 'MESSAGE', 'STATUS', 'TEXT', 'LV', 'ANCHOR']
     # avoid_lv = 3
     full_vocab_size = 65536
+    # full_vocab_size = 131072
     basic_num_dataset = 5000
-    jieba_dict = None
     unknown_position = 0
     alphabet_position = 0
     numeric_position = 0
@@ -30,27 +29,26 @@ class BasicChineseFilter(BasicFilter):
     encoder = None
     encoder_size = 0
     alpha_pattern = re.compile('[A-Za-z]+')
+    confirmed_rate = 0.6
 
     # override
-    def __init__(self, data = [], load_folder=None, jieba_vocabulary=[], jieba_freqs=[]):
+    def __init__(self, data = [], load_folder=None, vocabulary=[], freqs=[]):
         super().__init__(data=data, load_folder=load_folder)
-        if len(jieba_vocabulary) == 0:
+        if len(vocabulary) == 0:
             vocabulary_data = get_all_vocabulary_from_models(english=False, pinyin=False, chinese=True)
             _data = vocabulary_data['chinese']
             for _d in _data:
-                jieba_vocabulary.append(_d[0])
-                jieba_freqs.append(_d[1])
+                vocabulary.append(_d[0])
+                freqs.append(_d[1])
 
-        self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs)
-        self.unknown_position = self.jieba_dict.get_unknown_position() + 1
-        self.alphabet_position = self.jieba_dict.get_alphabet_position() + 1
-        self.numeric_position = self.jieba_dict.get_numeric_position() + 1
-        self.load_tokenizer_vocabularies()
+        self.load_tokenizer_vocabularies(vocabulary)
+        
 
     
-    def load_tokenizer_vocabularies(self):
-        _vocabularies = self.jieba_dict.get_vocabulary()
+    def load_tokenizer_vocabularies(self, vocabulary_dataset = []):
+        _vocabularies = vocabulary_dataset
         vocabulary_length = len(_vocabularies)
+        # print('vocabulary_length: ', vocabulary_length)
         assert vocabulary_length > 0 and vocabulary_length < self.full_vocab_size
         self.tokenizer_vocabularies = _vocabularies
         self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)
@@ -59,7 +57,8 @@ class BasicChineseFilter(BasicFilter):
 
     # override
     def transform_str(self, _string):
-        words, unknowns = self.jieba_dict.split_word(_string.replace(' ', ''))
+        # words, unknowns = self.jieba_dict.split_word(_string.replace(' ', ''))
+        words = _string.replace(' ', '').split('')
         return words
 
 
@@ -71,8 +70,9 @@ class BasicChineseFilter(BasicFilter):
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Embedding(self.full_vocab_size, full_words_length, mask_zero=True))
         # model.add(tf.keras.layers.Flatten())
-        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
-        # model.add(tf.keras.layers.GlobalAveragePooling1D())
+        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length, return_sequences=True)))
+        model.add(tf.keras.layers.LSTM(full_words_length, return_sequences=True))
+        model.add(tf.keras.layers.GlobalAveragePooling1D())
         model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(all_scs, return_sequences=True)))
         # model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
@@ -136,11 +136,9 @@ class BasicChineseFilter(BasicFilter):
         print('TRAIN_SIZE :: ', TRAIN_SIZE)
         print('VALIDATION_SIZE :: ', VALIDATION_SIZE)
 
-        # exit(2)
-
         steps = int(TRAIN_SIZE / BATCH_SIZE)
         vaildation_steps = int(VALIDATION_SIZE / BATCH_SIZE / epochs)
-        # print('steps [{}]  val steps [{}]'.format(steps, vaildation_steps))
+        print('steps [{}]  val steps [{}]'.format(steps, vaildation_steps))
 
         try:
             _start = datetime.now()
@@ -162,7 +160,7 @@ class BasicChineseFilter(BasicFilter):
                     print('Now Accuracy: {:.4f} / Target Accuracy: {:.4f}'.format(acc, stop_accuracy))
                     if acc >= stop_accuracy:
                         break
-                    
+
                 if stop_hours:
                     _now = datetime.now()
                     if _now > _end:
@@ -334,5 +332,27 @@ class BasicChineseFilter(BasicFilter):
         dataset = tf.data.Dataset.from_tensor_slices((x_list, y_list, w_list))
         
         return dataset
+    
+
+    # override
+    def predictText(self, text, lv = 0, with_reason=False):
+        possible = 0
+        reason = ''
+        
+        _result_text, _has_unknown = self.get_encode_word(text, ignore_english=True)
+
+        if len(_result_text) > 0:
+
+            predicted = self.model(np.array([_result_text]))[0]
+            # print('predicted: ', predicted)
+
+            possible = np.argmax(predicted)
+
+            if possible > 0:
+                ratio = predicted[possible]
+                if ratio < self.confirmed_rate:
+                    possible = 0
+            
+        return possible, reason
 
 

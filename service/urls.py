@@ -18,7 +18,7 @@ from django.urls import path, include
 from django.http import Http404, HttpResponse, JsonResponse
 from django.views.static import serve
 from service import instance
-from .views import ServiceJSONDataAPIView, ServiceUploadAPIView, ServiceRemoveAPIView
+from .views import ServiceJSONDataAPIView, ServiceUploadAPIView, ServiceRemoveAPIView, ServicePinyinBlockListAPIView
 import os
 
 
@@ -46,11 +46,15 @@ def read_data_path(request, name):
         result_data = main_service.get_vocabulary_data()
     elif name == 'modelversion':
         result_data = main_service.get_model_versions()
+    elif name == 'dpinyinblist':
+        result_data = main_service.get_dynamic_pinyin_block_list()
 
-    if result_data:
-        return JsonResponse(result_data, safe=False)
-    else:
+    # print('result_data: ', result_data)
+
+    if result_data is None:
         raise Http404('Data Not Found.')
+    else:
+        return JsonResponse(result_data, safe=False)
 
 
 
@@ -65,6 +69,7 @@ urlpatterns = [
     path('api/jsondata/<slug:name>', ServiceJSONDataAPIView.as_view()),
     path('api/upload/<slug:name>', ServiceUploadAPIView.as_view()),
     path('api/remove/<slug:name>/<slug:id>', ServiceRemoveAPIView.as_view()),
+    path('api/pinyinblock/<slug:id>', ServicePinyinBlockListAPIView.as_view()),
     # path(r'^django-rq/', include('django_rq.urls')),
     path('ai/', include('ai.urls')),
 ]

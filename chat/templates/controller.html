@@ -1,19 +1,170 @@
-<!-- chat/templates/chat/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8"/>
     <title>Chat Controller</title>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        .main-ctl {
+            padding: 0px;
+            margin: 0px;
+            overflow: hidden;
+            height: 96vh;
+            width: 100%;
+            position: relative;
+        }
+        .float-l {
+            float: left;
+            height: 100%;
+        }
+        .left-panel {
+            width: 200px;
+            background-color: #e7e7e7;
+            font-size: 20px;
+        }
+        ul {
+            list-style: none;
+            padding: 0px 10px;
+        }
+        .right-zone {
+            width: 100%;
+            height: 100%;
+            display: block;
+            padding-left: 200px;
+        }
+        .header {
+            height: 100px;
+            font-size: 24px;
+            width: 100%;
+            background-color: #d1fff0;
+            padding: 5px 20px;
+        }
+        .content {
+            height: calc(100% - 100px);
+            overflow-y: auto;
+            position: relative;
+        }
+        h1,h2,h3,p,ul {
+            margin: 0px;
+        }
+
+        #pinyin-block-list {
+            position: relative;
+            height: 86%;
+            overflow: auto;
+            max-height: 80vh;
+        }
+
+        #pinyin-block-list >li {
+            border-bottom: 1px solid #ccc;
+            line-height: 32px;
+        }
+        #pinyin-block-list >li:nth-child(odd) {
+            background-color: #f6fffc;
+        }
+        #pinyin-block-list >li:hover {
+            background-color: #ededed;
+        }
+
+        #pinyin-block-list >li:hover .delete-sapn {
+            visibility: inherit;
+        }
+
+        .pbz-btn {
+            width: 80px;
+            height: 32px;
+            font-size: 20px;
+            vertical-align: bottom;
+            margin-right: 24px;
+            cursor: pointer;
+        }
+
+        #pinyin-block-input {
+            height: 34px;
+            width: 280px;
+        }
+        .delete-sapn {
+            color: red;
+            cursor: pointer;
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            border: 1px solid red;
+            border-radius: 50%;
+            line-height: 20px;
+            margin: 0px 4px;
+            visibility: hidden;
+        }
+        .delete-sapn:hover {
+            background-color: red;
+            color: white;
+        }
+        .txt-span {
+            display: inline-block;
+            min-width: 320px;
+        }
+        .absolute-right {
+            position: absolute;
+            right: 0px;
+            top: 0px;
+        }
+        .font-btn {
+            font-size: 24px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <input id="file-input" type="file" accept=".xls,.xlsx"/>
-    <input id="file-submit" type="button" value="確認"/>
+    <div class="main-ctl">
+        <div class="float-l left-panel">
+            <ul>
+                <li><a href="#">即時禁詞(拼音)</a></li>
+            </ul>
+        </div>
+        <div class="right-zone">
+            <div id="pinyin-block-zone" style="height: 100%;">
+                <div class="header">
+                    <h2>即時禁詞(拼音)</h2>
+                    <div>
+                        <input type="text" id="pinyin-block-input"/>
+                        <button class="pbz-btn" id="btn-local-search">搜尋</button>
+                        <button class="pbz-btn" id="btn-add-block">新增</button>
+                    </div>
+                    <div class="absolute-right">
+                        <button class="font-btn" id="btn-download-list">⏬</button>
+                        <button class="font-btn">🔄</button>
+                    </div>
+                </div>
+                <div class="content">
+                    <ul id="pinyin-block-list">
+                        <li></li>
+                    </ul>
+                    <div id="list-info"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="display: none;">
+        <input id="file-input" type="file" accept=".xls,.xlsx"/>
+        <input id="file-submit" type="button" value="確認"/>
+    </div>
+    
 
     <script>
         var file_input = document.querySelector('#file-input');
-        var file_submit = document.querySelector('#file-submit');
-        console.log('axios', axios);
+        var pinyin_block_list = document.querySelector('#pinyin-block-list');
+        var pinyin_block_input = document.querySelector('#pinyin-block-input');
+        var list_info = document.querySelector('#list-info');
+        var btn_add_block = document.querySelector('#btn-add-block');
+        var btn_local_search = document.querySelector('#btn-local-search');
+        var btn_download_list = document.querySelector('#btn-download-list');
+        var global_pinyin_block_list = [];
+        var goon = false;
+        // console.log('axios', axios);
+
+        reloadPinyinList();
 
         file_submit.onclick = function(e) {
             var files = file_input.files;
@@ -29,6 +180,130 @@
                 }
             });
         };
+        
+        btn_add_block.onclick = function(e) {
+            var val = pinyin_block_input.value;
+            addPinyin(val.trim());
+        }
+
+        btn_local_search.onclick = function(e) {
+            var val = pinyin_block_input.value;
+            var exp = RegExp(`.*${val}.*`, 'ig');
+            if (val.length == 0) {
+                showList(global_pinyin_block_list);
+            } else {
+                showList(global_pinyin_block_list.filter(e => e[1].match(exp)));
+            }
+            // console.log('global_pinyin_block_list: ', global_pinyin_block_list);
+        }
+
+        pinyin_block_input.onchange = function(e) {
+            if (e.target.value.length == 0) {
+                showList(global_pinyin_block_list);
+            }
+        }
+
+        pinyin_block_list.onclick = function(e) {
+            var target = e.target;
+            if (target.classList.contains("delete-sapn")) {
+                if (!goon) {
+                    goon = window.confirm('確定執行刪除?');
+                }
+                if (goon) {
+                    var id = target.dataset.id;
+                    console.log([target]);
+
+                    axios.delete('/api/pinyinblock/' + id).then(e => {
+                        console.log('delete api: ', e.data);
+                        var _idx = global_pinyin_block_list.findIndex(e => e[0] == id);
+                        global_pinyin_block_list.splice(_idx, 1);
+                        list_info.innerHTML = `Total Length: ${global_pinyin_block_list.length}`;
+                        pinyin_block_list.removeChild(target.parentNode);
+                    });
+                }
+            }
+        }
+
+        btn_download_list.onclick = function(e) {
+            window.open('/api/pinyinblock/list', 'blank');
+        }
+
+
+
+        function showList(block_list) {
+            var new_html = '';
+            goon = false;
+            block_list.map(ary => {
+                var id = ary[0];
+                var txt = ary[1];
+                var py = ary[2];
+                new_html += strLi(id, txt, py);
+            });
+            if (block_list.length > 100) {
+                new_html += '最多只顯示100筆..';
+            }
+            pinyin_block_list.innerHTML = new_html;
+            list_info.innerHTML = `Total Length: ${block_list.length}`;
+        }
+
+        function reloadPinyinList() {
+            axios.get('/api/data/dpinyinblist').then(e => {
+                global_pinyin_block_list = e.data;
+                console.log('global_pinyin_block_list: ', global_pinyin_block_list);
+                goon = false;
+                if (e.data.length == 0) {
+                    pinyin_block_list.innerHTML = '無資料';
+                } else {
+                    showList(global_pinyin_block_list.slice(0, 100));
+                }
+            });
+        }
+
+        function strLi(id, txt, py){
+            var _html = `<li><span class="delete-sapn" data-id="${id}">X</span><span class="txt-span">${txt}</span> <span>| ${py}</span></li>`;
+            return _html;
+        }
+
+        function domLi(id, txt, py) {
+            var _dom = document.createElement('li');
+            _dom.innerHTML = `<span class="delete-sapn" data-id="${id}">X</span><span class="txt-span">${txt}</span> <span>| ${py}</span>`;
+            return _dom;
+        }
+
+        function addPinyin(text) {
+            if (!text) return false;
+            var isConflict = false;
+            goon = false;
+            global_pinyin_block_list.map(e => {
+                var _txt = e[0];
+                if (text == _txt) {
+                    isConflict = true;
+                }
+            });
+            if (isConflict) {
+                return window.alert('重複新增: '+ text);
+            }
+
+            var formData = new FormData();
+            formData.append('text', text);
+            return axios.post('/api/pinyinblock/add', formData).then(e => {
+                var data = e.data;
+                var result = data.result;
+                if (result) {
+                    var id = result.id;
+                    var text = result.text;
+                    var pinyin = result.pinyin;
+                    console.log('pinyinblock data: ', data);
+                    pinyin_block_list.prepend(domLi(id, text, pinyin));
+                    pinyin_block_input.value = '';
+                    global_pinyin_block_list.unshift([id, text, pinyin]);
+                    list_info.innerHTML = `Total Length: ${global_pinyin_block_list.length}`;
+                } else {
+                    window.alert('新增失敗.');
+                    console.log('text: ', text, 'data: ', data);
+                }
+            });
+        }
     </script>
 </body>
 </html>

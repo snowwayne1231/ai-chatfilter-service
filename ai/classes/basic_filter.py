@@ -37,6 +37,8 @@ class BasicFilter():
 
     def check_data_shape(self, data=[]):
 
+        print('check_data_shape data length: ', len(data))
+
         if len(data) == 0:
             data = self.data
 

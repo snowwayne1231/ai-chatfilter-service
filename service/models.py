@@ -93,3 +93,16 @@ class ChangeNicknameRequest(models.Model):
         indexes = [
             models.Index(fields=['status',]),
         ]
+
+
+class DynamicPinyinBlock(models.Model):
+    text = models.CharField(max_length=16)
+    pinyin = models.CharField(max_length=64)
+    type = models.IntegerField(default=1)
+    date = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['type',]),
+            models.Index(fields=['-date',]),
+        ]

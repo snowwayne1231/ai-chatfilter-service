@@ -1,10 +1,13 @@
 from django.utils import timezone
 from django.conf import settings
-from django.core.files.base import ContentFile
+from django.forms.models import model_to_dict
+# from django.core.files.base import ContentFile
 from http.client import HTTPConnection
 from ai.apps import MainAiApp
 from ai.service_impact import get_all_vocabulary_from_models
 from ai.helper import get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_re_path, get_vocabulary_dictionary_path
+from ai.classes.translator_pinyin import translate_by_string
+from ai.models import TextbookSentense
 from dataparser.apps import MessageParser, EnglishParser
 from dataparser.classes.store import ListPickle
 
@@ -15,8 +18,9 @@ from os import path, listdir
 from .classes.prefilter import PreFilter
 # from .classes.fuzzycenter import FuzzyCenter
 from .classes.chatstore import ChatStore
-from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, ChangeNicknameRequest, Blockword
-from ai.models import TextbookSentense
+from .models import GoodSentence, BlockedSentence, AnalyzingData, UnknownWord, ChangeNicknameRequest, Blockword, DynamicPinyinBlock
+
+
 
 
 
@@ -63,6 +67,7 @@ class MainService():
     REMOTE_ROUTE_GARMMAR_MODEL = '/api/model/grammar'
     REMOTE_ROUTE_ENGLISH_MODEL = '/api/model/english'
     REMOTE_ROUTE_VOCABULARY_DATA = '/api/data/vocabulary'
+    REMOTE_ROUTE_DYNAMIC_PINYIN_BLOCK = '/api/data/dpinyinblist'
 
     regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
     regex_has_gap = re.compile("[a-zA-Z]+\s+[a-zA-Z]+")
@@ -79,6 +84,7 @@ class MainService():
         if is_admin_server:
             self.is_admin_server = True
             self.check_analyzing()
+            self.pre_filter.set_pinyin_block_list(self.get_dynamic_pinyin_block_list())
 
         logging.info('=============  Main Service Activated. Time Zone: [ {} ] ============='.format(settings.TIME_ZONE))
 
@@ -265,7 +271,7 @@ class MainService():
             # wechat suspected english style
             _trimed_engtxt = self.english_parser.trim(text).replace(' ', '').lower()
             _len_eng = len(_trimed_engtxt)
-            print('_trimed_engtxt: ', _trimed_engtxt)
+            # print('_trimed_engtxt: ', _trimed_engtxt)
             if 0 < _len_eng <= 2 and not self.english_parser.is_vocabulary(_trimed_engtxt):
                 _len = len(text)
                 if  _len > 4:
@@ -306,6 +312,7 @@ class MainService():
             self.pre_filter.find_korea_mixed,
             self.pre_filter.find_emoji_word_mixed,
             self.pre_filter.find_unallow_eng,
+            self.pre_filter.find_pinyin_blocked,
         ]
         for m in methods:
             r = m(msg)
@@ -497,6 +504,10 @@ class MainService():
         else:
             _data_pk = ListPickle(get_vocabulary_dictionary_path() + '/data.pickle')
             return _data_pk.get_list()[0] or {}
+
+
+    def get_dynamic_pinyin_block_list(self):
+        return list(DynamicPinyinBlock.objects.values_list('id', 'text', 'pinyin').order_by('-id').all())
             
     
 
@@ -522,6 +533,20 @@ class MainService():
             _json_data = {}
         
         return _json_data
+
+    
+    def get_dynamic_pinyin_block_list_remotely(self, http_connection):
+        http_connection.request('GET', self.REMOTE_ROUTE_DYNAMIC_PINYIN_BLOCK, headers={'Content-type': 'application/json'})
+        _http_res = http_connection.getresponse()
+        json_data = None
+        if _http_res.status == 200:
+
+            json_data = json.loads(_http_res.read().decode(encoding='utf-8'))
+            logging.info('[get_dynamic_pinyin_block_list_remotely] Download Data Done.')
+        else:
+            logging.error('[get_dynamic_pinyin_block_list_remotely] Download Failed.')
+        
+        return json_data
     
 
 
@@ -560,6 +585,9 @@ class MainService():
 
         if self.lang_mode == self.STATUS_MODE_CHINESE:
             #
+            _dpb_list = self.get_dynamic_pinyin_block_list_remotely(_http_cnn)
+            self.pre_filter.set_pinyin_block_list(_dpb_list)
+
             _http_cnn.request('GET', self.REMOTE_ROUTE_PINYIN_MODEL)
             _http_res = _http_cnn.getresponse()
             if _http_res.status == 200:
@@ -632,9 +660,35 @@ class MainService():
             return False
 
 
+    def add_pinyin_block(self, text):
+        try:
+            _py = translate_by_string(text)
+            qs = DynamicPinyinBlock.objects.filter(pinyin=_py)
+            if len(qs) == 0:
+            
+                qs = DynamicPinyinBlock.objects.create(
+                    text=text,
+                    pinyin=_py,
+                )
+                return model_to_dict(qs)
+            else:
+                return None
+        except Exception as err:
+            print('add_pinyin_block error: ', err)
+            return None
+
+
     def remove_textbook_sentense(self, id):
         try:
             TextbookSentense.objects.get(pk=id).delete()
+            return True
+        except Exception as err:
+            return False
+
+
+    def remove_pinyin_block(self, id):
+        try:
+            DynamicPinyinBlock.objects.get(pk=id).delete()
             return True
         except Exception as err:
             return False

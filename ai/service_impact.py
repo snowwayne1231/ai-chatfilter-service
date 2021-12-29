@@ -4,7 +4,7 @@ from opencc import OpenCC
 
 
 
-def get_all_vocabulary_from_models(pinyin=True, english=True, chinese=False):
+def get_all_vocabulary_from_models(pinyin=True, english=True, chinese=True):
 
     _pinyins = []
     _englishs = []

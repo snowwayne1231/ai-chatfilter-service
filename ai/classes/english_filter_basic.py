@@ -45,7 +45,7 @@ class BasicEnglishFilter(BasicChineseFilter):
         if english_vocabulary:
             self.eng_vocabulary = english_vocabulary
         else:
-            _voca_data = get_all_vocabulary_from_models(pinyin=False)
+            _voca_data = get_all_vocabulary_from_models(pinyin=False, chinese=False)
             self.eng_vocabulary = [_[0] for _ in _voca_data['english']]
 
         # print('[BasicEnglishFilter] eng_vocabulary: ', self.eng_vocabulary)

@@ -1,10 +1,10 @@
 import re
 import time
+from ai.classes.translator_pinyin import translate_by_string
 
 
 regex_chinese = re.compile('[\u4e00-\u9fa5]+')
 regex_korea = re.compile('[\uac00-\ud7a3]+')
-# single_blocked_words = ['㐅', '㐃', 'ㄥ', '鴞', '', '', '', '', '', '', '卩', 'ノ', 'ろ', '〇']
 allowed_character_regexies = [
     (u'\u0020', u'\u0082'), # general english, digits and symbol
     # (u'\u23e9', u'\u23f9'), # symbol
@@ -29,6 +29,7 @@ class PreFilter():
     """
     SECOND_QUICK_SAYING = 5
     map_loginname_timestamp = {}
+    dynamic_pinyin_block_list = ['you_']
 
 
     def __init__(self):
@@ -208,12 +209,12 @@ class PreFilter():
             u'\u4e00', u'\u58f9', u'\u4e8c', u'\u8cb3', u'\u4e09', u'\u53c1', u'\u56db', u'\u8086', u'\u4e94', u'\u4f0d', 
             u'\u5348', u'\u821e', u'\u516d', u'\u9678', u'\u4e03', u'\u67d2', u'\u516b', u'\u5df4', u'\u53ed', u'\u634c', 
             u'\u6252', u'\u4e5d', u'\u4e45', u'\u7396', u'\u9152', u'\u96f6', u'\u9748', '＋', '+', '扒', '凌', '陵', '仁',
-            '灵', '漆', '舞', '武', '医', '陆', '司', '饿', '久', '删', '酒', '林', '腰', '兰', '溜', '临', '寺', '期', '铃',
+            '灵', '漆', '舞', '武', '医', '陆', '司', '久', '删', '酒', '林', '腰', '兰', '溜', '临', '寺', '期', '铃',
             '山', '遛', '思', '妖', '贰', '玲', '午', '妻', '跋', '衣', '似', '伶', '疤', '韭', '镹', '聆', '易', '衫', '齐',
-            '死', '世', '芭', '令', '依', '市', '士', '伊', '柳', '斯', '珊', '流', '奇', '数', '趴', '灸', '凄', '淋', '耙',
-            '两', '留', '耳', '儿', '羚', '鈴', '义', '把', '旧', '帕', '兒', '霸', '韭', '琳', '双', '俩', '爸', '龄', '乙',
-            '究', '耀', '拔', '邻', '恶', '而', '姍', '试', '伤', '叄', '澪', '無', '麟', '式', '舅', '臼', '启', '吾', '辆',
-            '无', '撕', '噩', '琦', '琪', '洞', '亿', '柿', '侍', '丸', '琉', '厄', '吐', '兔', '訕', '倆', '伺', '骑', '棋',
+            '死', '世', '芭', '令', '依', '市', '士', '伊', '柳', '斯', '珊', '流', '奇', '数', '趴', '灸', '凄', '耙',
+            '两', '留', '耳', '儿', '羚', '鈴', '义', '旧', '帕', '兒', '霸', '韭', '琳', '双', '俩', '爸', '龄', '乙',
+            '究', '耀', '拔', '邻', '恶', '而', '姍', '试', '伤', '叄', '澪', '無', '麟', '式', '舅', '臼', '吾', '辆',
+            '无', '撕', '噩', '琦', '琪', '洞', '亿', '柿', '侍', '丸', '琉', '厄', '兔', '訕', '倆', '伺', '骑', '棋',
             '巴', '仇', '杂', '怡', '丝', '棱', '仪', '欺', '&' , '+', '仙', '疚', '夭', '寺', '鸠',
         ]
         if chinese:
@@ -270,3 +271,41 @@ class PreFilter():
             if _before > 0:
                 return _now - _before < self.SECOND_QUICK_SAYING
         return False
+
+
+    def find_pinyin_blocked(self, text):
+        _pinyin = self.parse_pinyin(text)
+        # print('translate_by_string : ',  _pinyin)
+        for _py in self.dynamic_pinyin_block_list:
+            if _py in _pinyin:
+                # print('find_pinyin_blocked : ', _py)
+                return _py
+        return False
+
+
+    def parse_pinyin(self, text):
+        _parsed_text = re.sub(r'[a-zA-Z\d\s]+', '', text)
+        return translate_by_string(_parsed_text)
+
+
+    def set_pinyin_block_list(self, _list_):
+        print('set_pinyin_block_list: ', _list_)
+        _pinyin_idx = 2
+        if len(_list_) >0:
+            if isinstance(_list_[0], str):
+                self.dynamic_pinyin_block_list = _list_
+            else:
+                try:
+                    self.dynamic_pinyin_block_list = [_[_pinyin_idx] for _ in _list_]
+                except Exception as err:
+                    print('set_pinyin_block_list error: ', err)
+                    return False
+
+        return True
+        
+
+
+    def get_pinyin_block_list(self):
+        return self.dynamic_pinyin_block_list
+
+    

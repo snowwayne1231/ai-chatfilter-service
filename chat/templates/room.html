@@ -28,10 +28,11 @@
         }
 
         .bottom.range {
-            height: 30vh;
+            height: 35vh;
             width: 100%;
             margin: 0px;
             padding: 20px;
+            border-top: 1px solid #000;
         }
         table {
             width: 100%;
@@ -67,6 +68,16 @@
 </head>
 <body>
     <div class="left range">
+        <div class="filter-btn">
+            <dd>
+                <label>自定義房號</label>
+                <input type="test" id="room-text" value="localhost_test"></input>
+            </dd>
+            <dd>
+                <label>名稱</label>
+                <input type="test" id="room-nickname" value="TST-test"></input>
+            </dd>
+        </div>
         <textarea id="chat-log" cols="100" rows="20" readonly></textarea><br/>
         <input id="chat-message-input" type="text" size="100"/><br/>
         <input id="chat-message-submit" type="button" value="Send"/>
@@ -76,14 +87,6 @@
             <dd>
                 <label>只顯示刪除</label>
                 <input type="checkbox" id="checkbox-show-delete"></input>
-            </dd>
-            <dd>
-                <label>自定義房號</label>
-                <input type="test" id="room-text" value="localhost_test"></input>
-            </dd>
-            <dd>
-                <label>名稱</label>
-                <input type="test" id="room-nickname" value="TST-test"></input>
             </dd>
         </div>
         <table>
@@ -103,7 +106,7 @@
     <div class="bottom range">
 
         <!-- <button id="train-remote">Train Remote</button> -->
-        <button id="refresh-custom-vocabulary">Custom Vocabulary</button>
+        <!-- <button id="refresh-custom-vocabulary">Custom Vocabulary</button> -->
 
         <div id="custom-vocabulary-table">
             <talbe>

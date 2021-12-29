@@ -99,10 +99,14 @@ class MainAiApp():
     def predict(self, txt, lv=0, with_reason=False):
         prediction = 0
         reason = ''
+        _certainty_reason = 'SURE'
 
         for model in self.loaded_models:
             _predict, reason = model.predictText(txt, lv, with_reason=with_reason)
-            if _predict > 0:
+            if _predict == 0:
+                if reason == _certainty_reason:
+                    break
+            else:
                 prediction = _predict
                 break
 

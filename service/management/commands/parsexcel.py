@@ -43,7 +43,7 @@ class Command(BaseCommand):
         if output_path is None:
             _dirname = os.path.dirname(input_file)
             _filename = '{}.json'.format(date.today())
-            output_path = os.path.join(_dirname, _filename)
+            output_path = os.path.join(_dirname, '../json/',_filename)
 
         if check_file_path:
             _jp = JsonParser(file=check_file_path)
