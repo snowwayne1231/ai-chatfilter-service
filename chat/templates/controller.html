@@ -197,6 +197,10 @@
             /* border: 1px solid #333; */
         }
     </style>
+
+    <style>
+
+    </style>
 </head>
 <body>
     <div class="main-ctl">
@@ -204,6 +208,7 @@
             <ul>
                 <li><a href="#" onclick="naviTo('live-chat-zone');" title="移動到[即時聊天]頁">即時聊天</a></li>
                 <li><a href="#" onclick="naviTo('pinyin-block-zone');" title="移動到[即時禁詞]頁">即時禁詞(拼音)</a></li>
+                <li><a href="#" onclick="naviTo('train-center-zone');" title="移動到[訓練資料中心]頁">訓練資料中心</a></li>
             </ul>
         </div>
         <div class="right-zone">
@@ -270,6 +275,14 @@
                     <textarea id="chat-log" cols="100" rows="20" readonly></textarea>
                     <input id="chat-message-input" type="text" size="100"/>
                     <input id="chat-message-submit" type="button" value="Send"/>
+                </div>
+            </div>
+            <div id="train-center-zone" style="height: 100%; display: none;">
+                <div class="header">
+                    <h2>訓練資料中心</h2>
+                </div>
+                <div class="right range">
+
                 </div>
             </div>
         </div>
@@ -442,7 +455,7 @@
             if (val.length == 0) {
                 showList(global_pinyin_block_list);
             } else {
-                showList(global_pinyin_block_list.filter(e => e[1].match(exp)));
+                showList(global_pinyin_block_list.filter(e => e[1].match(exp) || e[2].match(exp)));
             }
             // console.log('global_pinyin_block_list: ', global_pinyin_block_list);
         }
