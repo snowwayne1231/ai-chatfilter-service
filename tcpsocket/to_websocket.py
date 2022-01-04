@@ -86,7 +86,6 @@ class WebsocketThread (threading.Thread):
 
             if self.on_message_callback:
                 self.on_message_callback(_msg_id, _res_message)
-        
 
     def on_error(self, error):
         logging.error('### Web Socket Error: {}'.format(error))
@@ -112,8 +111,7 @@ class WebsocketThread (threading.Thread):
 
 
     def setting(self):
-        return self.pool.apply(self.send_thread, [{'tcp': True, 'msgid': self.key_tcp_poto, 'hostname': self.local_host[0]+self.local_host[1]}])
-
+        return self.pool.apply(self.send_thread, [{'tcp': True, 'msgid': self.key_tcp_poto, 'hostname': self.local_host[0]+' | '+self.local_host[1]}])
 
     def get_ws_url(self):
         return self._url

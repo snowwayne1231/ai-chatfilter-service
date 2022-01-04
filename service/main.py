@@ -34,6 +34,7 @@ class MainService():
     english_parser = None
     fuzzy_center = None
     chat_store = None
+    main_admin_server_addr = None
     is_open_mind = False
     is_admin_server = False
 
@@ -177,11 +178,11 @@ class MainService():
             # print('parse_message text: ', text)
 
         if lv >= self.service_avoid_filter_lv:
-            return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+            return self.return_reslut(prediction, message=message, user=user, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
         
         if user[:3] == 'TST':
             if anchor > 0 or room == 'BG01':
-                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, user=user, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
         if text:
 
@@ -189,12 +190,12 @@ class MainService():
             reason_char = self.find_prefilter_reject_reason_with_nonparsed_msg(text)
             if reason_char:
                 prediction = self.STATUS_PREDICTION_NOT_ALLOW
-                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, user=user, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             # parse to general text
             trimed_text = self.trim_text(text)
             if len(trimed_text) == 0 :
-                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, user=user, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
 
             # print('text: [{}]   lv: [{}]   anchor: [{}]'.format(text, lv, anchor))
@@ -210,7 +211,7 @@ class MainService():
 
 
             if reason_char:
-                return self.return_reslut(prediction, message=message, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, user=user, room=room, text=text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
             
             # check same room conversation
             # room_texts = self.chat_store.get_texts_by_room(room)
@@ -218,12 +219,12 @@ class MainService():
             reason_char = self.chat_store.check_same_room_conversation(trimed_text, room)
             if reason_char:
                 prediction = self.STATUS_PREDICTION_SUSPECT_WATER_ARMY
-                return self.return_reslut(prediction, message=message, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, user=user, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             if self.pre_filter.check_loginname_shorttime_saying(user):
                 reason_char = 'Speak Too Quickly'
                 prediction = self.STATUS_PREDICTION_SAME_LOGINNAME_IN_SHORTTIME
-                return self.return_reslut(prediction, message=message, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+                return self.return_reslut(prediction, message=message, user=user, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
             #main ai
             prediction, reason_char = self.ai_app.predict(trimed_text, lv=lv, with_reason=self.is_admin_server)
@@ -236,13 +237,13 @@ class MainService():
                     room=room,
                 )
 
-            return self.return_reslut(prediction, message=message, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
+            return self.return_reslut(prediction, message=message, user=user, room=room, text=trimed_text, reason=reason_char, silence=silence, detail=detail, st_time=st_time)
 
         else:
 
             prediction = self.STATUS_PREDICTION_NO_MSG
 
-        return self.return_reslut(prediction, message=message, room=room, reason=reason_char, silence=silence, st_time=st_time)
+        return self.return_reslut(prediction, message=message, user=user, room=room, reason=reason_char, silence=silence, st_time=st_time)
 
 
 
@@ -571,6 +572,7 @@ class MainService():
             return exit(2)
 
         _http_cnn = HTTPConnection(remote_ip, port)
+        self.main_admin_server_addr = (remote_ip, port)
 
         def _save_file_by_http_response(response, path):
             with open(path, 'wb+') as f:
@@ -585,14 +587,12 @@ class MainService():
 
         if self.lang_mode == self.STATUS_MODE_CHINESE:
             #
-            _dpb_list = self.get_dynamic_pinyin_block_list_remotely(_http_cnn)
-            self.pre_filter.set_pinyin_block_list(_dpb_list)
+            self.reload_pinyin_block(_http_cnn)
 
             _http_cnn.request('GET', self.REMOTE_ROUTE_PINYIN_MODEL)
             _http_res = _http_cnn.getresponse()
             if _http_res.status == 200:
 
-                # _save_file_by_http_response(response=_http_res, path=get_pinyin_path()+'/model.h5')
                 _chinese_model_path = get_pinyin_re_path() if int(settings.PINYIN_REVERSE) == 1 else get_pinyin_path()
                 _save_file_by_http_response(response=_http_res, path=_chinese_model_path+'/model.remote.h5')
                 logging.info('[fetch_ai_model_data] Download Remote Pinyin Model Done.')
@@ -605,14 +605,12 @@ class MainService():
             _http_res = _http_cnn.getresponse()
             if _http_res.status == 200:
 
-                # _save_file_by_http_response(response=_http_res, path=get_grammar_path()+'/model.h5')
                 _save_file_by_http_response(response=_http_res, path=get_grammar_path()+'/model.remote.h5')
                 logging.info('[fetch_ai_model_data] Download Remote Grammar Model Done.')
 
             else:
 
                 logging.error('[fetch_ai_model_data] Download Remote Grammar Model Failed.')
-
 
         elif self.lang_mode == self.STATUS_MODE_ENGLISH:
             #
@@ -662,17 +660,24 @@ class MainService():
 
     def add_pinyin_block(self, text):
         try:
-            _py = translate_by_string(text)
-            qs = DynamicPinyinBlock.objects.filter(pinyin=_py)
-            if len(qs) == 0:
-            
-                qs = DynamicPinyinBlock.objects.create(
-                    text=text,
-                    pinyin=_py,
-                )
-                return model_to_dict(qs)
+            if isinstance(text, list):
+                _dps = []
+                for _ in text:
+                    _py = translate_by_string(_)
+                    _dps.append(DynamicPinyinBlock(text=_, pinyin=_py))
+                DynamicPinyinBlock.objects.bulk_create(_dps, batch_size=100)
+                return [model_to_dict(_) for _ in _dps]
             else:
-                return None
+                _py = translate_by_string(text)
+                qs = DynamicPinyinBlock.objects.filter(pinyin=_py)
+                if len(qs) == 0:
+                    qs = DynamicPinyinBlock.objects.create(
+                        text=text,
+                        pinyin=_py,
+                    )
+                    return model_to_dict(qs)
+                else:
+                    return None
         except Exception as err:
             print('add_pinyin_block error: ', err)
             return None
@@ -693,7 +698,20 @@ class MainService():
         except Exception as err:
             return False
 
-    
+
+    def reload_pinyin_block(self, conn = None):
+        print('[Reload_pinyin_block] Triggered.')
+        if conn:
+            _dpb_list = self.get_dynamic_pinyin_block_list_remotely(conn)
+        elif self.main_admin_server_addr:
+            _ip, _port = self.main_admin_server_addr
+            _dpb_list = self.get_dynamic_pinyin_block_list_remotely(HTTPConnection(_ip, _port))
+        else:
+            _dpb_list = self.get_dynamic_pinyin_block_list()
+        
+        self.pre_filter.set_pinyin_block_list(_dpb_list)
+
+
     def get_model_versions(self):
         result = {'pinyin': []}
         _pinyin_path = get_pinyin_path(is_version=True)

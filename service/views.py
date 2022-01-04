@@ -158,12 +158,12 @@ class ServicePinyinBlockListAPIView(APIView):
         return HttpResponseForbidden('Add Failed.')
 
     def post(self, request, id):
-        result = None
+        result = []
         if id == 'add':
-            text = request.data.get('text', None)
-            # print('text: ', text)
-            if text:
-                result = get_main_service(is_admin=True).add_pinyin_block(text)
+            texts = request.data.getlist('text[]')
+            if texts:
+                result = get_main_service(is_admin=True).add_pinyin_block(texts)
+                print('result: ', result)
 
             return JsonResponse({'result': result}, safe=False)
         

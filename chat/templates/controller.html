@@ -2,9 +2,20 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>Chat Controller</title>
+    <title>Admin Chat Controller</title>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <style>
+        div {
+            box-sizing: border-box;
+        }
+        ul {
+            list-style: none;
+            padding: 0px 10px;
+        }
+        h1,h2,h3,p,ul {
+            margin: 0px;
+        }
+
         .main-ctl {
             padding: 0px;
             margin: 0px;
@@ -22,10 +33,7 @@
             background-color: #e7e7e7;
             font-size: 20px;
         }
-        ul {
-            list-style: none;
-            padding: 0px 10px;
-        }
+        
         .right-zone {
             width: 100%;
             height: 100%;
@@ -34,18 +42,20 @@
         }
         .header {
             height: 100px;
+            max-height: 20vh;
             font-size: 24px;
             width: 100%;
             background-color: #d1fff0;
             padding: 5px 20px;
+            border-bottom: 1px solid #000;
+        }
+        .header label {
+            font-size: 16px;
         }
         .content {
             height: calc(100% - 100px);
             overflow-y: auto;
             position: relative;
-        }
-        h1,h2,h3,p,ul {
-            margin: 0px;
         }
 
         #pinyin-block-list {
@@ -53,6 +63,7 @@
             height: 86%;
             overflow: auto;
             max-height: 80vh;
+            box-sizing: border-box;
         }
 
         #pinyin-block-list >li {
@@ -68,6 +79,9 @@
 
         #pinyin-block-list >li:hover .delete-sapn {
             visibility: inherit;
+        }
+        #pinyin-block-list.draging {
+            border: 1px solid #21c2ff;
         }
 
         .pbz-btn {
@@ -115,26 +129,95 @@
             cursor: pointer;
         }
     </style>
+
+    <style>
+        .range {
+            float: left;
+            position: relative;
+            margin: 0px 1%;
+            max-height: 54vh;
+            overflow: auto;
+            box-sizing: border-box;
+        }
+
+        .range textarea, .range input {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .range textarea {
+            min-height: 112px;
+            max-height: 160px;
+            line-height: 22px;
+            width: 80%;
+        }
+
+        .bottom.range {
+            height: 26vh;
+            width: 100%;
+            margin: 0px;
+            padding: 2px 20px;
+            border-top: 1px solid #000;
+        }
+        .left.range {
+            width: 0%;
+        }
+        .right.range {
+            height: 54vh;
+            width: 98%;
+        }
+        table {
+            width: 100%;
+        }
+
+        table td {
+            min-width: 5%;
+            border: 1px solid #666;
+        }
+
+        .prediction {
+            text-align: center;
+        }
+
+        table dl {
+            margin: 0px;
+        }
+
+        input[type=checkbox] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .filter-btn {
+            line-height: 22px;
+        }
+
+        .filter-btn dd {
+            display: inline-block;
+            /* border: 1px solid #333; */
+        }
+    </style>
 </head>
 <body>
     <div class="main-ctl">
         <div class="float-l left-panel">
             <ul>
-                <li><a href="#">即時禁詞(拼音)</a></li>
+                <li><a href="#" onclick="naviTo('live-chat-zone');" title="移動到[即時聊天]頁">即時聊天</a></li>
+                <li><a href="#" onclick="naviTo('pinyin-block-zone');" title="移動到[即時禁詞]頁">即時禁詞(拼音)</a></li>
             </ul>
         </div>
         <div class="right-zone">
-            <div id="pinyin-block-zone" style="height: 100%;">
+            <div id="pinyin-block-zone" style="height: 100%; display: none;">
                 <div class="header">
                     <h2>即時禁詞(拼音)</h2>
                     <div>
                         <input type="text" id="pinyin-block-input"/>
-                        <button class="pbz-btn" id="btn-local-search">搜尋</button>
-                        <button class="pbz-btn" id="btn-add-block">新增</button>
+                        <button class="pbz-btn" id="btn-local-search" title="模糊匹配搜尋已存禁詞">搜尋</button>
+                        <button class="pbz-btn" id="btn-add-block" title="新增禁詞">新增</button>
                     </div>
                     <div class="absolute-right">
-                        <button class="font-btn" id="btn-download-list">⏬</button>
-                        <button class="font-btn">🔄</button>
+                        <button class="font-btn" id="btn-download-list" title="下載現有禁詞">⏬</button>
+                        <button class="font-btn" id="btn-refresh" title="刷新後台禁詞到 Tcp Socket 服務">🔄</button>
                     </div>
                 </div>
                 <div class="content">
@@ -144,15 +227,180 @@
                     <div id="list-info"></div>
                 </div>
             </div>
+            <div id="live-chat-zone" style="height: 100%; display: block;">
+                <div class="header">
+                    <h2>即時聊天</h2>
+                    <div class="filter-btn">
+                        <dd>
+                            <label>自定義房號</label>
+                            <input type="test" id="room-text" value="localhost_test"></input>
+                        </dd>
+                        <dd>
+                            <label>名稱</label>
+                            <input type="test" id="room-nickname" value="TST-test"></input>
+                        </dd>
+                        <dd>
+                            <label>只顯示刪除</label>
+                            <input type="checkbox" id="checkbox-show-delete"></input>
+                        </dd>
+                    </div>
+                    <div class="filter-btn">
+                        
+                    </div>
+                </div>
+                <!-- <div class="left range">
+                </div> -->
+                <div class="right range">
+                    
+                    <table>
+                        <thead>
+                            <th style="width: 10%;">房號</th>
+                            <th style="width: 10%;">玩家</th>
+                            <th style="width: 30%;">聊天內容</th>
+                            <th style="width: 5%;">結果</th>
+                            <th style="width: 15%;">原因</th>
+                            <th style="width: 30%;">詳細</th>
+                        </thead>
+                        <tbody id="table-body">
+            
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bottom range">
+                    <textarea id="chat-log" cols="100" rows="20" readonly></textarea>
+                    <input id="chat-message-input" type="text" size="100"/>
+                    <input id="chat-message-submit" type="button" value="Send"/>
+                </div>
+            </div>
         </div>
     </div>
     <div style="display: none;">
         <input id="file-input" type="file" accept=".xls,.xlsx"/>
         <input id="file-submit" type="button" value="確認"/>
     </div>
-    
 
-    <script>
+    <script id="common">
+        var key_send_train_remotely = '__remotetrain__';
+        var key_get_model = '__getmodel__';
+        var key_is_admin_client = '__isadminclient__';
+
+        var maxSocketRetry = 15;
+        window.conn = ConnWebSocket();
+        
+        function ConnWebSocket(name='') {
+            if (window.conn) {
+                delete window.conn.onmessage
+                delete window.conn.onclose
+                delete window.conn.onerror
+                delete window.conn
+            }
+
+            var chatSocket = new WebSocket(
+                // 'ws://' + window.location.host + '/ws/chat/' + name + '/'
+                'ws://' + window.location.host + '/ws/chat/'
+            );
+
+            var _limit_chatbox = 100;
+
+            chatSocket.onopen = function() {
+                chatSocket.send(JSON.stringify({
+                    'msgid': key_is_admin_client,
+                }));
+            }
+
+            chatSocket.onmessage = function(e) {
+                var data = JSON.parse(e.data);
+                var msgid = data['msgid'];
+                var user = data['user'];
+                var room = data['room'];
+                var message = data['message'];
+                var prediction = data['prediction'];
+                var reason_char = data['reason_char'];
+                var detail = data['detail'];
+
+                if (Number.isInteger(msgid)) {
+
+                    if (window.is_show_only_deleted && prediction == 0) {
+                        return;
+                    }
+                    
+                    var tbody = document.querySelector('#table-body');
+                    var _tr = document.createElement('tr');
+                    ['room', 'user', 'message', 'prediction', 'reason_char', 'detail'].map(e => {
+                        var loc = data[e];
+                        var _td = document.createElement('td');
+                            
+                        if (typeof loc == 'object') {
+                            // console.log(loc);
+                            // loc = JSON.stringify(loc);
+                            handleObjectToTd(_td, loc)
+                            
+                        } else {
+                            _td.innerText = loc;
+                        }
+                        _td.className = e;
+                        _tr.appendChild(_td);
+                    });
+                    tbody.prepend(_tr);
+                    
+                    var trs = tbody.getElementsByTagName('tr');
+                    // console.log('trs: ', [trs]);
+                    if (trs.length > _limit_chatbox) {
+                        tbody.removeChild(tbody.lastChild)
+                    }
+                }
+                
+            };
+
+            chatSocket.onclose = function(e) {
+                console.error('Chat socket closed unexpectedly');
+                reConnectWebSocket()
+            };
+
+            chatSocket.onerror = function(e) {
+                reConnectWebSocket()
+            }
+
+            return chatSocket;
+        }
+
+        function reConnectWebSocket() {
+            if (window.connectedTimer) {
+                window.clearTimeout(window.connectedTimer);
+                delete window.connectedTimer;
+            }
+
+            window.connectedTimer = window.setTimeout(connection, 5000);
+        }
+
+        var conn_i = 0;
+        function connection() {
+            if (conn_i++ >= maxSocketRetry) {
+                window.alert('Please Reload This Page, The Socket Connection Can Not Be Connected.');
+            } else {
+                window.conn = ConnWebSocket();
+            }
+        }
+        function naviTo(zoneName) {
+            var zones = [
+                'live-chat-zone',
+                'pinyin-block-zone',
+            ];
+            var _dom = document.getElementById(zoneName);
+            if (_dom) {
+                zones.map(z => {
+                    document.getElementById(z).style.display='none';
+                });
+                _dom.style.display='block';
+            } else {
+                zones.map((z, idx) => {
+                    document.getElementById(z).style.display= idx == 0 ? 'block' : 'none';
+                });
+            }
+        }
+    </script>
+    
+    <script id="pinyin-block-script">
         var file_input = document.querySelector('#file-input');
         var pinyin_block_list = document.querySelector('#pinyin-block-list');
         var pinyin_block_input = document.querySelector('#pinyin-block-input');
@@ -160,26 +408,28 @@
         var btn_add_block = document.querySelector('#btn-add-block');
         var btn_local_search = document.querySelector('#btn-local-search');
         var btn_download_list = document.querySelector('#btn-download-list');
+        var btn_refresh = document.querySelector('#btn-refresh');
         var global_pinyin_block_list = [];
         var goon = false;
+        var max_block_num = 200;
         // console.log('axios', axios);
 
         reloadPinyinList();
 
-        file_submit.onclick = function(e) {
-            var files = file_input.files;
-            var file = files[0];
-            console.log(files);
-            var formData = new FormData();
-            formData.append('file', file);
+        // file_submit.onclick = function(e) {
+        //     var files = file_input.files;
+        //     var file = files[0];
+        //     console.log(files);
+        //     var formData = new FormData();
+        //     formData.append('file', file);
             
-            axios.post('/api/upload/', formData, {
-                headers: {
-                    'Content-Type': file.type,
-                    'Content-Disposition': 'attachment; filename=' + file.name,
-                }
-            });
-        };
+        //     axios.post('/api/upload/', formData, {
+        //         headers: {
+        //             'Content-Type': file.type,
+        //             'Content-Disposition': 'attachment; filename=' + file.name,
+        //         }
+        //     });
+        // };
         
         btn_add_block.onclick = function(e) {
             var val = pinyin_block_input.value;
@@ -224,10 +474,69 @@
             }
         }
 
+        pinyin_block_list.ondragenter = pinyin_block_list.ondragover = function(e) {
+            e.preventDefault();
+            this.classList.add('draging');
+        }
+        pinyin_block_list.ondragleave = function(e) {
+            e.preventDefault();
+            this.classList.remove('draging');
+        }
+
+        pinyin_block_list.ondrop = function(e) {
+            e.preventDefault();
+            this.classList.remove('draging');
+            var file = e.dataTransfer.files[0];
+            
+            
+            if (file.name.match(/.*\.csv$/i)) {
+                // var formData = new FormData();
+                // formData.append('file', file);
+                // console.log('formData: ', formData);
+                // axios.post('/api/upload/', formData, {
+                //     headers: {
+                //         'Content-Type': file.type,
+                //         'Content-Disposition': 'attachment; filename=' + file.name,
+                //     }
+                // });
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    console.log(event.target); 
+                    var res_text = event.target.result;
+                    var res_ary = res_text.split(/[\r\n]+/ig).map(r => r.split(',')[1]).filter(r => r && r.length > 0);
+                    console.log('reader res_ary: ', res_ary);
+                    var global_list = global_pinyin_block_list.map(e => e[1]);
+                    var filtered_ary = res_ary.filter(r => {
+                        return !global_list.includes(r);
+                    });
+                    console.log('filtered_ary: ', filtered_ary);
+                    addPinyin(filtered_ary);
+                };
+                reader.readAsText(file);
+            } else {
+                window.alert('錯誤的檔案格式');
+            }
+        }
+
         btn_download_list.onclick = function(e) {
             window.open('/api/pinyinblock/list', 'blank');
         }
 
+        btn_refresh.onclick = function (e) {
+            if (window.conn) {
+                window.conn.send(JSON.stringify({
+                    'msgid': '__tcpsocketrefreshpinyinblock__',
+                    'code': 1,
+                }));
+                window.alert('已更新禁詞');
+                // axios.post('/api/pinyinblock/refresh').then(e => {
+                    
+                // });
+            } else {
+                window.alert('請等待socket連線.');
+            }
+            
+        }
 
 
         function showList(block_list) {
@@ -272,38 +581,128 @@
 
         function addPinyin(text) {
             if (!text) return false;
-            var isConflict = false;
-            goon = false;
-            global_pinyin_block_list.map(e => {
-                var _txt = e[0];
-                if (text == _txt) {
-                    isConflict = true;
-                }
-            });
-            if (isConflict) {
-                return window.alert('重複新增: '+ text);
+            if (global_pinyin_block_list.length > max_block_num) {
+                return window.alert(`最多只能禁 [ ${max_block_num} ] 個禁詞. `);
             }
+            goon = false;
 
             var formData = new FormData();
-            formData.append('text', text);
+
+            if (Array.isArray(text)) {
+                if (text.length > 0) {
+                    text.map(t => {
+                        formData.append('text[]', t);
+                    });
+                } else {
+                    return window.alert('沒有需要更新.');
+                }
+            } else {
+                var isConflict = false;
+                global_pinyin_block_list.map(e => {
+                    var _txt = e[0];
+                    if (text == _txt) {
+                        isConflict = true;
+                    }
+                });
+                if (isConflict) {
+                    return window.alert('重複新增: '+ text);
+                }
+                if (text.match(/[\d]+/g)) {
+                    return window.alert('不能有數字');
+                }
+                formData.append('text[]', text);
+            }
+            
             return axios.post('/api/pinyinblock/add', formData).then(e => {
                 var data = e.data;
                 var result = data.result;
                 if (result) {
-                    var id = result.id;
-                    var text = result.text;
-                    var pinyin = result.pinyin;
-                    console.log('pinyinblock data: ', data);
-                    pinyin_block_list.prepend(domLi(id, text, pinyin));
-                    pinyin_block_input.value = '';
-                    global_pinyin_block_list.unshift([id, text, pinyin]);
-                    list_info.innerHTML = `Total Length: ${global_pinyin_block_list.length}`;
+                    if (result.length == 1) {
+                        result.map(r => {
+                            var id = r.id;
+                            var text = r.text;
+                            var pinyin = r.pinyin;
+                            console.log('pinyinblock data: ', data);
+                            pinyin_block_list.prepend(domLi(id, text, pinyin));
+                            pinyin_block_input.value = '';
+                            global_pinyin_block_list.unshift([id, text, pinyin]);
+                            list_info.innerHTML = `Total Length: ${global_pinyin_block_list.length}`;
+                        });
+                    } else {
+                        reloadPinyinList();
+                    }
                 } else {
                     window.alert('新增失敗.');
                     console.log('text: ', text, 'data: ', data);
+                    reloadPinyinList();
                 }
             });
         }
+    </script>
+
+    <script id="chat-script">
+        // var roomName = {{ room_name_json }};
+        var randomUsers = new Array(3).fill(0).map(e => {
+            return Math.random().toString(16).substring(2,8);
+        });
+        var randomRooms = new Array(5).fill(0).map(e => {
+            return Math.random().toString(16).substring(2,6);
+        });
+
+        // window.conn = ConnWebSocket();
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            var messageInputDom = document.querySelector('#chat-message-input');
+            var message = messageInputDom.value;
+            if (window.conn) {
+                window.conn.send(JSON.stringify({
+                    'msgid': 1234,
+                    'user': (document.querySelector('#room-nickname').value || '').trim(),
+                    // 'room': randomRooms[Math.floor(Math.random() * randomRooms.length)],
+                    'room': (document.querySelector('#room-text').value || '').trim(),
+                    'message': message.replace(/\ /g, ''),
+                    'detail': 1,
+                }));
+                messageInputDom.value = '';
+
+                document.querySelector('#chat-log').value += (message + '\n');
+            }
+        };
+
+        document.querySelector('#checkbox-show-delete').onclick = function(e) {
+            var checked = this.checked;
+            window.is_show_only_deleted = checked;
+        }
+
+        function handleObjectToTd(ele, _object) {
+            for (key in _object) {
+                var _val = _object[key];
+                var __div = document.createElement('div');
+                if (typeof _val == 'object' && !Array.isArray(_val)) {
+                    handleObjectToTd(__div, _val)
+                } else {
+                    if (key == 'predicted_ratios') {
+                        var __next_val = '';
+                        _val.map((v,i) => {
+                            if (parseInt(v) > 0) {
+                                __next_val += '<i>[ ' + i + ' ] = ' + v + '</i><br/>';
+                            }
+                        });
+                        
+                        _val = __next_val
+                    }
+                    __div.innerHTML = '<dl>'+key+' : </dl><dl>' + _val + '</dl>';
+                }
+                ele.appendChild(__div);
+            }
+        }
+
     </script>
 </body>
 </html>

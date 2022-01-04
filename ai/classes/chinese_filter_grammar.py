@@ -281,7 +281,7 @@ class GrammarFilter(BasicFilter):
         reason = ''
         passible = 0
         
-        if lv < self.avoid_lv:
+        if lv < self.avoid_lv and len(text) > 1:
 
             _words = self.transform(text)
 

@@ -12,6 +12,8 @@ from service import instance
 
 class LaunchTcpSocket():
 
+    STATIC_MSGID_REFRESH_PINYIN_BLOCK = '__tcpsocketrefreshpinyinblock__'
+
     addr = (None, None)
     server = None
     service_instance = None
@@ -96,7 +98,10 @@ class LaunchTcpSocket():
 
 
     def on_websocket_message(self, msgid, message):
-        logging.debug('on_websocket_message msgid: {}'.format(msgid))
+        logging.debug('on_websocket_message msgid: {}  message: {}'.format(msgid, message))
+        if msgid == self.STATIC_MSGID_REFRESH_PINYIN_BLOCK:
+            self.service_instance.reload_pinyin_block()
+        # self.service_instance
     
 
     def start(self):

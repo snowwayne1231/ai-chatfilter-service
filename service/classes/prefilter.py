@@ -29,7 +29,7 @@ class PreFilter():
     """
     SECOND_QUICK_SAYING = 5
     map_loginname_timestamp = {}
-    dynamic_pinyin_block_list = ['you_']
+    dynamic_pinyin_block_list = []
 
 
     def __init__(self):
@@ -275,7 +275,8 @@ class PreFilter():
 
     def find_pinyin_blocked(self, text):
         _pinyin = self.parse_pinyin(text)
-        # print('translate_by_string : ',  _pinyin)
+        print('find_pinyin_blocked text: ',  text)
+        print('translate_by_string _pinyin: ',  _pinyin)
         for _py in self.dynamic_pinyin_block_list:
             if _py in _pinyin:
                 # print('find_pinyin_blocked : ', _py)
@@ -284,12 +285,13 @@ class PreFilter():
 
 
     def parse_pinyin(self, text):
-        _parsed_text = re.sub(r'[a-zA-Z\d\s]+', '', text)
+        # _parsed_text = re.sub(r'[a-zA-Z\d\s]+', '', text)
+        _parsed_text = re.sub(r'[\d\s]+', '', text)
         return translate_by_string(_parsed_text)
 
 
     def set_pinyin_block_list(self, _list_):
-        print('set_pinyin_block_list: ', _list_)
+        print('[set_pinyin_block_list] Length: ', len(_list_))
         _pinyin_idx = 2
         if len(_list_) >0:
             if isinstance(_list_[0], str):
@@ -298,7 +300,7 @@ class PreFilter():
                 try:
                     self.dynamic_pinyin_block_list = [_[_pinyin_idx] for _ in _list_]
                 except Exception as err:
-                    print('set_pinyin_block_list error: ', err)
+                    print('[set_pinyin_block_list] Error: ', err)
                     return False
 
         return True

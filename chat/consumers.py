@@ -26,6 +26,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     is_working = False
     group_name_global = 'GLOBAL_CHATTING'
     group_name_admin_client = 'GLOBAL_CHATTING_ADMIN_CLIENT'
+    group_name_tcpsocket_client = 'GLOBAL_CHATTING_TCPSOCKET_CLIENT'
 
     key_get_model = '__getmodel__'
     key_is_admin_client = '__isadminclient__'
@@ -33,6 +34,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     key_change_nickname_request = '__changenicknamerequest__'
     key_training_start = '__trainingstart__'
     key_tcpsocket_connection_login = '__tcpsocketconnectionlogin__'
+    key_tcp_refresh_pinyin_block = '__tcpsocketrefreshpinyinblock__'
+
+    STATIC_REFRESH = '_REFRESH_'
 
     def check_service(self):
         if not self.main_service:
@@ -69,6 +73,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_discard(
             self.group_name_admin_client,
+            self.channel_name
+        )
+
+        await self.channel_layer.group_discard(
+            self.group_name_tcpsocket_client,
             self.channel_name
         )
 
@@ -162,6 +171,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'nickname': _nickname,
                 'code': event.get('code', 0),
             }))
+
+    async def channel_chat_to_tcpsocket(self, event):
+        await self.send(text_data=json.dumps({
+            'msgid': event.get('msgid', ''),
+            'message': event.get('message', 0),
+        }))
     
 
     def get_message_by_order(self, order_key, json = {}):
@@ -193,10 +208,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
         elif order_key == self.key_tcp_poto:
 
             _hostname = message
+            # print('_hostname: ', _hostname)
             if _hostname:
+                await self.channel_layer.group_add(
+                    self.group_name_tcpsocket_client,
+                    self.channel_name
+                )
                 self.hostname = _hostname
 
                 self.is_tcp = True
+
+        elif order_key == self.key_tcp_refresh_pinyin_block:
+            await self.channel_layer.group_send(
+                self.group_name_tcpsocket_client,
+                {
+                    'type': 'channel_chat_to_tcpsocket',
+                    'msgid': self.key_tcp_refresh_pinyin_block,
+                    'message': 1,
+                },
+            )
+            self.main_service.reload_pinyin_block()
+            return None
 
         # elif order_key == self.key_send_train_remotely:
         elif order_key == self.key_change_nickname_request:
