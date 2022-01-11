@@ -173,8 +173,8 @@ pip -V
 > before doing this you've make sure you already got "venv" environment
 > install what python's need in "venv"
 ```Shell
-pip install tf-nightly
-pip install tensorflow_datasets
+pip install tensorflow==2.3.1
+pip install tensorflow_datasets==1.3.0
 ```
 
 
@@ -191,6 +191,7 @@ pip install grpcio
 pip install grpcio-tools
 pip install djangogrpcframework
 pip install opencc-python-reimplemented
+pip install psycopg2-binary==2.8.6
 ```
 
 
@@ -220,9 +221,9 @@ python manage.py collectstatic
 python manage.py knowledge -i ai/assets/chinese/dict_taiwan.xlsx -lan TW -f 2
 python manage.py knowledge -i ai/assets/english/dict.xls -lan EN -f 3
 python manage.py knowledge -di ai/assets/chinese_digits/dict.xls
-python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN -f 50
+python manage.py knowledge -i ai/assets/chinese/dict_china_common.xls -lan CN -f 24
 python manage.py knowledge -i ai/assets/chinese/dict_china_single.xls -lan CN -f 2
-python manage.py freq -i ai/assets/textbook/json/2020-12-27.json
+python manage.py freq -i ai/assets/textbook/json/2022-01-03.json
 ```
 
 > start training
@@ -237,6 +238,8 @@ python manage.py train -i ai/assets/textbook/json/english/2020-09-08.json -eng -
 > open tcp port for chatting socket if need
 ```Shell
 sudo firewall-cmd --permanent --zone=public --add-port=8025/tcp
+sudo firewall-cmd --permanent --zone=public --add-port=9001/tcp
+sudo firewall-cmd --reload
 ```
 
 
@@ -261,7 +264,7 @@ sudo systemctl status supervisord
 > copy and edit config
 ```Shell
 cp supervisor.conf.example supervisor.conf
-nano superviosr.conf
+nano supervisor.conf
 ```
 + > change all directory `/opt/` to your project's folder
 ```EditorConfig
@@ -295,11 +298,12 @@ sudo systemctl restart nginx
 ```
 
 
-## Others
+## Otherssudo 
 
 > Check the SELinux and add policy to nginx or just disable it
 ```Shell
 sestatus
+setsebool -P httpd_can_network_connect 1
 ```
 
 *SELinux might block the socket connection between nginx and supervisord*

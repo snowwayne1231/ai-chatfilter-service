@@ -73,7 +73,7 @@ class WebsocketThread (threading.Thread):
         self.is_active = True
 
 
-    def on_message(self, message):
+    def on_message(self, message, *args):
         # print('on_message', message)
         _json = json.loads(message)
         _msg_id = _json.get('msgid', None)
@@ -87,7 +87,7 @@ class WebsocketThread (threading.Thread):
             if self.on_message_callback:
                 self.on_message_callback(_msg_id, _res_message)
 
-    def on_error(self, error):
+    def on_error(self, error, *args):
         logging.error('### Web Socket Error: {}'.format(error))
         self.is_active = False
         self._waitting_ids = []
@@ -95,7 +95,7 @@ class WebsocketThread (threading.Thread):
         # raise Exception(error)
 
 
-    def on_close(self):
+    def on_close(self, *args):
         self.is_active = False
         logging.warning("# Web Socket Closed ###")
         

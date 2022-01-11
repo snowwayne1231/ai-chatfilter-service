@@ -199,7 +199,24 @@
     </style>
 
     <style>
-
+        .upload-zone {
+            box-sizing: border-box;
+            color: #fff;
+            background-color: #ccc;
+            border: 1px dashed #303030;
+            width: 80%;
+            min-height: 120px;
+            line-height: 112px;
+            font-size: 24px;
+            margin: 12px auto;
+            padding: 2px;
+            text-align: center;
+        }
+        .upload-zone.draging {
+            color: #28cd97;
+            background-color: #ededed;
+            border: 1px solid #1518d5; 
+        }
     </style>
 </head>
 <body>
@@ -208,7 +225,7 @@
             <ul>
                 <li><a href="#" onclick="naviTo('live-chat-zone');" title="移動到[即時聊天]頁">即時聊天</a></li>
                 <li><a href="#" onclick="naviTo('pinyin-block-zone');" title="移動到[即時禁詞]頁">即時禁詞(拼音)</a></li>
-                <li><a href="#" onclick="naviTo('train-center-zone');" title="移動到[訓練資料中心]頁">訓練資料中心</a></li>
+                <!-- <li><a href="#" onclick="naviTo('train-center-zone');" title="移動到[訓練資料中心]頁">訓練資料中心</a></li> -->
             </ul>
         </div>
         <div class="right-zone">
@@ -282,14 +299,10 @@
                     <h2>訓練資料中心</h2>
                 </div>
                 <div class="right range">
-
+                    <div id="upload-train-excel" class="upload-zone">請拖曳訓練資料到此處</div>
                 </div>
             </div>
         </div>
-    </div>
-    <div style="display: none;">
-        <input id="file-input" type="file" accept=".xls,.xlsx"/>
-        <input id="file-submit" type="button" value="確認"/>
     </div>
 
     <script id="common">
@@ -414,7 +427,6 @@
     </script>
     
     <script id="pinyin-block-script">
-        var file_input = document.querySelector('#file-input');
         var pinyin_block_list = document.querySelector('#pinyin-block-list');
         var pinyin_block_input = document.querySelector('#pinyin-block-input');
         var list_info = document.querySelector('#list-info');
@@ -424,25 +436,10 @@
         var btn_refresh = document.querySelector('#btn-refresh');
         var global_pinyin_block_list = [];
         var goon = false;
-        var max_block_num = 200;
+        var max_block_num = 255;
         // console.log('axios', axios);
 
         reloadPinyinList();
-
-        // file_submit.onclick = function(e) {
-        //     var files = file_input.files;
-        //     var file = files[0];
-        //     console.log(files);
-        //     var formData = new FormData();
-        //     formData.append('file', file);
-            
-        //     axios.post('/api/upload/', formData, {
-        //         headers: {
-        //             'Content-Type': file.type,
-        //             'Content-Disposition': 'attachment; filename=' + file.name,
-        //         }
-        //     });
-        // };
         
         btn_add_block.onclick = function(e) {
             var val = pinyin_block_input.value;
@@ -555,17 +552,17 @@
         function showList(block_list) {
             var new_html = '';
             goon = false;
-            block_list.map(ary => {
+            block_list.slice(0, 100).map(ary => {
                 var id = ary[0];
                 var txt = ary[1];
                 var py = ary[2];
                 new_html += strLi(id, txt, py);
             });
-            if (block_list.length > 100) {
+            if (block_list.length >= 100) {
                 new_html += '最多只顯示100筆..';
             }
             pinyin_block_list.innerHTML = new_html;
-            list_info.innerHTML = `Total Length: ${block_list.length}`;
+            list_info.innerHTML = `Now Length: ( ${block_list.length} ) / Total Length: ${global_pinyin_block_list.length}`;
         }
 
         function reloadPinyinList() {
@@ -576,7 +573,7 @@
                 if (e.data.length == 0) {
                     pinyin_block_list.innerHTML = '無資料';
                 } else {
-                    showList(global_pinyin_block_list.slice(0, 100));
+                    showList(global_pinyin_block_list);
                 }
             });
         }
@@ -594,7 +591,7 @@
 
         function addPinyin(text) {
             if (!text) return false;
-            if (global_pinyin_block_list.length > max_block_num) {
+            if (global_pinyin_block_list.length >= max_block_num) {
                 return window.alert(`最多只能禁 [ ${max_block_num} ] 個禁詞. `);
             }
             goon = false;
@@ -603,6 +600,9 @@
 
             if (Array.isArray(text)) {
                 if (text.length > 0) {
+                    if (global_pinyin_block_list.length + text.length > max_block_num) {
+                        return window.alert(`最多只能禁 [ ${max_block_num} ] 個禁詞. `);
+                    }
                     text.map(t => {
                         formData.append('text[]', t);
                     });
@@ -644,6 +644,7 @@
                     } else {
                         reloadPinyinList();
                     }
+                    window.alert('新增成功.');
                 } else {
                     window.alert('新增失敗.');
                     console.log('text: ', text, 'data: ', data);
@@ -716,6 +717,60 @@
             }
         }
 
+    </script>
+
+    <script id="train-script">
+        var dom_upload_zones = document.querySelectorAll('.upload-zone');
+        var dom_upload_train_excel = document.getElementById('upload-train-excel');
+        
+        console.log('dom_upload_zones: ', dom_upload_zones);
+
+        dom_upload_zones.forEach(d => {
+            d.addEventListener('dragover', function(e){
+                e.preventDefault();
+                this.classList.add('draging');
+            });
+            d.addEventListener('drop', function(e){
+                e.preventDefault();
+                this.classList.remove('draging');
+            });
+            d.addEventListener('dragleave', function(e){
+                e.preventDefault();
+                this.classList.remove('draging');
+            });
+        });
+
+        dom_upload_train_excel.addEventListener('drop', function(e){
+            var file = e.dataTransfer.files[0];
+            console.log('file: ', file)
+            if (file.name.match(/.*\.xls.$/i)) {
+                var formData = new FormData();
+                formData.append('file', file);
+                console.log('formData: ', formData);
+                axios.post('/api/upload/', formData, {
+                    headers: {
+                        'Content-Type': file.type,
+                        'Content-Disposition': 'attachment; filename=' + file.name,
+                    }
+                });
+                // const reader = new FileReader();
+                // reader.onload = function (event) {
+                //     console.log(event.target); 
+                //     var res_text = event.target.result;
+                //     var res_ary = res_text.split(/[\r\n]+/ig).map(r => r.split(',')[1]).filter(r => r && r.length > 0);
+                    
+                // };
+                // reader.readAsText(file);
+            } else {
+                window.alert('錯誤的檔案格式');
+            }
+        });
+
+            
+
+        
+
+        
     </script>
 </body>
 </html>

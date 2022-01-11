@@ -11,17 +11,13 @@ upstream supervisorctl {
 server {
     # the port site will be served on
     listen 80;
+
     # the domain name it will serve for
     server_name _;
     charset utf-8;
 
     #max upload size
     client_max_body_size 80M;
-
-    # Django media
-    location /media {
-        proxy_pass http://django;
-    }
 
     # Django static file
     location /static {
@@ -30,10 +26,17 @@ server {
 
     location /admin {
         proxy_pass http://django;
+        proxy_set_header Host $host;
     }
 
     location /chat {
         proxy_pass http://django;
+        proxy_set_header Host $host;
+    }
+
+    location /api {
+        proxy_pass http://django;
+        proxy_set_header Host $host;
     }
 
     # SupervisorCtl web site.
