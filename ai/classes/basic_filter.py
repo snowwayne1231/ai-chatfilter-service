@@ -284,11 +284,11 @@ class BasicFilter():
                 _status = _d[y_idx]
                 if _status:
                     _status = int(_status)
-                else:
+                elif not isinstance(_status, int):
                     continue
-
+                
                 new_x.append(_t)
-                new_y.append(_status if _status != '' else __auto_human_delete_if_not)
+                new_y.append(_status)
             else:
                 _has_not_word_value = True
                 print('[get_xy_data] Not Found: ', _d)

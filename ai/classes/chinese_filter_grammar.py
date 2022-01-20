@@ -60,16 +60,17 @@ class GrammarFilter(BasicFilter):
         all_scs = self.status_classsets
 
         model = tf.keras.Sequential()
+        model.add(tf.keras.layers.Embedding(8, full_words_length, mask_zero=True))
         # model.add(tf.keras.layers.Conv1D(input_shape=(full_words_length,)))
-        model.add(tf.keras.layers.Flatten(input_shape=(full_words_length,)))
-        # model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(full_words_length)))
+        model.add(tf.keras.layers.GlobalAveragePooling1D())
         model.add(tf.keras.layers.Dense(full_words_length * all_scs, activation=tf.nn.relu))
+        model.add(tf.keras.layers.Dense(full_words_length, activation=tf.nn.relu))
         model.add(tf.keras.layers.Dense(all_scs, activation=tf.nn.softmax))
 
         # model.build()
         model.summary()
         
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001, amsgrad=True)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001, amsgrad=True)
 
         model.compile(
             optimizer=optimizer,
@@ -91,7 +92,7 @@ class GrammarFilter(BasicFilter):
             self.set_data(train_data)
 
 
-        batch_train_data = self.get_train_batchs()
+        batch_train_data = self.get_train_batchs(check_duplicate=False)
 
         _length_of_data = self.length_x
         
@@ -132,7 +133,7 @@ class GrammarFilter(BasicFilter):
         # for _ in batch_train_data.take(1):
         #     print(_)
         
-        # print(list(batch_train_data.take(1).as_numpy_iterator()))
+        # print(list(batch_train_data.take(100).as_numpy_iterator())[-1])
         # exit(2)
         
 
@@ -225,12 +226,11 @@ class GrammarFilter(BasicFilter):
 
         def gen():
             for idx, texts in enumerate(_parsed_x_list):
-                if len(texts) == 0:
-                    continue
 
                 st = 1 if y[idx] and int(y[idx]) > 0 else 0
+                _len_t = len(texts)
                 
-                yield texts, st
+                yield np.pad(texts, (0, _full_wl - _len_t), constant_values=0), st
 
         dataset = tf.data.Dataset.from_generator(
             gen,
@@ -242,17 +242,16 @@ class GrammarFilter(BasicFilter):
 
 
     def parse_texts(self, texts):
-        next_txt = []
+        next_txt = texts
         _len = len(texts)
         _full_wl = self.full_words_length
-        _status_e = self.STATUS_EMPTY
-        _left_pad = int((_full_wl - _len) / 2)
+        # _status_e = self.STATUS_EMPTY
+        # _left_pad = int((_full_wl - _len) / 2)
 
-        if _left_pad >= 0:
-            _right_pad = _full_wl - _left_pad - _len
-            next_txt = ([_status_e] * _left_pad) + texts + ([_status_e] * _right_pad)
-            
-        else:
+        # if _left_pad >= 0:
+        #     _right_pad = _full_wl - _left_pad - _len
+        #     next_txt = ([_status_e] * _left_pad) + texts + ([_status_e] * _right_pad)
+        if _len > _full_wl:
             next_txt = next_txt[:_full_wl]
         
         return np.array(next_txt)

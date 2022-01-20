@@ -236,7 +236,7 @@ class PinYinReverseStateFilter(PinYinFilter):
     STATE_UNKNOWN_MEANING = 9
     PASS_RATIO = 0.875
     PASS_RATIO_SINGLE = 0.52
-    SURE_RATIO = 0.95
+    SURE_RATIO = 0.999
     SURE_REASON = 'SURE'
 
     # override

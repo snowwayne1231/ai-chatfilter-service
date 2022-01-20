@@ -63,6 +63,8 @@ class Command(BaseCommand):
                     _num = word_map.get(_word)
                     _split_length = _word.count(_split_char)
                     _word_length = _split_length if _split_length > 0 else len(_word)
+                    if _word[:2] == 'si' and len(_word) < 4:
+                        print('_word: ', _word)
                     if _num:
                         if _word_length <= 2:
                             if _num > 16:

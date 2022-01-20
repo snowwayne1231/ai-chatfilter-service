@@ -22,6 +22,11 @@ class Command(BaseCommand):
             '-c', dest='check_file_path', required=False,
             help='json file path for check.',
         )
+        parser.add_argument(
+            '-flw', dest='filter_low_weight', required=False,
+            help='filter low weight.',
+        )
+    
 
     def find_index_of_rlist(self, msg, list):
         _finded = False
@@ -37,7 +42,8 @@ class Command(BaseCommand):
         input_file = options.get('input_file')
         output_path = options.get('output_path', None)
         check_file_path = options.get('check_file_path', None)
-
+        filter_low_weight = bool(options.get('filter_low_weight', False))
+        
         result_list = []
 
         if output_path is None:
@@ -45,11 +51,12 @@ class Command(BaseCommand):
             _filename = '{}.json'.format(date.today())
             output_path = os.path.join(_dirname, '../json/',_filename)
 
-        if check_file_path:
+        if isinstance(check_file_path, str) and len(check_file_path) > 2:
             _jp = JsonParser(file=check_file_path)
             _old_json = _jp.load()
             _length_json = len(_old_json)
             _j_idx = 0
+            _half_length = int(_length_json / 2)
             print('')
             for _oj in _old_json:
                 _j_idx += 1
@@ -68,6 +75,9 @@ class Command(BaseCommand):
                 msg = _oj[4] if _length_oj>4 else _oj[2]
                 weight = int(_oj[1]) if _oj[1] else 1
 
+                if filter_low_weight and _j_idx > 10000 and weight <= 1:
+                    continue
+
                 _r_idx = self.find_index_of_rlist(msg, result_list)
                 
                 if _r_idx >= 0:
@@ -76,6 +86,8 @@ class Command(BaseCommand):
                 else:
                     if weight > 2:
                         weight -= 1
+                    elif _j_idx < _half_length and weight == 2:
+                        weight = 1
                     result_list.append([_oj[0], weight, msg, status])
                 
 
@@ -139,7 +151,7 @@ class Command(BaseCommand):
                             result_list[_r_idx][1] = weight * weight
                     else:
                         weight += 3
-                        result_list.append([_oj[0], weight, msg, status])
+                        result_list.append(['', weight, msg, status])
 
                 _idx += 1
 
