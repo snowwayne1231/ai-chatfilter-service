@@ -228,9 +228,8 @@ class GrammarFilter(BasicFilter):
             for idx, texts in enumerate(_parsed_x_list):
 
                 st = 1 if y[idx] and int(y[idx]) > 0 else 0
-                _len_t = len(texts)
                 
-                yield np.pad(texts, (0, _full_wl - _len_t), constant_values=0), st
+                yield texts, st
 
         dataset = tf.data.Dataset.from_generator(
             gen,
@@ -254,7 +253,7 @@ class GrammarFilter(BasicFilter):
         if _len > _full_wl:
             next_txt = next_txt[:_full_wl]
         
-        return np.array(next_txt)
+        return np.pad(np.array(next_txt), (0, _full_wl-_len), constant_values=0)
 
 
     # override
