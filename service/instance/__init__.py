@@ -1,4 +1,5 @@
 from service.main import MainService
+from service.twice import TwiceMainService
 from service.nickname import NicknameFilter
 
 
@@ -10,6 +11,7 @@ class MemoryController(object):
 
     main_service = None
     nickname_filter = None
+    remote_twict_service = None
 
     def __init__(self):
         pass
@@ -27,9 +29,17 @@ class MemoryController(object):
 
         return self.nickname_filter
 
+    def get_remote_twice_service(self):
+        if self.remote_twict_service is None:
+            self.remote_twict_service = TwiceMainService()
+
+        return self.remote_twict_service
+
+
 
 
 mc = MemoryController()
 
 get_main_service = mc.get_main_service
 get_nickname_filter = mc.get_nickname_filter
+get_remote_twice_service = mc.get_remote_twice_service

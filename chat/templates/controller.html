@@ -59,29 +59,50 @@
         }
 
         #pinyin-block-list {
-            position: relative;
             height: 86%;
             overflow: auto;
             max-height: 80vh;
-            box-sizing: border-box;
         }
 
-        #pinyin-block-list >li {
+        .list {
+            position: relative;
+            box-sizing: border-box;
+            transition: all 0.5s ease;
+        }
+        .list >li {
             border-bottom: 1px solid #ccc;
             line-height: 32px;
         }
-        #pinyin-block-list >li:nth-child(odd) {
+        .list >li:nth-child(odd) {
             background-color: #f6fffc;
         }
-        #pinyin-block-list >li:hover {
+        .list >li:hover {
             background-color: #ededed;
         }
 
-        #pinyin-block-list >li:hover .delete-sapn {
+        .list >li:hover .delete-sapn {
             visibility: inherit;
         }
-        #pinyin-block-list.draging {
+        .list.draging {
             border: 1px solid #21c2ff;
+        }
+        .list.loading::after {
+            content: 'Loading...';
+            display: block;
+            position: absolute;
+            z-index: 2;
+            font-size: 48px;
+            color: #00ff37;
+            height: 100%;
+            width: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: center;
+            opacity: 0.4;
+            background-color: black;
+            box-sizing: border-box;
+            padding: 30px;
+            cursor: not-allowed;
         }
 
         .pbz-btn {
@@ -172,7 +193,7 @@
 
         table td {
             min-width: 5%;
-            border: 1px solid #666;
+            border: 1px solid #dbdbdb;
         }
 
         .prediction {
@@ -211,11 +232,27 @@
             margin: 12px auto;
             padding: 2px;
             text-align: center;
+            transition: opacity 0.3s ease;
         }
         .upload-zone.draging {
             color: #28cd97;
             background-color: #ededed;
             border: 1px solid #1518d5; 
+        }
+        table {
+            position: relative;
+            border: 1px solid #ccc;
+            box-shadow: 1px 1px 2px #ddd;
+        }
+        th {
+            background-color: #d1fff0;
+        }
+        tr:nth-child(even) {
+            background-color: #f6fffc;
+        }
+        .table-container {
+            max-height: calc(100% - 200px);
+            overflow: auto;;
         }
     </style>
 </head>
@@ -225,7 +262,7 @@
             <ul>
                 <li><a href="#" onclick="naviTo('live-chat-zone');" title="移動到[即時聊天]頁">即時聊天</a></li>
                 <li><a href="#" onclick="naviTo('pinyin-block-zone');" title="移動到[即時禁詞]頁">即時禁詞(拼音)</a></li>
-                <!-- <li><a href="#" onclick="naviTo('train-center-zone');" title="移動到[訓練資料中心]頁">訓練資料中心</a></li> -->
+                <li><a href="#" onclick="naviTo('train-center-zone');" title="移動到[訓練資料中心]頁">訓練資料中心</a></li>
             </ul>
         </div>
         <div class="right-zone">
@@ -243,7 +280,7 @@
                     </div>
                 </div>
                 <div class="content">
-                    <ul id="pinyin-block-list">
+                    <ul id="pinyin-block-list" class="list">
                         <li></li>
                     </ul>
                     <div id="list-info"></div>
@@ -298,8 +335,26 @@
                 <div class="header">
                     <h2>訓練資料中心</h2>
                 </div>
-                <div class="right range">
+                <div class="right range" style="height: calc(100% - 120px); max-height: none;">
                     <div id="upload-train-excel" class="upload-zone">請拖曳訓練資料到此處</div>
+                    <div style="text-align: center;">
+                        <button id="start-train" class="pbz-btn" style="width: 120px;">開始訓練</button>
+                    </div>
+                    <div class="table-container">
+                        <p>僅顯示最新上傳的資料  Length: ( <span id="train-count"></span> ) </p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Origin File</th>
+                                    <th>Text</th>
+                                    <th>Status</th>
+                                    <th>Weight</th>
+                                </tr>
+                            </thead>
+                            <tbody id="train-table-body">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -601,7 +656,12 @@
             if (Array.isArray(text)) {
                 if (text.length > 0) {
                     if (global_pinyin_block_list.length + text.length > max_block_num) {
-                        return window.alert(`最多只能禁 [ ${max_block_num} ] 個禁詞. `);
+                        var _is = window.confirm(`最多只能禁 [ ${max_block_num} ] 個禁詞.  是否將超過數量的舊資料全移除?`);
+                        if (_is) {
+
+                        } else {
+                            return false;
+                        }
                     }
                     text.map(t => {
                         formData.append('text[]', t);
@@ -625,7 +685,7 @@
                 }
                 formData.append('text[]', text);
             }
-            
+            pinyin_block_list.classList.add('loading');
             return axios.post('/api/pinyinblock/add', formData).then(e => {
                 var data = e.data;
                 var result = data.result;
@@ -650,6 +710,7 @@
                     console.log('text: ', text, 'data: ', data);
                     reloadPinyinList();
                 }
+                pinyin_block_list.classList.remove('loading');
             });
         }
     </script>
@@ -722,8 +783,19 @@
     <script id="train-script">
         var dom_upload_zones = document.querySelectorAll('.upload-zone');
         var dom_upload_train_excel = document.getElementById('upload-train-excel');
+        var dom_train_table_body = document.getElementById('train-table-body');
+        var dom_train_count = document.getElementById('train-count');
+        var dom_start_train = document.getElementById('start-train');
         
         console.log('dom_upload_zones: ', dom_upload_zones);
+        
+        window.addEventListener('load', function(e){
+            /*
+                for testing
+            */
+            naviTo('train-center-zone');
+            refresh_train_table();
+        });
 
         dom_upload_zones.forEach(d => {
             d.addEventListener('dragover', function(e){
@@ -742,17 +814,27 @@
 
         dom_upload_train_excel.addEventListener('drop', function(e){
             var file = e.dataTransfer.files[0];
-            console.log('file: ', file)
-            if (file.name.match(/.*\.xls.$/i)) {
+            console.log('file: ', file);
+            if (file.name.match(/.*\.xls.?$/i)) {
                 var formData = new FormData();
                 formData.append('file', file);
                 console.log('formData: ', formData);
-                axios.post('/api/upload/', formData, {
+                dom_upload_train_excel.style.opacity = 0;
+                axios.post('/api/upload/textbook', formData, {
                     headers: {
                         'Content-Type': file.type,
                         'Content-Disposition': 'attachment; filename=' + file.name,
                     }
-                });
+                }).then(e => {
+                    console.log('upload done: ', e);
+                    window.alert('檔案上傳成功.');
+                    refresh_train_table();
+                }).catch(e => {
+                    window.alert('檔案獲取失敗.');
+                    console.log('error: ', e);
+                }).finally(e => {
+                    dom_upload_train_excel.style.opacity = 1;
+                })
                 // const reader = new FileReader();
                 // reader.onload = function (event) {
                 //     console.log(event.target); 
@@ -766,8 +848,29 @@
             }
         });
 
+        dom_start_train.addEventListener('click', function(e) {
             
+        });
 
+            
+        function refresh_train_table() {
+            return axios.get('/api/data/textbook').then(e => {
+                var textbook = e.data;
+                var _html = '';
+                console.log('textbook: ', textbook);
+                textbook.map(t => {
+                    var _origin = t[1];
+                    var _text = t[2];
+                    var _status = t[3];
+                    var _weight = t[4];
+                    var tr = `<tr><td>${_origin}</td><td>${_text}</td><td>${_status}</td><td>${_weight}</td></tr>`;
+                    _html += tr;
+                });
+                
+                dom_train_table_body.innerHTML = _html;
+                dom_train_count.innerText = textbook.length;
+            });
+        }
         
 
         

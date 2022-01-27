@@ -548,7 +548,21 @@ class MainService():
             logging.error('[get_dynamic_pinyin_block_list_remotely] Download Failed.')
         
         return json_data
+
     
+    def get_textbook_sentense_list(self, latest = True):
+        result = []
+        _model = TextbookSentense.objects.values_list('id', 'origin', 'text', 'status', 'weight').order_by('-id')
+        if latest:
+            _first = TextbookSentense.objects.order_by('-id').first()
+            if _first:
+                _latest_origin = model_to_dict(_first, ['origin'])['origin']
+                print('_latest_origin: ', _latest_origin)
+                result = list(_model.filter(origin=_latest_origin))
+        else:
+            result = list(_model.all())
+            
+        return result
 
 
     def get_pinyin_model_path(self):
@@ -627,18 +641,19 @@ class MainService():
                 logging.error('[fetch_ai_model_data] Download Remote English Model Failed.')
         
 
-    def add_textbook_sentense(self, sentenses):
-        limit_tbs_size = 50
+    def add_textbook_sentense(self, origin='', sentenses=[]):
+        limit_tbs_size = 100
         try:
+            _exist_texts = list(TextbookSentense.objects.filter(origin=origin).values_list('text', flat=True))
             tbs = []
             for _sen in sentenses:
-                _origin_sen = _sen[0]
-                _status = _sen[1]
-                _weight = _sen[2] or 1
-                _text, _lv, _a = self.parse_message(_origin_sen)
-                if _text and _status:
+                _text = _sen[0]
+                _status = int(_sen[1])
+                _weight = int(_sen[2]) if _sen[2] else 1
+                _text, _lv, _a = self.parse_message(_text)
+                if _text and _status >= 0 and _text not in _exist_texts:
                     _textbook = TextbookSentense(
-                        origin=_origin_sen,
+                        origin=origin,
                         text=_text,
                         status=_status,
                         weight=_weight,
@@ -655,10 +670,11 @@ class MainService():
             return True
         except Exception as err:
             logging.error(str(err))
-            return False
+            raise Exception(err)
 
 
     def add_pinyin_block(self, text):
+        _num_max = 255
         try:
             if isinstance(text, list):
                 _dps = []
@@ -666,6 +682,9 @@ class MainService():
                     _py = translate_by_string(_)
                     _dps.append(DynamicPinyinBlock(text=_, pinyin=_py))
                 DynamicPinyinBlock.objects.bulk_create(_dps, batch_size=100)
+                _ids = list(DynamicPinyinBlock.objects.values_list('pk', flat=True)[_num_max:])
+                if len(_ids) > 0:
+                    DynamicPinyinBlock.objects.filter(id__in=_ids).delete()
                 return [model_to_dict(_) for _ in _dps]
             else:
                 _py = translate_by_string(text)
@@ -675,6 +694,9 @@ class MainService():
                         text=text,
                         pinyin=_py,
                     )
+                    _count = DynamicPinyinBlock.objects.count()
+                    if _count > _num_max:
+                        DynamicPinyinBlock.objects.all().first().delete()
                     return model_to_dict(qs)
                 else:
                     return None
@@ -685,7 +707,10 @@ class MainService():
 
     def remove_textbook_sentense(self, id):
         try:
-            TextbookSentense.objects.get(pk=id).delete()
+            if isinstance(id, int):
+                TextbookSentense.objects.get(pk=id).delete()
+            elif id == 'all':
+                TextbookSentense.objects.all().delete()
             return True
         except Exception as err:
             return False

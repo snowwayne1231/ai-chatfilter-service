@@ -1,3 +1,4 @@
+from numpy import isin
 from rest_framework.parsers import JSONParser, FileUploadParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,7 +12,7 @@ from django import forms
 
 import csv, codecs
 from dataparser.apps import ExcelParser
-from .instance import get_main_service
+from .instance import get_main_service, get_remote_twice_service
 from datetime import date
 
 
@@ -78,32 +79,29 @@ class ServiceUploadAPIView(APIView):
 
     def post(self, request, name):
         data = request.data
-        if name:
-            try:
+        try:
+            if name == 'textbook':
+               
                 _data = []
-
-                if name == 'textbookuploadexcel':
-                    _file = request.FILES['file']
-
-                    _ep = ExcelParser(file_content=_file.read())
-                    
-                    _data = _ep.get_row_list(column=['发言内容', '状态', '權重'])
-
-                    _done = get_main_service(is_admin=True).add_textbook_sentense(_data)
-
-                    if not _done:
-                        return JsonResponse({'error': 'Failed.', 'data': _data}, safe=False)
-
-                return JsonResponse({
-                    'name': name,
-                    'datetime': datetime.today(),
-                    'data': _data,
-                })
+                _file = request.FILES['file']
+                _ep = ExcelParser(file_content=_file.read())
+                _data = _ep.get_row_list(column=['发言内容', '状态', '權重'])
+                _service = get_main_service(is_admin=True)
                 
-            except Exception as err:
-                return HttpResponseForbidden(str(err))
-        else:
-            return JsonResponse({'name': 'none'}, safe=False)
+                _done = _service.add_textbook_sentense(origin=_file.name, sentenses=_data)
+
+                if isinstance(_done, bool):
+                    if _done:
+                        _twice_service = get_remote_twice_service()
+                        _done = _twice_service.add_textbook_sentense(origin=_file.name, sentenses=_data)
+                    
+                    return JsonResponse({'done': _done, 'data': _data}, safe=False)
+
+            else:
+                return JsonResponse({'name': 'none'}, safe=False)
+        
+        except Exception as err:
+            return HttpResponseForbidden(str(err))
 
 
 class ServiceRemoveAPIView(APIView):
@@ -115,9 +113,9 @@ class ServiceRemoveAPIView(APIView):
         data = request.data
         if name:
             try:
-                if name == 'textbookremove':
+                if name == 'textbook':
 
-                    _done = get_main_service(is_admin=True).remove_textbook_sentense(id)
+                    _done = get_main_service(is_admin=True).remove_textbook_sentense(int(id))
 
                     if not _done:
                         return HttpResponseForbidden('Delete Failed.')
@@ -163,7 +161,6 @@ class ServicePinyinBlockListAPIView(APIView):
             texts = request.data.getlist('text[]')
             if texts:
                 result = get_main_service(is_admin=True).add_pinyin_block(texts)
-                print('result: ', result)
 
             return JsonResponse({'result': result}, safe=False)
         
@@ -190,3 +187,36 @@ class ServicePinyinBlockListAPIView(APIView):
             
         except Exception as err:
             return HttpResponseForbidden(str(err))
+
+
+
+
+
+class TwiceServiceAPIView(APIView):
+    """
+    """
+    
+
+    def get(self, request, fn):
+        
+        return HttpResponseForbidden('Get Failed.')
+
+    def post(self, request, fn):
+        result = None
+        data = request.data
+        try:
+            _service = get_main_service(is_admin=True)
+            _fn = getattr(_service, fn)
+            result = _fn(**data)
+        
+        except Exception as err:
+
+            return HttpResponseForbidden(str(err))
+
+        return JsonResponse({
+            'result': result,
+            'datetime': datetime.today(),
+        })
+        
+        
+        

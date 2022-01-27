@@ -18,7 +18,7 @@ from django.urls import path, include
 from django.http import Http404, HttpResponse, JsonResponse
 from django.views.static import serve
 from service import instance
-from .views import ServiceJSONDataAPIView, ServiceUploadAPIView, ServiceRemoveAPIView, ServicePinyinBlockListAPIView
+from .views import ServiceJSONDataAPIView, ServiceUploadAPIView, ServiceRemoveAPIView, ServicePinyinBlockListAPIView, TwiceServiceAPIView
 import os
 
 
@@ -48,6 +48,8 @@ def read_data_path(request, name):
         result_data = main_service.get_model_versions()
     elif name == 'dpinyinblist':
         result_data = main_service.get_dynamic_pinyin_block_list()
+    elif name == 'textbook':
+        result_data = main_service.get_textbook_sentense_list()
 
     # print('result_data: ', result_data)
 
@@ -70,6 +72,7 @@ urlpatterns = [
     path('api/upload/<slug:name>', ServiceUploadAPIView.as_view()),
     path('api/remove/<slug:name>/<slug:id>', ServiceRemoveAPIView.as_view()),
     path('api/pinyinblock/<slug:id>', ServicePinyinBlockListAPIView.as_view()),
+    path('api/twice/<slug:fn>', TwiceServiceAPIView.as_view()),
     # path(r'^django-rq/', include('django_rq.urls')),
     path('ai/', include('ai.urls')),
 ]

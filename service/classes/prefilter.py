@@ -84,7 +84,7 @@ class PreFilter():
         next_char = ''
         _idx = 0
         _last_number_idx = 0
-        _dobule_scored_number_range = 3
+        _dobule_scored_number_range = 2
         _text_ = text.replace(' ', '')
         _has_wv = False
         
@@ -99,7 +99,7 @@ class PreFilter():
                 if '0' in next_char and u == '0':
                     continue
                 _number_scored = 1
-                if number_size > 0 and (_idx - _last_number_idx) <= _dobule_scored_number_range and u > u'\u003a':
+                if number_size > 0 and (_idx - _last_number_idx) <= _dobule_scored_number_range and u > u'\u0031':
                     _number_scored += 1
                 
                 number_size += _number_scored
@@ -215,7 +215,8 @@ class PreFilter():
             '两', '留', '耳', '儿', '羚', '鈴', '义', '旧', '帕', '兒', '霸', '韭', '琳', '双', '俩', '爸', '龄', '乙',
             '究', '耀', '拔', '邻', '恶', '而', '姍', '试', '伤', '叄', '澪', '無', '麟', '式', '舅', '臼', '吾', '辆',
             '无', '撕', '噩', '琦', '琪', '洞', '亿', '柿', '侍', '丸', '琉', '厄', '兔', '訕', '倆', '伺', '骑', '棋',
-            '巴', '仇', '杂', '怡', '丝', '棱', '仪', '欺', '&' , '+', '仙', '疚', '夭', '寺', '鸠',
+            '巴', '仇', '杂', '怡', '丝', '棱', '仪', '欺', '&' , '+', '仙', '疚', '夭', '寺', '鸠', '楞', '呜', '吧',
+            '柺',
         ]
         if chinese:
             return uchar in chineses
@@ -275,8 +276,7 @@ class PreFilter():
 
     def find_pinyin_blocked(self, text):
         _pinyin = self.parse_pinyin(text)
-        print('find_pinyin_blocked text: ',  text)
-        print('translate_by_string _pinyin: ',  _pinyin)
+        # print('[find_pinyin_blocked] translate_by_string _pinyin: ',  _pinyin)
         for _py in self.dynamic_pinyin_block_list:
             if _py in _pinyin:
                 # print('find_pinyin_blocked : ', _py)
@@ -287,7 +287,32 @@ class PreFilter():
     def parse_pinyin(self, text):
         # _parsed_text = re.sub(r'[a-zA-Z\d\s]+', '', text)
         _parsed_text = re.sub(r'[\d\s]+', '', text)
+        _parsed_text = self.parse_riddle(_parsed_text)
         return translate_by_string(_parsed_text)
+
+    def parse_riddle(self, text):
+        _nagative_words = ['不要', '拿走', '删除']
+        _idx_nagative_word = 0
+        _len_nagative_word = 0
+        _check_text = text[3:]
+        if _check_text:
+            for _nw in _nagative_words:
+                if _nw in _check_text:
+                    _idx_nagative_word = text.index(_nw)
+                    _len_nagative_word = len(_nw)
+                    break
+        
+            if _idx_nagative_word > 0:
+                _idx_splited = _idx_nagative_word + _len_nagative_word
+                _before_word = text[:_idx_splited]
+                _after_word = text[_idx_splited:]
+                for _aw in _after_word:
+                    if _aw in _before_word:
+                        _before_word = _before_word.replace(_aw, '')
+
+                return _before_word + _after_word
+
+        return text
 
 
     def set_pinyin_block_list(self, _list_):

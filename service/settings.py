@@ -229,3 +229,10 @@ CACHES = {
 
 PINYIN_REVERSE = config.get('MODEL', 'PINYIN_REVERSE')
 
+TWICE_SERVICE = {
+    'default': {
+        'HOST': config.get('TWICE', 'TWICE_HOST'),
+        'WEB_PORT': config.get('TWICE', 'TWICE_WEB_PORT'),
+        'TCPSOCKET_PORT': config.get('TWICE', 'TWICE_TCPSOCKET_PORT'),
+    },
+}

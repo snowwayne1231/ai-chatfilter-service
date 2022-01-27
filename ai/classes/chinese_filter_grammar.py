@@ -244,6 +244,7 @@ class GrammarFilter(BasicFilter):
         next_txt = texts
         _len = len(texts)
         _full_wl = self.full_words_length
+        _right_pad = _full_wl - _len
         # _status_e = self.STATUS_EMPTY
         # _left_pad = int((_full_wl - _len) / 2)
 
@@ -252,8 +253,9 @@ class GrammarFilter(BasicFilter):
         #     next_txt = ([_status_e] * _left_pad) + texts + ([_status_e] * _right_pad)
         if _len > _full_wl:
             next_txt = next_txt[:_full_wl]
+            _right_pad = 0
         
-        return np.pad(np.array(next_txt), (0, _full_wl-_len), constant_values=0)
+        return np.pad(np.array(next_txt), (0, _right_pad), constant_values=0)
 
 
     # override
