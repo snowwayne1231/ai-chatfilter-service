@@ -10,7 +10,7 @@ from django.core.paginator import Paginator
 from django import forms
 
 
-import csv, codecs
+import csv, codecs, json, re
 from dataparser.apps import ExcelParser
 from .instance import get_main_service, get_remote_twice_service
 from datetime import date
@@ -205,9 +205,27 @@ class TwiceServiceAPIView(APIView):
         result = None
         data = request.data
         try:
+            if data:
+                data = dict(data)
+                # print('[TwiceServiceAPIView] first data: ', data)
+                next_data = {}
+                for idx, key in enumerate(data):
+                    if isinstance(data[key], list):
+                        _loc = data[key][0]
+                    elif isinstance(data[key], str):
+                        _loc = data[key]
+
+                    _loc = _loc.replace("'", '"')
+                    _loc = _loc.replace('\\xa0', '')
+                    _loc = re.sub(r'[\r\n]+', '' ,_loc)
+                    # print('[TwiceServiceAPIView] _loc: ', _loc)
+                    next_data[key] = json.loads(_loc) if (_loc[0] == '[' or _loc[0] == '{') else _loc
+                
+                # print('[TwiceServiceAPIView] next_data: ', next_data)
             _service = get_main_service(is_admin=True)
             _fn = getattr(_service, fn)
-            result = _fn(**data)
+            
+            result = _fn(**next_data)
         
         except Exception as err:
 

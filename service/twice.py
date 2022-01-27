@@ -9,7 +9,7 @@ from ai.helper import get_pinyin_path, get_grammar_path, get_english_model_path,
 from ai.classes.translator_pinyin import translate_by_string
 
 import numpy as np
-import time, re, logging, json
+import time, re, logging, json, urllib
 from os import path, listdir
 
 # from .models import GoodSentence
@@ -60,8 +60,8 @@ class TwiceMainService():
 
         self.service_data = settings.TWICE_SERVICE['default']
         self.service_addr = self.service_data['HOST']
-        self.service_web_port = self.service_data['WEB_PORT']
-        self.service_tcpsocket_port = self.service_data['TCPSOCKET_PORT']
+        self.service_web_port = int(self.service_data['WEB_PORT'])
+        self.service_tcpsocket_port = int(self.service_data['TCPSOCKET_PORT'])
 
         print('service_data: ', self.service_data)
 
@@ -69,16 +69,28 @@ class TwiceMainService():
 
 
     def request_web(self, method = 'GET', uri = '/', dataset = {}):
+        # print('start request_web: uri: ', uri, ' dataset: ', dataset)
         _conn = HTTPConnection(self.service_addr, self.service_web_port)
         body = None
         try:
-            _conn.request(method, uri, dataset)
-            print('request_web: uri: ', uri, ' dataset: ', dataset)
+            # _param = {}
+            _params = urllib.parse.urlencode(dataset)
+            # for idx, key in enumerate(dataset):
+            #     _param[key] = json.dumps(dataset[key])
+            _conn.request(method, uri, _params, 
+                {"Content-type": "application/x-www-form-urlencoded"}
+            )
             res = _conn.getresponse()
             if res.status == 200:
 
                 body = res.read().decode()
                 print('request_web get response body: ', body)
+            
+            else:
+
+                print('res.status: ', res.status)
+                body = res.read()
+                print('[request_web] failed. ', body)
             
         except Exception as err:
 
