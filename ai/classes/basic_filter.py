@@ -330,7 +330,7 @@ class BasicFilter():
                     new_w.append(_weight)
             else:
                 print('[get_xyw_data] Not Found data: ', _d)
-                exit(2)
+                continue
 
             if _i % 1000 == 0:
                 _percent = _i / data_length

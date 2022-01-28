@@ -117,7 +117,7 @@ class PreFilter():
 
         _NE_ratio = _NE_size / length_char
         
-        is_many_asci = (_NE_size >= 6 and number_size >= 2) or number_size > 4
+        is_many_asci = _NE_size >= 6 or number_size > 4
 
         is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and (number_size > 0 or eng_size > 0)
 
