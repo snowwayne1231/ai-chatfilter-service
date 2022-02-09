@@ -87,6 +87,9 @@ class PreFilter():
         _dobule_scored_number_range = 2
         _text_ = text.replace(' ', '')
         _has_wv = False
+
+        if lowercase_only:
+            _text_ = _text_.lower()
         
         length_char = len(_text_)
 
@@ -122,24 +125,28 @@ class PreFilter():
         is_many_language = _NE_size >= 5 and _NE_ratio > 0.3 and _NE_ratio < 1 and (number_size > 0 or eng_size > 0)
 
         has_double_eng = False
+        has_doubt_eng = False
         if _NE_ratio > 0.8 and eng_size > 5:
-            __first_char = text[:2]
-            # print('[find_wechat_char]__first_char: ', __first_char)
-            __next_same_char = 0
-            for __idx in range(len(text)):
-                if __idx > 1 and text[__idx: __idx+2] == __first_char:
-                    __next_same_char = __idx
-                    break
-            
-            __first_sentence = text[:__next_same_char]
-            # print('[find_wechat_char]__first_sentence: ', __first_sentence)
-            
-            if __next_same_char > 0 and len(__first_sentence) < 12:
-                __left_text = text[__next_same_char:]
-                # print('[find_wechat_char]__left_text: ', __left_text)
+            if eng_size <= 8:
+                has_doubt_eng = True
+            else:
+                __first_char = text[:2]
+                # print('[find_wechat_char]__first_char: ', __first_char)
+                __next_same_char = 0
+                for __idx in range(len(text)):
+                    if __idx > 1 and text[__idx: __idx+2] == __first_char:
+                        __next_same_char = __idx
+                        break
+                
+                __first_sentence = text[:__next_same_char]
+                # print('[find_wechat_char]__first_sentence: ', __first_sentence)
+                
+                if __next_same_char > 0 and len(__first_sentence) < 12:
+                    __left_text = text[__next_same_char:]
+                    # print('[find_wechat_char]__left_text: ', __left_text)
 
-                if __first_sentence in __left_text:
-                    has_double_eng = True
+                    if __first_sentence in __left_text:
+                        has_double_eng = True
 
         # print('[find_wechat_char] _NE_ratio: ', _NE_ratio, ' | length_char: ', length_char, eng_size, number_size)
         
@@ -151,7 +158,7 @@ class PreFilter():
         if _has_wv and eng_size < 3 and (length_char - eng_size) > 1:
             return next_char
 
-        return next_char if is_many_asci or is_many_language or has_double_eng else ''
+        return next_char if is_many_asci or is_many_language or has_double_eng or has_doubt_eng else ''
 
     
     def find_emoji_word_mixed(self, text):
@@ -224,7 +231,7 @@ class PreFilter():
 
     def is_english(self, uchar):
         # return (uchar >= u'\u0041' and uchar <= u'\u0039') or (uchar >= u'\u0061' and uchar <= u'\u007a')
-        return uchar >= u'\u0061' and uchar <= u'\u007a'
+        return (uchar >= u'\u0061' and uchar <= u'\u007a') or uchar >= u'\uff41'
 
     def is_question_mark(self, uchar):
         return uchar == u'\u003f'
