@@ -116,7 +116,7 @@ class BasicFilter():
         else:
 
             _json = {}
-            with open(folder + '/last.history', 'r+') as f:
+            with open(folder + '/last.history', 'a+') as f:
                 _string = f.read()
                 if _string:
                     _json = json.loads(_string)
@@ -428,7 +428,7 @@ class BasicFilter():
     def get_last_history(self):
         data = {}
         _path = self.get_saved_folder() + '/last.history'
-        with open(_path, 'r+') as f:
+        with open(_path, 'a+') as f:
             data = json.load(f)
         return data
 
