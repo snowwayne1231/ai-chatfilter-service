@@ -1,9 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from datetime import datetime
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import os
+import os, json
 
 
 
@@ -75,7 +76,7 @@ class BasicFilter():
         return self
 
 
-    def save(self, folder = None, is_check = False):
+    def save(self, folder = None, is_check = False, history = None, is_continue= False, eta=0, origin='none'):
         if folder is not None:
             self.saved_folder = folder
         elif self.saved_folder:
@@ -91,6 +92,45 @@ class BasicFilter():
             self.save_model(folder + '/model.h5')
         
             print('Successful saved. ')
+
+        if history:
+            # print('history: ', history)
+            with open(folder + '/last.history', 'w+') as f:
+                _acc = history.get('accuracy', [0])[-1]
+                _los = history.get('loss', [0])[-1]
+                _val_acc = history.get('val_accuracy', [0])[-1]
+                _acc = int(_acc * 10000) / 10000
+                _los = int(_los * 10000) / 10000
+                _val_acc = int(_val_acc * 10000) / 10000
+
+                f.write(json.dumps({
+                    'accuracy': _acc,
+                    'loss': _los,
+                    'validation': _val_acc,
+                    'ontraining': is_continue,
+                    'ETA': eta if is_continue else 0,
+                    'timestamp': datetime.now().isoformat(),
+                    'origin': origin,
+                }, indent = 2))
+        
+        else:
+
+            _json = {}
+            with open(folder + '/last.history', 'r+') as f:
+                _string = f.read()
+                if _string:
+                    _json = json.loads(_string)
+            
+            with open(folder + '/last.history', 'w+') as f:
+                f.write(json.dumps({
+                    'accuracy': _json.get('accuracy', 0),
+                    'loss': _json.get('loss', 0),
+                    'validation': _json.get('validation', 0),
+                    'ontraining': is_continue,
+                    'ETA': eta if is_continue else 0,
+                    'timestamp': datetime.now().isoformat(),
+                    'origin': origin,
+                }, indent = 2))
 
         return self
 
@@ -248,7 +288,7 @@ class BasicFilter():
                     steps_per_epoch=steps,
                     validation_steps=vaildation_steps,
                 )
-                self.save()
+                self.save(history = history.history)
 
                 acc = history.history.get('accuracy')[-1]
                 
@@ -383,4 +423,12 @@ class BasicFilter():
         if not os.path.exists(_path):
             _path = self.get_saved_folder() + '/model.remote.h5'
         return _path
+
+
+    def get_last_history(self):
+        data = {}
+        _path = self.get_saved_folder() + '/last.history'
+        with open(_path, 'r+') as f:
+            data = json.load(f)
+        return data
 

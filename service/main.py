@@ -8,11 +8,12 @@ from ai.service_impact import get_all_vocabulary_from_models
 from ai.helper import get_pinyin_path, get_grammar_path, get_english_model_path, get_pinyin_re_path, get_vocabulary_dictionary_path
 from ai.classes.translator_pinyin import translate_by_string
 from ai.models import TextbookSentense
+from ai.train import train_pinyin_by_list, get_row_list_by_json_path
 from dataparser.apps import MessageParser, EnglishParser
 from dataparser.classes.store import ListPickle
 
 import numpy as np
-import time, re, logging, json
+import time, re, logging, json, threading
 from os import path, listdir
 
 from .classes.prefilter import PreFilter
@@ -42,6 +43,8 @@ class MainService():
     service_avoid_filter_lv = 5
     lang_mode = 1
     vocabulary_data = {}
+    is_training = False
+    train_thread = None
 
     
     STATUS_PREDICTION_NO_MSG = 0
@@ -69,6 +72,9 @@ class MainService():
     REMOTE_ROUTE_ENGLISH_MODEL = '/api/model/english'
     REMOTE_ROUTE_VOCABULARY_DATA = '/api/data/vocabulary'
     REMOTE_ROUTE_DYNAMIC_PINYIN_BLOCK = '/api/data/dpinyinblist'
+    
+    PATH_TEXTBOOK_JSON = '/assets/textbook/json/2022-02-10.json'
+    # PATH_TEXTBOOK_JSON = '/assets/textbook/json/test.json'
 
     regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
     regex_has_gap = re.compile("[a-zA-Z]+\s+[a-zA-Z]+")
@@ -131,6 +137,8 @@ class MainService():
             self.ai_app.load_pinyin(is_version_of_reverse=is_version_of_reverse)
 
             self.ai_app.load_garmmar()
+
+            self.ai_app.pinyin_model.save(is_check=True, is_continue=False)
 
         elif self.lang_mode == self.STATUS_MODE_ENGLISH:
             #
@@ -579,6 +587,13 @@ class MainService():
         self.open_mind()
         return self.ai_app.english_model.get_model_path() if self.ai_app.english_model else None
 
+    
+    def get_ai_train_data(self):
+        _app = self.ai_app
+        if _app:
+            return _app.get_train_data()
+        return {}
+
 
     def fetch_ai_model_data(self, remote_ip, port = 80):
         if self.is_admin_server:
@@ -743,8 +758,56 @@ class MainService():
         result['pinyin'] = listdir(_pinyin_path)
         return result
 
+
+    def fit_pinyin_model_autoly(self):
+        if self.is_training:
+            return False
+        _json_textbook_path = self.ai_app.get_ai_dir() + self.PATH_TEXTBOOK_JSON
+        _max_spend_time = 20
+        _final_accuracy = 0.9995
+        result_list = get_row_list_by_json_path(_json_textbook_path)
+        # print('result_list length: ', len(result_list))
+        db_textbooks = TextbookSentense.objects.values_list('id', 'origin', 'text', 'status', 'weight').order_by('-id')
+        lasest_origin = ''
+        if db_textbooks:
+            lasest_origin = db_textbooks[0][1]
+            result_list = result_list + [['', _[4], _[2], _[3]] for _ in db_textbooks]
+
+        if self.ai_app and self.ai_app.pinyin_model:
+            _thread = threading.Thread(target=self.thread_train_pinyin, args=(result_list, _final_accuracy, _max_spend_time, lasest_origin))
+            _thread.start()
+            self.is_training = True
+            self.train_thread = _thread
+        else:
+            return False
         
-    
+        return lasest_origin
+
+
+    def thread_train_pinyin(self, train_data, stop_accuracy, stop_hours, origin):
+        print('========== Thread_Train_Pinyin ========== ')
+        print('train_data lengtn: ', len(train_data))
+        print('stop_accuracy: ', stop_accuracy)
+        print('stop_hours: ', stop_hours)
+        self.ai_app.pinyin_model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
+        history = self.ai_app.pinyin_model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0)
+        self.is_training = False
+        return history
+
+
+    def thred_train_stop(self):
+        if self.ai_app and self.ai_app.pinyin_model:
+            self.ai_app.pinyin_model.save(is_check=True, is_continue=True, eta=-1)
+        
+        if self.is_training:
+            if self.train_thread.is_alive():
+                self.train_thread._is_running = False
+                self.train_thread.join()
+            self.is_training = False
+            self.ai_app.pinyin_model.save(is_check=True, is_continue=False)
+        
+        return True
+        
 
         
 

@@ -251,9 +251,15 @@
             background-color: #f6fffc;
         }
         .table-container {
-            max-height: calc(100% - 200px);
+            max-height: calc(100% - 260px);
             overflow: auto;;
         }
+        .train-center-top-panel {
+            height: 260px;
+            overflow: hidden;
+            position: relative;
+        }
+        
     </style>
 </head>
 <body>
@@ -336,9 +342,33 @@
                     <h2>訓練資料中心</h2>
                 </div>
                 <div class="right range" style="height: calc(100% - 120px); max-height: none;">
-                    <div id="upload-train-excel" class="upload-zone">請拖曳訓練資料到此處</div>
-                    <div style="text-align: center;">
-                        <button id="start-train" class="pbz-btn" style="width: 120px;">開始訓練</button>
+                    <div class="train-center-top-panel">
+                        <div id="train-center-panel-training">
+                            <table>
+                                <thead>
+                                    <th>
+                                        <button class="pbz-btn" onclick="refresh_train_panel()" style="width:auto; margin: 0px;">⟳</button>
+                                        <span>狀態</span>
+                                    </th>
+                                    <th>準確率</th>
+                                    <th>預估結束時間</th>
+                                    <th>上次完成時間</th>
+                                </thead>
+                                <tbody>
+                                    <td id="train-center-status">讀取中..</td>
+                                    <td id="train-center-accuracy">0.00</td>
+                                    <td><span id="train-center-eta">0 </span> <span> Hour</span></td>
+                                    <td id="train-center-timestamp"></td>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="train-center-panel-ready">
+                            <div id="upload-train-excel" class="upload-zone">請拖曳訓練資料到此處</div>
+                            <div style="text-align: center;">
+                                <button id="start-train" class="pbz-btn" style="width: 120px; display: none;">開始訓練</button>
+                                <button id="stop-train" class="pbz-btn" onclick="stop_training()" style="width: 120px; display: none;">停止</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="table-container">
                         <p>僅顯示最新上傳的資料  Length: ( <span id="train-count"></span> ) </p>
@@ -786,6 +816,9 @@
         var dom_train_table_body = document.getElementById('train-table-body');
         var dom_train_count = document.getElementById('train-count');
         var dom_start_train = document.getElementById('start-train');
+        var dom_stop_train = document.getElementById('stop-train');
+        var dom_train_center_panel_ready = document.getElementById('train-center-panel-ready');
+        var dom_train_center_panel_training = document.getElementById('train-center-panel-training');
         
         console.log('dom_upload_zones: ', dom_upload_zones);
         
@@ -794,6 +827,7 @@
                 for testing
             */
             naviTo('train-center-zone');
+            refresh_train_panel();
             refresh_train_table();
         });
 
@@ -827,7 +861,12 @@
                     }
                 }).then(e => {
                     console.log('upload done: ', e);
-                    window.alert('檔案上傳成功.');
+                    var data = e.data;
+                    if (data.done) {
+                        window.alert('檔案上傳並且同步成功.');
+                    } else {
+                        window.alert('檔案上傳成功. 但同步資料失敗.');
+                    }
                     refresh_train_table();
                 }).catch(e => {
                     window.alert('檔案獲取失敗.');
@@ -849,7 +888,22 @@
         });
 
         dom_start_train.addEventListener('click', function(e) {
-            
+            return axios.post('/api/cmd/trainstart').then(e => {
+                var data = e.data;
+                console.log(data);
+                if (data.result && data.datetime) {
+                    refresh_train_panel({
+                        ontraining: true,
+                        accuracy: 0.00,
+                        ETA: 20,
+                        timestamp: new Date().toISOString(),
+                    });
+                } else {
+                    alert(' 開始失敗. ');
+                }
+            }).catch(e => {
+                console.log(e);
+            });
         });
 
             
@@ -871,8 +925,61 @@
                 dom_train_count.innerText = textbook.length;
             });
         }
-        
 
+        function refresh_train_panel(result) {
+            if (result) {
+                if (typeof result == 'string') {
+                    try {
+                        result = JSON.parse(result);
+                        if (result.result) {
+                            result = result.result;
+                        }
+                    } catch (err) {
+                        console.log('refresh_train_panel err: ', err);
+                        result = {ontraining: false, accuracy: 0, ETA: 0};
+                    }
+                    
+                }
+                console.log('refresh_train_panel result: ', result);
+                if (result.ontraining) {
+                    dom_start_train.style.display = 'none';
+                    if (result.ETA == -1) {
+                        dom_stop_train.style.display = 'none';
+                    } else {
+                        dom_stop_train.style.display = 'inline-block';
+                    }
+                } else {
+                    dom_stop_train.style.display = 'none';
+                    dom_start_train.style.display = 'inline-block';
+                }
+                dom_train_center_panel_training.querySelector('#train-center-status').innerText = result.ontraining ? (result.ETA == -1 ? '🟠 正在停止...' : '🟡 正在學習...') : '🟢 學習完成';
+                dom_train_center_panel_training.querySelector('#train-center-accuracy').innerText = `${result.accuracy * 100} %`;
+                dom_train_center_panel_training.querySelector('#train-center-eta').innerText = result.ETA == -1 ? '0.5~1' : `${result.ETA}`;
+                dom_train_center_panel_training.querySelector('#train-center-timestamp').innerText = `${new Date(result.timestamp)}`;
+
+                if (window.timeout_refresh_train) {
+                    window.clearTimeout(window.timeout_refresh_train);
+                }
+                window.timeout_refresh_train = window.setTimeout(refresh_train_panel, 5*60*1000);
+            } else {
+                axios.get('/api/cmd/aitrainer').then(e => {
+                    var data = e.data;
+                    refresh_train_panel(data.result || {});
+                });
+            }
+        }
+        
+        function stop_training(e) {
+            var _yes = window.confirm('確定要停止學習嗎？ (估計需要45分鐘至1小時的時間來停止學習)');
+            if (_yes) {
+                axios.post('/api/cmd/trainstop').then(e => {
+                    var data = e.data;
+                    console.log(data);
+                    refresh_train_panel();
+                });
+                window.setTimeout(refresh_train_panel, 1000);
+            }
+        }
         
     </script>
 </body>

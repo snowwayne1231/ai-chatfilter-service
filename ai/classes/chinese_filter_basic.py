@@ -94,7 +94,7 @@ class BasicChineseFilter(BasicFilter):
 
     
     # override
-    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None):
+    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None, origin=''):
         if save_folder is not None:
             self.saved_folder = save_folder
         
@@ -141,10 +141,11 @@ class BasicChineseFilter(BasicFilter):
         print('steps [{}]  val steps [{}]'.format(steps, vaildation_steps))
 
         try:
+            _eta = stop_hours
             _start = datetime.now()
             if stop_hours:
                 _end = _start + timedelta(hours=stop_hours)
-            while True:
+            while True: 
                 history = self.model.fit(
                     batch_train_data,
                     epochs=epochs,
@@ -153,18 +154,25 @@ class BasicChineseFilter(BasicFilter):
                     steps_per_epoch=steps,
                     validation_steps=vaildation_steps,
                 )
-                self.save()
-                acc = max(history.history.get('accuracy'))
+                
+                whether_continue = True
 
                 if stop_accuracy:
+                    acc = max(history.history.get('accuracy'))
                     print('Now Accuracy: {:.4f} / Target Accuracy: {:.4f}'.format(acc, stop_accuracy))
                     if acc >= stop_accuracy:
-                        break
+                        whether_continue = False
 
                 if stop_hours:
                     _now = datetime.now()
-                    if _now > _end:
-                        break
+                    _eta = int((_end - _now).total_seconds() / 60 / 6 * 10) / 100
+                    if _eta <= 0:
+                        whether_continue = False
+                        _eta = 0
+
+                self.save(history=history.history, is_continue=whether_continue, eta=_eta, origin=origin)
+                if whether_continue is False:
+                    break
                 
         except KeyboardInterrupt:
             print('Keyboard pressed. Stop Tranning.')

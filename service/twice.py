@@ -84,13 +84,13 @@ class TwiceMainService():
             if res.status == 200:
 
                 body = res.read().decode()
-                print('request_web get response body: ', body)
+                print('[TwiceMainService] Request Web get response body: ', body)
             
             else:
-
-                print('res.status: ', res.status)
-                body = res.read()
-                print('[request_web] failed. ', body)
+                
+                print('[TwiceMainService] Request Web get failed. status: ', res.status, ' uri: ', uri)
+                body = res.read().decode()
+                
             
         except Exception as err:
 
@@ -101,6 +101,18 @@ class TwiceMainService():
 
     def add_textbook_sentense(self, **args):
         return self.request_web(method='POST', uri='/api/twice/add_textbook_sentense', dataset=args)
+
+
+    def get_ai_train_data(self):
+        return self.request_web(method='POST', uri='/api/twice/get_ai_train_data')
+
+
+    def fit_pinyin_model_autoly(self):
+        return self.request_web(method='POST', uri='/api/twice/fit_pinyin_model_autoly')
+
+    
+    def thred_train_stop(self):
+        return self.request_web(method='POST', uri='/api/twice/thred_train_stop')
     
 
     def saveRecord(self, prediction, message, text='', reason=''):

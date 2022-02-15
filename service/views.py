@@ -205,10 +205,11 @@ class TwiceServiceAPIView(APIView):
         result = None
         data = request.data
         try:
+            next_data = {}
             if data:
                 data = dict(data)
                 # print('[TwiceServiceAPIView] first data: ', data)
-                next_data = {}
+                
                 for idx, key in enumerate(data):
                     if isinstance(data[key], list):
                         _loc = data[key][0]
@@ -232,6 +233,53 @@ class TwiceServiceAPIView(APIView):
             return HttpResponseForbidden(str(err))
 
         return JsonResponse({
+            'mode': 'TwiceServiceAPI',
+            'result': result,
+            'datetime': datetime.today(),
+        })
+        
+
+
+
+class ServiceCommandAPIView(APIView):
+    """
+    """
+    
+
+    def get(self, request, name):
+        # _service = get_main_service(is_admin=True)
+        _service = get_remote_twice_service()
+        if name == 'aitrainer':
+            result = _service.get_ai_train_data()
+            # print('result: ', result)
+            return JsonResponse({
+                'mode': 'ServiceCommandAPI',
+                'result': result,
+                'datetime': datetime.today(),
+            })
+        
+        return HttpResponseForbidden('Get Failed.')
+
+
+    def post(self, request, name):
+        result = None
+        data = request.data
+        try:
+            _service = get_remote_twice_service()
+            if name == 'trainstart':
+                
+                result = _service.fit_pinyin_model_autoly()
+
+            elif name == 'trainstop':
+
+                result = _service.thred_train_stop()
+        
+        except Exception as err:
+
+            return HttpResponseForbidden(str(err))
+
+        return JsonResponse({
+            'mode': 'ServiceCommandAPI',
             'result': result,
             'datetime': datetime.today(),
         })

@@ -3,7 +3,6 @@ from service.twice import TwiceMainService
 from service.nickname import NicknameFilter
 
 
-
 class MemoryController(object):
     """
 
@@ -34,7 +33,6 @@ class MemoryController(object):
             self.remote_twict_service = TwiceMainService()
 
         return self.remote_twict_service
-
 
 
 

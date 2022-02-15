@@ -7,16 +7,13 @@ from .classes.chinese_filter_grammar import GrammarFilter
 from .classes.english_filter_basic import BasicEnglishFilter
 
 import tensorflow as tf
+import os
 
 pinyin_model_path = get_pinyin_path()
 pinyin_model_re_path = get_pinyin_re_path()
 grammar_model_path = get_grammar_path()
 english_model_path = get_english_model_path()
 chinese_model_path = get_chinese_path()
-
-class AiConfig(AppConfig):
-    name = 'ai'
-
 
 
 class MainAiApp():
@@ -125,4 +122,14 @@ class MainAiApp():
         return details_result
 
 
+    def get_ai_dir(self):
+        return os.path.dirname(os.path.realpath(__file__))
+
+
+    def get_train_data(self, model_name = 'pinyin_model'):
+        _model = getattr(self, model_name)
+        if _model is None:
+            _model = self.pinyin_model
+        
+        return _model.get_last_history()
 
