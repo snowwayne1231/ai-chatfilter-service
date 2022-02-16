@@ -769,9 +769,13 @@ class MainService():
         # print('result_list length: ', len(result_list))
         db_textbooks = TextbookSentense.objects.values_list('id', 'origin', 'text', 'status', 'weight').order_by('-id')
         lasest_origin = ''
+        print(' **********result_list: ', result_list)
+        
         if db_textbooks:
             lasest_origin = db_textbooks[0][1]
-            result_list.extend([['', _[4], _[2], _[3]] for _ in db_textbooks])
+            _append_db_textbooks = [['', _[4], _[2], _[3]] for _ in db_textbooks]
+            print(' **********_append_db_textbooks: ', _append_db_textbooks)
+            result_list.extend()
 
         if self.ai_app and self.ai_app.pinyin_model:
             _thread = threading.Thread(target=self.thread_train_pinyin, args=(result_list, _final_accuracy, _max_spend_time, lasest_origin))
