@@ -188,7 +188,7 @@ class BasicChineseFilter(BasicFilter):
         
         x, y, w = self.get_xyw_data(to_numpy=True)
 
-        # print('[get_train_batchs] x length: ', len(x))
+        print('[get_train_batchs] x length: ', len(x))
 
         tokenized_list = self.tokenize_data(x)
 
@@ -232,12 +232,12 @@ class BasicChineseFilter(BasicFilter):
                 else:
                     exit(2)
 
-        _basic = int(self.basic_num_dataset / len(tokenized_list))
+        # _basic = int(self.basic_num_dataset / len(tokenized_list))
 
-        if _basic >= 1:
-            tokenized_list = tokenized_list * (_basic+1)
-            y = y * (_basic+1)
-            w = w * (_basic+1)
+        # if _basic >= 1:
+        #     tokenized_list = tokenized_list * (_basic+1)
+        #     y = y * (_basic+1)
+        #     w = w * (_basic+1)
 
         self.length_x = len(tokenized_list)
 
@@ -336,6 +336,10 @@ class BasicChineseFilter(BasicFilter):
             w_list.append(np.int64(weight))
 
         self.length_x = len(x_list)
+
+        print('x_list[-10:]: ', x_list[-10:])
+        print('y_list[-10:]: ', y_list[-10:])
+        print('w_list[-10:]: ', x_list[-10:])
 
         dataset = tf.data.Dataset.from_tensor_slices((x_list, y_list, w_list))
         

@@ -769,19 +769,16 @@ class MainService():
         # print('result_list length: ', len(result_list))
         db_textbooks = TextbookSentense.objects.values_list('id', 'origin', 'text', 'status', 'weight').order_by('-id')
         lasest_origin = ''
-        print(' **********result_list: ', result_list)
         
         if db_textbooks:
             lasest_origin = db_textbooks[0][1]
             _append_db_textbooks = [['', _[4], _[2], _[3]] for _ in db_textbooks]
-            print(' **********_append_db_textbooks: ', _append_db_textbooks)
-            result_list.extend()
+            result_list.extend(_append_db_textbooks)
 
         if self.ai_app and self.ai_app.pinyin_model:
-            _thread = threading.Thread(target=self.thread_train_pinyin, args=(result_list, _final_accuracy, _max_spend_time, lasest_origin))
-            _thread.start()
+            self.train_thread = threading.Thread(target=self.thread_train_pinyin, args=(result_list, _final_accuracy, _max_spend_time, lasest_origin))
             self.is_training = True
-            self.train_thread = _thread
+            self.train_thread.start()
         else:
             return False
         
@@ -793,6 +790,7 @@ class MainService():
         print('train_data lengtn: ', len(train_data))
         print('stop_accuracy: ', stop_accuracy)
         print('stop_hours: ', stop_hours)
+        print('train_data [-10:]: ', train_data[-10:])
         self.ai_app.pinyin_model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
         history = self.ai_app.pinyin_model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0)
         self.is_training = False
