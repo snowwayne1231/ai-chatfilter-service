@@ -952,10 +952,18 @@
                     dom_stop_train.style.display = 'none';
                     dom_start_train.style.display = 'inline-block';
                 }
-                dom_train_center_panel_training.querySelector('#train-center-status').innerText = result.ontraining ? (result.ETA == -1 ? '🟠 正在停止...' : '🟡 正在學習...') : '🟢 學習完成';
+
+
+                if (result.ontraining == undefined) {
+                    dom_train_center_panel_training.querySelector('#train-center-status').innerText = '🟠 準備中...';
+                    dom_train_center_panel_training.querySelector('#train-center-eta').innerText = '< 1';
+                } else {
+                    dom_train_center_panel_training.querySelector('#train-center-status').innerText = result.ontraining ? (result.ETA == -1 ? '🟠 正在停止...' : '🟡 正在學習...') : '🟢 學習完成';
+                    dom_train_center_panel_training.querySelector('#train-center-eta').innerText = result.ETA == -1 ? '0.5~1' : `${result.ETA}`;
+                }
                 dom_train_center_panel_training.querySelector('#train-center-accuracy').innerText = `${result.accuracy * 100} %`;
-                dom_train_center_panel_training.querySelector('#train-center-eta').innerText = result.ETA == -1 ? '0.5~1' : `${result.ETA}`;
                 dom_train_center_panel_training.querySelector('#train-center-timestamp').innerText = `${new Date(result.timestamp)}`;
+                
 
                 if (window.timeout_refresh_train) {
                     window.clearTimeout(window.timeout_refresh_train);
