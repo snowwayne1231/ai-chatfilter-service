@@ -432,7 +432,11 @@ class BasicFilter():
     def get_last_history(self):
         data = {}
         _path = self.get_saved_folder() + '/last.history'
-        with open(_path, 'a+') as f:
-            data = json.load(f)
+        try:
+            with open(_path, 'a+') as f:
+                data = json.load(f)
+        except Exception as err:
+            print(err)
+        
         return data
 
