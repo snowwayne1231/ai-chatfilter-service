@@ -73,8 +73,8 @@ class MainService():
     REMOTE_ROUTE_VOCABULARY_DATA = '/api/data/vocabulary'
     REMOTE_ROUTE_DYNAMIC_PINYIN_BLOCK = '/api/data/dpinyinblist'
     
-    PATH_TEXTBOOK_JSON = '/assets/textbook/json/2022-02-10.json'
-    # PATH_TEXTBOOK_JSON = '/assets/textbook/json/test.json'
+    # PATH_TEXTBOOK_JSON = '/assets/textbook/json/2022-02-10.json'
+    PATH_TEXTBOOK_JSON = '/assets/textbook/json/test.json'
 
     regex_all_english_word = re.compile("^[a-zA-Z\s\r\n]+$")
     regex_has_gap = re.compile("[a-zA-Z]+\s+[a-zA-Z]+")

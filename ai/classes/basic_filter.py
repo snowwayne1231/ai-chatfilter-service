@@ -94,7 +94,7 @@ class BasicFilter():
             print('Successful saved. ')
 
         if history:
-            # print('history: ', history)
+            print('Saved History: ', history)
             with open(folder + '/last.history', 'w+') as f:
                 _acc = history.get('accuracy', [0])[-1]
                 _los = history.get('loss', [0])[-1]
@@ -432,7 +432,6 @@ class BasicFilter():
     def get_last_history(self):
         data = {}
         _path = self.get_saved_folder() + '/last.history'
-        print('======== get_last_history _path: ', _path)
         try:
             with open(_path, 'r') as f:
                 data = json.load(f)
