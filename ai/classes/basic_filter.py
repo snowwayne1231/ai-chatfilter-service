@@ -116,10 +116,14 @@ class BasicFilter():
         else:
 
             _json = {}
-            with open(folder + '/last.history', 'a+') as f:
-                _string = f.read()
-                if _string:
-                    _json = json.loads(_string)
+            try:
+                with open(folder + '/last.history', 'a+') as f:
+                    _string = f.read()
+                    if _string:
+                        _json = json.loads(_string)
+            except Exception as err:
+                print(err)
+            
             
             with open(folder + '/last.history', 'w+') as f:
                 f.write(json.dumps({
