@@ -357,7 +357,7 @@
                                 <tbody>
                                     <td id="train-center-status">讀取中..</td>
                                     <td id="train-center-accuracy">0.00</td>
-                                    <td><span id="train-center-eta">0 </span> <span> Hour</span></td>
+                                    <td><span id="train-center-eta">0:00</span><span> 小時</span></td>
                                     <td id="train-center-timestamp"></td>
                                 </tbody>
                             </table>
@@ -821,6 +821,20 @@
         var dom_train_center_panel_training = document.getElementById('train-center-panel-training');
         
         console.log('dom_upload_zones: ', dom_upload_zones);
+        window.start_decrease_train_EAT = false;
+        window.train_EAT_second_left = 0;
+        window.setInterval(() => {
+            if (window.start_decrease_train_EAT) {
+                window.train_EAT_second_left -= 15;
+                if (window.train_EAT_second_left < 0) {
+                    window.train_EAT_second_left = 0;
+                    window.start_decrease_train_EAT = false;
+                }
+                var _hours = Math.floor(window.train_EAT_second_left / 3600);
+                var _minutes = Math.floor((window.train_EAT_second_left % 3600) / 60);
+                dom_train_center_panel_training.querySelector('#train-center-eta').innerText = `${_hours} : ${_minutes}`
+            }
+        }, 15 * 1000);
         
         window.addEventListener('load', function(e){
             /*
@@ -959,7 +973,7 @@
                     dom_train_center_panel_training.querySelector('#train-center-eta').innerText = '< 1';
                 } else {
                     dom_train_center_panel_training.querySelector('#train-center-status').innerText = result.ontraining ? (result.ETA == -1 ? '🟠 正在停止...' : '🟡 正在學習...') : '🟢 學習完成';
-                    dom_train_center_panel_training.querySelector('#train-center-eta').innerText = result.ETA == -1 ? '0.5~1' : `${result.ETA}`;
+                    dom_train_center_panel_training.querySelector('#train-center-eta').innerText = result.ETA == -1 ? ' - ' : `${Math.ceil(result.ETA)} : 00`;
                 }
                 dom_train_center_panel_training.querySelector('#train-center-accuracy').innerText = `${result.accuracy * 100} %`;
                 dom_train_center_panel_training.querySelector('#train-center-timestamp').innerText = `${new Date(result.timestamp)}`;
@@ -968,7 +982,14 @@
                 if (window.timeout_refresh_train) {
                     window.clearTimeout(window.timeout_refresh_train);
                 }
-                window.timeout_refresh_train = window.setTimeout(refresh_train_panel, 5*60*1000);
+                if (result.ETA > 0) {
+                    window.train_EAT_second_left = result.ETA * 60 * 60;
+                    window.start_decrease_train_EAT = true;
+                } else {
+                    window.train_EAT_second_left = 0
+                    window.start_decrease_train_EAT = false;
+                }
+                window.timeout_refresh_train = window.setTimeout(refresh_train_panel, 10*60*1000);
             } else {
                 axios.get('/api/cmd/aitrainer').then(e => {
                     var data = e.data;

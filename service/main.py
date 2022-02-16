@@ -771,7 +771,7 @@ class MainService():
         lasest_origin = ''
         if db_textbooks:
             lasest_origin = db_textbooks[0][1]
-            result_list = result_list + [['', _[4], _[2], _[3]] for _ in db_textbooks]
+            result_list.extend([['', _[4], _[2], _[3]] for _ in db_textbooks])
 
         if self.ai_app and self.ai_app.pinyin_model:
             _thread = threading.Thread(target=self.thread_train_pinyin, args=(result_list, _final_accuracy, _max_spend_time, lasest_origin))
