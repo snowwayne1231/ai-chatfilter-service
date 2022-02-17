@@ -761,7 +761,8 @@ class MainService():
 
     def fit_pinyin_model_autoly(self):
         if self.is_training:
-            return False
+            print('Service is already in training...')
+            return 'Service is already in training...'
         _json_textbook_path = self.ai_app.get_ai_dir() + self.PATH_TEXTBOOK_JSON
         _max_spend_time = 20
         _final_accuracy = 0.9995
@@ -780,7 +781,7 @@ class MainService():
             self.is_training = True
             self.train_thread.start()
         else:
-            return False
+            return 'Pinyin model is Not ready.'
         
         return lasest_origin
 
