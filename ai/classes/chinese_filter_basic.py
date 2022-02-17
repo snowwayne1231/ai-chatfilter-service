@@ -339,7 +339,7 @@ class BasicChineseFilter(BasicFilter):
 
         print('x_list[-10:]: ', x_list[-10:])
         print('y_list[-10:]: ', y_list[-10:])
-        print('w_list[-10:]: ', x_list[-10:])
+        print('w_list[-10:]: ', w_list[-10:])
 
         dataset = tf.data.Dataset.from_tensor_slices((x_list, y_list, w_list))
         
