@@ -298,7 +298,7 @@ class PreFilter():
         return translate_by_string(_parsed_text)
 
     def parse_riddle(self, text):
-        _nagative_words = ['不要', '拿走', '删除']
+        _nagative_words = ['不要', '拿走', '删除', '后面']
         _idx_nagative_word = 0
         _len_nagative_word = 0
         _check_text = text[3:]

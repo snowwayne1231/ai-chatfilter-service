@@ -78,7 +78,7 @@ class PinYinFilter(BasicChineseFilter):
         elif len(vocabulary_dataset) > 0:
             _vocabularies = vocabulary_dataset
         vocabulary_length = len(_vocabularies)
-        print('vocabulary_length: ', vocabulary_length)
+        print('[PinYinFilter][Load_Tokenizer_Vocabularies] Vocabulary length: ', vocabulary_length)
         assert vocabulary_length > 0 and vocabulary_length < self.full_vocab_size
         self.tokenizer_vocabularies = _vocabularies
         self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)

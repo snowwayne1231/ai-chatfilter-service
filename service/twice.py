@@ -84,7 +84,7 @@ class TwiceMainService():
             if res.status == 200:
 
                 body = res.read().decode()
-                print('[TwiceMainService] Request Web get response body: ', body)
+                print('[TwiceMainService] Request Web get response uri: {} body: {}'.format(uri, body))
             
             else:
                 
@@ -113,6 +113,10 @@ class TwiceMainService():
     
     def thred_train_stop(self):
         return self.request_web(method='POST', uri='/api/twice/thred_train_stop')
+
+
+    def get_test_accuracy_by_origin(self, **args):
+        return self.request_web(method='POST', uri='/api/twice/get_test_accuracy_by_origin', dataset=args)
     
 
     def saveRecord(self, prediction, message, text='', reason=''):

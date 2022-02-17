@@ -413,12 +413,20 @@ class BasicFilter():
 
     
     def get_details(self, text):
-        words = self.transform(text)
-        predicted = self.model.predict([words])[0]
+        transformed_words = self.transform(text)
+        encoded_words, _has_unknown = self.get_encode_word(transformed_words, ignore_english=False)
 
+        if encoded_words:
+            predicted = self.model.predict([encoded_words])[0]
+        else:
+            predicted = []
+
+        # print('encoded_words: ', encoded_words)
+        
         return {
-            'transformed_words': words,
+            'encoded_words': encoded_words,
             'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)],
+            'transformed_words': transformed_words
         }
 
 

@@ -350,15 +350,17 @@
                                         <button class="pbz-btn" onclick="refresh_train_panel()" style="width:auto; margin: 0px;">⟳</button>
                                         <span>狀態</span>
                                     </th>
-                                    <th>準確率</th>
+                                    <th>學習準確率</th>
                                     <th>預估結束時間</th>
                                     <th>上次完成時間</th>
+                                    <th>驗證準確率</th>
                                 </thead>
                                 <tbody>
                                     <td id="train-center-status">讀取中..</td>
                                     <td id="train-center-accuracy">0.00</td>
                                     <td><span id="train-center-eta">0:00</span><span> 小時</span></td>
                                     <td id="train-center-timestamp"></td>
+                                    <td id="train-center-validation">0%</td>
                                 </tbody>
                             </table>
                         </div>
@@ -367,6 +369,7 @@
                             <div style="text-align: center;">
                                 <button id="start-train" class="pbz-btn" style="width: 120px; display: none;">開始訓練</button>
                                 <button id="stop-train" class="pbz-btn" onclick="stop_training()" style="width: 120px; display: none;">停止</button>
+                                <button id="test-accuracy" class="pbz-btn" onclick="test_accuracy()" style="width: auto; display: none;">-</button>
                             </div>
                         </div>
                     </div>
@@ -817,6 +820,7 @@
         var dom_train_count = document.getElementById('train-count');
         var dom_start_train = document.getElementById('start-train');
         var dom_stop_train = document.getElementById('stop-train');
+        var dom_test_accuracy = document.getElementById('test-accuracy');
         var dom_train_center_panel_ready = document.getElementById('train-center-panel-ready');
         var dom_train_center_panel_training = document.getElementById('train-center-panel-training');
         
@@ -840,7 +844,7 @@
             /*
                 for testing
             */
-            naviTo('train-center-zone');
+            // naviTo('train-center-zone');
             refresh_train_panel();
             refresh_train_table();
         });
@@ -925,9 +929,10 @@
             return axios.get('/api/data/textbook').then(e => {
                 var textbook = e.data;
                 var _html = '';
+                var _origin = '';
                 console.log('textbook: ', textbook);
                 textbook.map(t => {
-                    var _origin = t[1];
+                    _origin = t[1];
                     var _text = t[2];
                     var _status = t[3];
                     var _weight = t[4];
@@ -937,26 +942,33 @@
                 
                 dom_train_table_body.innerHTML = _html;
                 dom_train_count.innerText = textbook.length;
+                dom_test_accuracy.innerText = `驗證準確率 【 ${_origin} 】`;
+                window.lasest_origin = _origin;
             });
+        }
+
+        function parse_general_result(result) {
+            if (typeof result == 'string') {
+                try {
+                    result = JSON.parse(result);
+                    if (result.result) {
+                        result = result.result;
+                    }
+                } catch (err) {
+                    console.log('refresh_train_panel err: ', err);
+                    result = {ontraining: false, accuracy: 0, ETA: 0};
+                }
+            }
+            return result
         }
 
         function refresh_train_panel(result) {
             if (result) {
-                if (typeof result == 'string') {
-                    try {
-                        result = JSON.parse(result);
-                        if (result.result) {
-                            result = result.result;
-                        }
-                    } catch (err) {
-                        console.log('refresh_train_panel err: ', err);
-                        result = {ontraining: false, accuracy: 0, ETA: 0};
-                    }
-                    
-                }
+                result = parse_general_result(result);
                 console.log('refresh_train_panel result: ', result);
                 if (result.ontraining) {
                     dom_start_train.style.display = 'none';
+                    dom_test_accuracy.style.display = 'none';
                     if (result.ETA == -1) {
                         dom_stop_train.style.display = 'none';
                     } else {
@@ -965,6 +977,7 @@
                 } else {
                     dom_stop_train.style.display = 'none';
                     dom_start_train.style.display = 'inline-block';
+                    dom_test_accuracy.style.display = 'inline-block';
                 }
 
 
@@ -989,7 +1002,7 @@
                     window.train_EAT_second_left = 0
                     window.start_decrease_train_EAT = false;
                 }
-                window.timeout_refresh_train = window.setTimeout(refresh_train_panel, 10*60*1000);
+                window.timeout_refresh_train = window.setTimeout(refresh_train_panel, 15*60*1000);
             } else {
                 axios.get('/api/cmd/aitrainer').then(e => {
                     var data = e.data;
@@ -1007,6 +1020,20 @@
                     refresh_train_panel();
                 });
                 window.setTimeout(refresh_train_panel, 1000);
+            }
+        }
+
+        function test_accuracy(e) {
+            if (window.lasest_origin) {
+                document.getElementById('train-center-validation').innerText = 'load...';
+                dom_test_accuracy.style.pointerEvents = 'none';
+                axios.post('/api/cmd/testaccuracy', {origin: window.lasest_origin}).then(e => {
+                    var data = e.data;
+                    var result = parse_general_result(data.result);
+                    console.log(result);
+                    document.getElementById('train-center-validation').innerText = `${parseInt(result.acc * 10000, 10) / 100} %`;
+                    dom_test_accuracy.style.pointerEvents = 'auto';
+                });
             }
         }
         

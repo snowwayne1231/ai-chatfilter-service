@@ -1,3 +1,4 @@
+from dis import findlinestarts
 from django.utils import timezone
 from django.conf import settings
 from django.forms.models import model_to_dict
@@ -119,19 +120,19 @@ class MainService():
         _voca_pinyin = _voca_data.get('pinyin', [])
 
         _vocabulary_english = _voca_data.get('english', [])
-        # _vocabulary_chinese = _voca_data.get('chinese', [])
-        # print('_vocabulary_chinese length: ', len(_vocabulary_chinese))
+        _vocabulary_chinese = _voca_data.get('chinese', [])
         _unknowns = _voca_data.get('unknowns', [])
         # _unknown_words = [_[0] for _ in _unknowns]
 
         self.english_parser.set_vocabulary(_vocabulary_english)
 
-        self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english)
-        # self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english, chinese_data=_vocabulary_chinese)
+        # self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english)
+        _vocabulary_single_chinese = [_ for _ in _vocabulary_chinese if len(_[0])==1]
+        self.ai_app = MainAiApp(pinyin_data=_voca_pinyin, english_data=_vocabulary_english, chinese_data=_vocabulary_single_chinese)
         
         if self.lang_mode == self.STATUS_MODE_CHINESE:
             #
-            # self.ai_app.load_chinese()
+            self.ai_app.load_chinese()
 
             is_version_of_reverse = int(settings.PINYIN_REVERSE) == 1
             self.ai_app.load_pinyin(is_version_of_reverse=is_version_of_reverse)
@@ -777,25 +778,13 @@ class MainService():
             result_list.extend(_append_db_textbooks)
 
         if self.ai_app and self.ai_app.pinyin_model:
-            self.train_thread = threading.Thread(target=self.thread_train_pinyin, args=(result_list, _final_accuracy, _max_spend_time, lasest_origin))
+            self.train_thread = ThreadPinyinModel(args=(result_list, _final_accuracy, _max_spend_time, lasest_origin))
             self.is_training = True
             self.train_thread.start()
         else:
             return 'Pinyin model is Not ready.'
         
         return lasest_origin
-
-
-    def thread_train_pinyin(self, train_data, stop_accuracy, stop_hours, origin):
-        print('========== Thread_Train_Pinyin ========== ')
-        print('train_data lengtn: ', len(train_data))
-        print('stop_accuracy: ', stop_accuracy)
-        print('stop_hours: ', stop_hours)
-        print('train_data [-10:]: ', train_data[-10:])
-        self.ai_app.pinyin_model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
-        history = self.ai_app.pinyin_model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0)
-        self.is_training = False
-        return history
 
 
     def thred_train_stop(self):
@@ -810,6 +799,24 @@ class MainService():
             self.ai_app.pinyin_model.save(is_check=True, is_continue=False)
         
         return True
+
+
+    def get_test_accuracy_by_origin(self, origin=''):
+        result = {'acc': 0, 'length': 0, 'right': 0}
+        _list = TextbookSentense.objects.filter(origin=origin).values_list('text', 'status')
+        _list = list(_list)
+        result['length'] = len(_list)
+        if result['length'] > 0:
+            for _ in _list:
+                _text = _[0]
+                _status = _[1]
+                _prediction = self.think(_text)['prediction']
+                if _prediction == _status:
+                    result['right'] += 1
+
+            result['acc'] = result['right'] / result['length']
+
+        return result
         
 
         
@@ -818,3 +825,43 @@ class MainService():
 
         
 
+
+
+class ThreadPinyinModel(threading.Thread):
+    """
+    """
+
+    def __init__(self, target=None, args=()):
+        super(ThreadPinyinModel, self).__init__(args=args, target=target)
+        self.args = args
+        
+    
+    def thread_train_pinyin(self, train_data, stop_accuracy, stop_hours, origin):
+        print('========== Thread_Train_Pinyin ========== ')
+        print('train_data lengtn: ', len(train_data))
+        print('stop_accuracy: ', stop_accuracy)
+        print('stop_hours: ', stop_hours)
+        print('train_data [-10:]: ', train_data[-10:])
+        self.ai_app.pinyin_model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
+        history = self.ai_app.pinyin_model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0)
+        self.is_training = False
+        return history
+
+    
+    def run(self):
+        print('ThreadPinyinModel run start!!', flush=True)
+        train_data = self.args[0]
+        stop_accuracy = self.args[1]
+        stop_hours = self.args[2]
+        origin = self.args[3]
+        print('ThreadPinyinModel train_data len: ', len(train_data), flush=True)
+        print('ThreadPinyinModel stop_accuracy : ', stop_accuracy, flush=True)
+        print('ThreadPinyinModel stop_hours : ', stop_hours, flush=True)
+        print('ThreadPinyinModel origin : ', origin, flush=True)
+        # threading.Thread(target=self.thread_train_pinyin, args=(train_data, stop_accuracy, stop_hours, origin))
+        try:
+            pass
+        except Exception as err:
+            pass
+        finally:
+            pass

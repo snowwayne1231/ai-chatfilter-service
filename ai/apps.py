@@ -88,7 +88,7 @@ class MainAiApp():
         for _ in self.chinese_data:
             _vocabularies.append(_[0])
             _freqs.append(_[1])
-        self.chinese_model = BasicChineseFilter(load_folder=_model_path, jieba_vocabulary=_vocabularies ,jieba_freqs=_freqs)
+        self.chinese_model = BasicChineseFilter(load_folder=_model_path, vocabulary=_vocabularies, freqs=_freqs)
         self.loaded_models.append(self.chinese_model)
         self.loaded_model_names.append('chinese')
     

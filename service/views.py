@@ -11,6 +11,8 @@ from django import forms
 
 
 import csv, codecs, json, re
+
+from websockets import Origin
 from dataparser.apps import ExcelParser
 from .instance import get_main_service, get_remote_twice_service
 from datetime import date
@@ -273,6 +275,14 @@ class ServiceCommandAPIView(APIView):
             elif name == 'trainstop':
 
                 result = _service.thred_train_stop()
+
+            elif name == 'testaccuracy':
+
+                _origin = data.get('origin', False)
+                if _origin:
+                    result = _service.get_test_accuracy_by_origin(origin=_origin)
+                else:
+                    result = 'no recive origin: {}'.format(_origin)
         
         except Exception as err:
 

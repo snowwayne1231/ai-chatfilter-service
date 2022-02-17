@@ -764,9 +764,9 @@ class JieBaDictionary():
             _list = vocabulary
 
             if _freqs and len(_list) == len(_freqs):
-                print('===========[load_vocabularies] by Vocabulary Data Length: ', len(vocabulary), flush=True)
-                print('====Beginning Data: ',  vocabulary[:10], flush=True)
-                print('====Ending Data: ',  vocabulary[-10:], _freqs[-10:], flush=True)
+                print('[Jieba][Load_Vocabularies] by Vocabulary Data Length: ', len(vocabulary), flush=True)
+                print('    Beginning Data: ',  vocabulary[:10], flush=True)
+                print('    Ending Data: ',  vocabulary[-10:], _freqs[-10:], flush=True)
             else:
                 _freqs = [2 for _ in _list]
 

@@ -22,9 +22,9 @@ class BasicChineseFilter(BasicFilter):
     full_vocab_size = 65536
     # full_vocab_size = 131072
     basic_num_dataset = 5000
-    unknown_position = 0
-    alphabet_position = 0
-    numeric_position = 0
+    unknown_position = 1
+    alphabet_position = 2
+    numeric_position = 3
     tokenizer_vocabularies = []
     encoder = None
     encoder_size = 0
@@ -38,8 +38,9 @@ class BasicChineseFilter(BasicFilter):
             vocabulary_data = get_all_vocabulary_from_models(english=False, pinyin=False, chinese=True)
             _data = vocabulary_data['chinese']
             for _d in _data:
-                vocabulary.append(_d[0])
-                freqs.append(_d[1])
+                if len(_d[0]) == 1:
+                    vocabulary.append(_d[0])
+                    freqs.append(_d[1])
 
         self.load_tokenizer_vocabularies(vocabulary)
         
@@ -48,7 +49,7 @@ class BasicChineseFilter(BasicFilter):
     def load_tokenizer_vocabularies(self, vocabulary_dataset = []):
         _vocabularies = vocabulary_dataset
         vocabulary_length = len(_vocabularies)
-        # print('vocabulary_length: ', vocabulary_length)
+        print('[BasicChineseFilter][Load_Tokenizer_Vocabularies] Vocabulary length: ', vocabulary_length)
         assert vocabulary_length > 0 and vocabulary_length < self.full_vocab_size
         self.tokenizer_vocabularies = _vocabularies
         self.encoder = tfds.features.text.TokenTextEncoder(_vocabularies)
@@ -57,7 +58,7 @@ class BasicChineseFilter(BasicFilter):
 
     # override
     def transform_str(self, _string):
-        words = _string.replace(' ', '').split('')
+        words = list(_string.replace(' ', ''))
         return words
 
 
@@ -225,7 +226,7 @@ class BasicChineseFilter(BasicFilter):
 
             if len(_all_duplicate_zipstr) > 0:
                 print('[Error] Failed To Start Train Because Data is Confusion.')
-                my_input = input('Do you wanna continue?')
+                my_input = input('Do you wanna continue ? (y/n)')
                 if my_input == 'y':
                     pass
                 else:
@@ -251,8 +252,6 @@ class BasicChineseFilter(BasicFilter):
         _i = 0
         _total = len(datalist)
         tokenized = []
-
-        # print(datalist[:10])
         
         for words in datalist:
             _i += 1
@@ -268,48 +267,49 @@ class BasicChineseFilter(BasicFilter):
             tokenized.append(_ary)
         
         print('Tokenize Done.')
-        
         return np.asarray(tokenized)
 
 
     def get_encode_word(self, _words, ignore_english = True):
         _result_text = []
-        _encoder = self.encoder
-        _max_size = self.encoder_size
         _found_other_unknown = False
 
         for _ in _words:
             if ignore_english and self.alpha_pattern.fullmatch(_):
-                _result_text = []
-                break
-            _loc = _encoder.encode(_)
-            
-            if len(_loc) > 0:
-                __code = _loc[0]
-
-                if __code > _max_size:
-                    # find the new word
-                    if len(_) <= 2 and self.alpha_pattern.fullmatch(_):
-
-                        _result_text.append(self.alphabet_position)
-
-                    elif _.isnumeric():
-
-                        _result_text.append(self.numeric_position)
-
-                    else:
-                        
-                        # print('[Pinyin filter][get_encode_word] | unknown encode word: {},  _words: {}'.format(_, _words))
-                        _found_other_unknown = True
-                        _result_text.append(self.unknown_position)
-                    
-                elif __code >= 0:
-                    _result_text.append(__code)
+                continue
+            _code = self.sub_encode(_)
+            _result_text.append(_code)
+            if _code == self.unknown_position:
+                _found_other_unknown = True
 
         # if _found_other_unknown:
         #     print('_found_other_unknown: ', _words)
         
         return _result_text, _found_other_unknown
+
+
+    def sub_encode(self, word):
+        _encoder = self.encoder
+        _max_size = self.encoder_size
+        _loc = _encoder.encode(word)
+            
+        if len(_loc) > 0:
+            __code = _loc[0]
+
+            if __code > _max_size:
+                # find the new word
+                if len(word) <= 2 and self.alpha_pattern.fullmatch(word):
+                    return self.alphabet_position
+                elif word.isnumeric():
+                    return self.numeric_position
+                else:
+                    return self.unknown_position
+                
+            elif __code >= 0:
+
+                return __code
+        
+        return self.unknown_position
 
 
     def bathchs_labeler(self, x, y, w):
@@ -328,7 +328,7 @@ class BasicChineseFilter(BasicFilter):
 
             st = y[idx] if y[idx] else 0
             weight = w[idx] if w[idx] else 1
-            npts = np.pad(texts, (0, full_words_length - _len), 'constant')
+            npts = np.pad(texts[:full_words_length], (0, max(0, full_words_length - _len)), 'constant')
             
             x_list.append(npts)
             y_list.append(np.int64(st))
