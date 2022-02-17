@@ -57,7 +57,6 @@ class BasicChineseFilter(BasicFilter):
 
     # override
     def transform_str(self, _string):
-        # words, unknowns = self.jieba_dict.split_word(_string.replace(' ', ''))
         words = _string.replace(' ', '').split('')
         return words
 

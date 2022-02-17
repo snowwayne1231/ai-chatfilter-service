@@ -287,8 +287,8 @@ class PinYinReverseStateFilter(PinYinFilter):
                 for _p in predicted[:self.STATE_OF_PASS]:
                     if _p > _others_ratio:
                         return self.STATE_UNKNOWN_MEANING, reason
-                if predicted[self.STATE_OF_PASS] > self.SURE_RATIO:
-                    reason = self.SURE_REASON
+                # if predicted[self.STATE_OF_PASS] > self.SURE_RATIO:
+                #     reason = self.SURE_REASON
                 return 0, reason
             elif predicted[self.STATE_OF_PASS] > self.PASS_RATIO_SINGLE and len(_result_text) <= 2:
                 return 0, reason

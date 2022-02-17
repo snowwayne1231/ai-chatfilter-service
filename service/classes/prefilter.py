@@ -109,7 +109,7 @@ class PreFilter():
                 _last_number_idx = _idx
             elif self.is_english(u):
                 eng_size += 1
-                if u in 'vVwW':
+                if u in 'vVwWＶＷ':
                     _has_wv = True
             else:
                 continue

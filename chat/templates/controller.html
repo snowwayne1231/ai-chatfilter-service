@@ -972,7 +972,7 @@
                     dom_train_center_panel_training.querySelector('#train-center-status').innerText = '🟠 準備中...';
                     dom_train_center_panel_training.querySelector('#train-center-eta').innerText = '< 1';
                 } else {
-                    dom_train_center_panel_training.querySelector('#train-center-status').innerText = result.ontraining ? (result.ETA == -1 ? '🟠 正在停止...' : '🟡 正在學習...') : '🟢 學習完成';
+                    dom_train_center_panel_training.querySelector('#train-center-status').innerText = result.ontraining ? (result.ETA == -1 ? '🟠 正在停止...' : '🟡 正在學習...') : '🟢 就緒';
                     dom_train_center_panel_training.querySelector('#train-center-eta').innerText = result.ETA == -1 ? ' - ' : `${Math.floor(result.ETA)} : ${Math.ceil((result.ETA % 1)*60)}`;
                 }
                 dom_train_center_panel_training.querySelector('#train-center-accuracy').innerText = `${result.accuracy * 100} %`;
