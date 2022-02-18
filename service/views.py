@@ -7,12 +7,9 @@ from django.http import Http404, JsonResponse, HttpResponseForbidden, HttpRespon
 from django.apps import apps
 from django.utils.timezone import datetime
 from django.core.paginator import Paginator
-from django import forms
-
 
 import csv, codecs, json, re
 
-from websockets import Origin
 from dataparser.apps import ExcelParser
 from .instance import get_main_service, get_remote_twice_service
 from datetime import date
