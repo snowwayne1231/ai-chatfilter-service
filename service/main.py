@@ -12,6 +12,7 @@ from ai.models import TextbookSentense
 from ai.train import train_pinyin_by_list, get_row_list_by_json_path
 from dataparser.apps import MessageParser, EnglishParser
 from dataparser.classes.store import ListPickle
+from tensorflow.keras.callbacks import Callback
 
 import numpy as np
 import time, re, logging, json, threading
@@ -774,7 +775,7 @@ class MainService():
             
         _json_textbook_path = self.ai_app.get_ai_dir() + self.PATH_TEXTBOOK_JSON
         _max_spend_time = 20
-        _final_accuracy = 0.9995
+        _final_accuracy = 0.9994
         result_list = get_row_list_by_json_path(_json_textbook_path)
         # print('result_list length: ', len(result_list))
         db_textbooks = TextbookSentense.objects.values_list('id', 'origin', 'text', 'status', 'weight').order_by('-id')
@@ -801,16 +802,15 @@ class MainService():
         
         if self.is_training:
             if self.train_thread.is_alive():
-                self.train_thread.force_exit()
-                self.train_thread.join()
-            self.is_training = False
-            self.ai_app.pinyin_model.save(is_check=True, is_continue=False)
+                self.ai_app.pinyin_model.set_stop()
+                self.train_thread.stop()
+            # self.ai_app.pinyin_model.save(is_check=True, is_continue=False)
         
         return True
 
 
     def get_test_accuracy_by_origin(self, origin=''):
-        result = {'acc': 0, 'length': 0, 'right': 0}
+        result = {'acc': 0, 'length': 0, 'right': 0, 'wrongs': []}
         _list = TextbookSentense.objects.filter(origin=origin).values_list('text', 'status')
         _list = list(_list)
         result['length'] = len(_list)
@@ -819,19 +819,30 @@ class MainService():
                 _text = _[0]
                 _status = _[1]
                 _prediction = self.think(_text)['prediction']
-                if _prediction == _status:
+                _is_delete = _prediction > 0
+                _ans_delete = _status > 0
+                if _is_delete == _ans_delete:
                     result['right'] += 1
+                else:
+                    result['wrongs'].append(_text)
 
             result['acc'] = result['right'] / result['length']
 
         return result
         
 
-        
 
-        
 
-        
+
+set_training_finishe = False
+
+class ThreadTrainingCallback(Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        global set_training_finishe
+        print('[ThreadTrainingCallback][on_epoch_end] training: ', set_training_finishe)
+        if set_training_finishe:
+            self.model.stop_training = True
+
 
 
 
@@ -851,13 +862,13 @@ class ThreadPinyinModel(threading.Thread):
     
     def thread_train_pinyin(self, train_data, stop_accuracy, stop_hours, origin):
         print('========== Thread_Train_Pinyin ========== ')
-        print('train_data lengtn: ', len(train_data))
-        print('stop_accuracy: ', stop_accuracy)
-        print('stop_hours: ', stop_hours)
-        print('train_data [-10:]: ', train_data[-10:])
+        print('train_data lengtn: ', len(train_data), flush=True)
+        print('stop_accuracy: ', stop_accuracy, flush=True)
+        print('stop_hours: ', stop_hours, flush=True)
+        print('train_data [-5:]: ', train_data[-5:], flush=True)
         self.ontraning = True
         self.model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
-        self.history = self.model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0)
+        self.history = self.model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0, callback=ThreadTrainingCallback())
         self.ontraning = False
         return False
 
@@ -870,13 +881,16 @@ class ThreadPinyinModel(threading.Thread):
         return self.ontraning
 
 
-    def force_exit(self):
-        exit()
+    def stop(self):
+        self.model.set_stop()
+        global set_training_finishe
+        set_training_finishe = True
 
     
     def run(self):
+        global set_training_finishe
         try:
-
+            set_training_finishe = False
             train_data = self.args[0]
             stop_accuracy = self.args[1]
             stop_hours = self.args[2]
@@ -886,8 +900,9 @@ class ThreadPinyinModel(threading.Thread):
         except Exception as err:
 
             print(err, flush=True)
-            exit()
         
         finally:
 
+            self.model.save(is_check=True, is_continue=False, origin=origin)
             self.ontraning = False
+            

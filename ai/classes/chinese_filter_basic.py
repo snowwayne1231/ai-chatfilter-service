@@ -29,6 +29,7 @@ class BasicChineseFilter(BasicFilter):
     encoder_size = 0
     alpha_pattern = re.compile('[A-Za-z]+')
     confirmed_rate = 0.6
+    enforced_stop = False
 
     # override
     def __init__(self, data = [], load_folder=None, vocabulary=[], freqs=[]):
@@ -93,7 +94,8 @@ class BasicChineseFilter(BasicFilter):
 
     
     # override
-    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None, origin=''):
+    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None, origin='', callback=lambda _:_):
+        self.enforced_stop = False
         if save_folder is not None:
             self.saved_folder = save_folder
         
@@ -152,9 +154,10 @@ class BasicChineseFilter(BasicFilter):
                     validation_data=batch_test_data,
                     steps_per_epoch=steps,
                     validation_steps=vaildation_steps,
+                    callbacks=[callback],
                 )
                 
-                whether_continue = True
+                whether_continue = False if self.enforced_stop else True
 
                 if stop_accuracy:
                     acc = max(history.history.get('accuracy'))
@@ -366,3 +369,6 @@ class BasicChineseFilter(BasicFilter):
         return possible, reason
 
 
+    def set_stop(self):
+        self.enforced_stop = True
+        return self.enforced_stop

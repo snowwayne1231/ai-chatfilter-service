@@ -95,7 +95,7 @@ class BasicFilter():
 
         if history:
             print('Saved History: ', history)
-            print('is_continue: ', is_continue)
+            
             with open(folder + '/last.history', 'w+') as f:
                 _acc = history.get('accuracy', [0])[-1]
                 _los = history.get('loss', [0])[-1]
@@ -116,7 +116,6 @@ class BasicFilter():
         
         else:
 
-            print('Saved No History.')
             _json = {}
             try:
                 with open(folder + '/last.history', 'r') as f:
@@ -126,8 +125,7 @@ class BasicFilter():
             except Exception as err:
                 print(err)
             
-            print('last.history: ', _json)
-            print('is_continue: ', is_continue)
+            print('Save No History, last.history: ', _json)
 
             with open(folder + '/last.history', 'w+') as f:
                 f.write(json.dumps({
