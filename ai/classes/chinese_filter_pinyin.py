@@ -69,6 +69,8 @@ class PinYinFilter(BasicChineseFilter):
         self.jieba_dict = JieBaDictionary(vocabulary=jieba_vocabulary, freqs=jieba_freqs)
         
         super().__init__(data=data, load_folder=load_folder, vocabulary=jieba_vocabulary)
+
+        self.full_words_length = 64
         
 
 
