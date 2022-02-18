@@ -17,8 +17,7 @@ class BasicChineseFilter(BasicFilter):
     """
     """
 
-    # columns = ['ROOM', 'ACCOUNT', 'MESSAGE', 'STATUS', 'TEXT', 'LV', 'ANCHOR']
-    # avoid_lv = 3
+    full_words_length = 16
     full_vocab_size = 65536
     # full_vocab_size = 131072
     basic_num_dataset = 5000

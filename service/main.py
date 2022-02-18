@@ -762,8 +762,16 @@ class MainService():
 
     def fit_pinyin_model_autoly(self):
         if self.is_training:
-            print('Service is already in training...')
-            return 'Service is already in training...'
+            if self.train_thread:
+                _is_on_training = self.train_thread.get_is_training()
+                if _is_on_training:
+                    print('Service is already in training...', flush=True)
+                    return 'Service is already in training...'
+                
+                self.is_training = _is_on_training
+            else:
+                return 'Training Thread Not Setting.'
+            
         _json_textbook_path = self.ai_app.get_ai_dir() + self.PATH_TEXTBOOK_JSON
         _max_spend_time = 20
         _final_accuracy = 0.9995
@@ -778,7 +786,7 @@ class MainService():
             result_list.extend(_append_db_textbooks)
 
         if self.ai_app and self.ai_app.pinyin_model:
-            self.train_thread = ThreadPinyinModel(args=(result_list, _final_accuracy, _max_spend_time, lasest_origin))
+            self.train_thread = ThreadPinyinModel(args=(result_list, _final_accuracy, _max_spend_time, lasest_origin), model=self.ai_app.pinyin_model)
             self.is_training = True
             self.train_thread.start()
         else:
@@ -793,7 +801,7 @@ class MainService():
         
         if self.is_training:
             if self.train_thread.is_alive():
-                self.train_thread._is_running = False
+                self.train_thread.force_exit()
                 self.train_thread.join()
             self.is_training = False
             self.ai_app.pinyin_model.save(is_check=True, is_continue=False)
@@ -830,10 +838,15 @@ class MainService():
 class ThreadPinyinModel(threading.Thread):
     """
     """
+    model = None
+    history = None
+    ontraning = False
 
-    def __init__(self, target=None, args=()):
+
+    def __init__(self, target=None, args=(), model=None):
         super(ThreadPinyinModel, self).__init__(args=args, target=target)
         self.args = args
+        self.model = model
         
     
     def thread_train_pinyin(self, train_data, stop_accuracy, stop_hours, origin):
@@ -842,26 +855,39 @@ class ThreadPinyinModel(threading.Thread):
         print('stop_accuracy: ', stop_accuracy)
         print('stop_hours: ', stop_hours)
         print('train_data [-10:]: ', train_data[-10:])
-        self.ai_app.pinyin_model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
-        history = self.ai_app.pinyin_model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0)
-        self.is_training = False
-        return history
+        self.ontraning = True
+        self.model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
+        self.history = self.model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0)
+        self.ontraning = False
+        return False
+
+
+    def get_history(self):
+        return self.history
+
+
+    def get_is_training(self):
+        return self.ontraning
+
+
+    def force_exit(self):
+        exit()
 
     
     def run(self):
-        print('ThreadPinyinModel run start!!', flush=True)
-        train_data = self.args[0]
-        stop_accuracy = self.args[1]
-        stop_hours = self.args[2]
-        origin = self.args[3]
-        print('ThreadPinyinModel train_data len: ', len(train_data), flush=True)
-        print('ThreadPinyinModel stop_accuracy : ', stop_accuracy, flush=True)
-        print('ThreadPinyinModel stop_hours : ', stop_hours, flush=True)
-        print('ThreadPinyinModel origin : ', origin, flush=True)
-        # threading.Thread(target=self.thread_train_pinyin, args=(train_data, stop_accuracy, stop_hours, origin))
         try:
-            pass
+
+            train_data = self.args[0]
+            stop_accuracy = self.args[1]
+            stop_hours = self.args[2]
+            origin = self.args[3]
+            self.thread_train_pinyin(train_data, stop_accuracy, stop_hours, origin)
+
         except Exception as err:
-            pass
+
+            print(err, flush=True)
+            exit()
+        
         finally:
-            pass
+
+            self.ontraning = False

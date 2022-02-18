@@ -109,7 +109,7 @@ class PreFilter():
                 _last_number_idx = _idx
             elif self.is_english(u):
                 eng_size += 1
-                if u in 'vVwWＶＷ':
+                if u in 'vVwW' or u >= u'\uff36':
                     _has_wv = True
             else:
                 continue
@@ -131,7 +131,6 @@ class PreFilter():
                 has_doubt_eng = True
             else:
                 __first_char = text[:2]
-                # print('[find_wechat_char]__first_char: ', __first_char)
                 __next_same_char = 0
                 for __idx in range(len(text)):
                     if __idx > 1 and text[__idx: __idx+2] == __first_char:
@@ -139,22 +138,21 @@ class PreFilter():
                         break
                 
                 __first_sentence = text[:__next_same_char]
-                # print('[find_wechat_char]__first_sentence: ', __first_sentence)
                 
                 if __next_same_char > 0 and len(__first_sentence) < 12:
                     __left_text = text[__next_same_char:]
-                    # print('[find_wechat_char]__left_text: ', __left_text)
 
                     if __first_sentence in __left_text:
                         has_double_eng = True
-
-        # print('[find_wechat_char] _NE_ratio: ', _NE_ratio, ' | length_char: ', length_char, eng_size, number_size)
         
         # all is english and digits
         if _NE_ratio == 1 and number_size > 0 and length_char > 3 and length_char <= 12:
            return next_char
 
-        # print('[find_wechat_chat] _words:', _words)
+        # print('[Prefilter][find_wechat_chat] _text_:', _text_)
+        # print('[Prefilter][find_wechat_chat] _has_wv:', _has_wv)
+        # print('[Prefilter][find_wechat_chat] eng_size:', eng_size)
+        # print('[Prefilter][find_wechat_chat] number_size:', number_size)
         if _has_wv and eng_size < 3 and (length_char - eng_size) > 1:
             return next_char
 
@@ -231,7 +229,7 @@ class PreFilter():
 
     def is_english(self, uchar):
         # return (uchar >= u'\u0041' and uchar <= u'\u0039') or (uchar >= u'\u0061' and uchar <= u'\u007a')
-        return (uchar >= u'\u0061' and uchar <= u'\u007a') or uchar >= u'\uff41'
+        return (uchar >= u'\u0061' and uchar <= u'\u007a') or uchar >= u'\uff21'
 
     def is_question_mark(self, uchar):
         return uchar == u'\u003f'
