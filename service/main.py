@@ -869,9 +869,11 @@ class ThreadPinyinModel(threading.Thread):
         print('stop_hours: ', stop_hours, flush=True)
         print('train_data [-5:]: ', train_data[-5:], flush=True)
         self.ontraning = True
-        self.model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
         if self.model_simple:
+            self.model_simple.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=1, origin=origin)
             _history_simple = self.model_simple.fit_model(train_data=train_data[-8000:], stop_accuracy=0.999, stop_hours=1, origin=origin, verbose=0)
+
+        self.model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
         self.history = self.model.fit_model(train_data=train_data[-120000:] if len(train_data) > 150000 else train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0, callback=ThreadTrainingCallback())
         
         self.ontraning = False
