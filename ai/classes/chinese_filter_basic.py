@@ -375,7 +375,7 @@ class BasicChineseFilter(BasicFilter):
         if len(_result_text) > 0:
 
             predicted = self.model(np.array([_result_text]))[0]
-            print('[BasicChineseFilter] predicted: ', predicted)
+            # print('[BasicChineseFilter] predicted: ', predicted)
 
             possible = np.argmax(predicted)
 
