@@ -778,7 +778,7 @@ class MainService():
         _final_accuracy = 0.9994
         result_list = get_row_list_by_json_path(_json_textbook_path)
         # print('result_list length: ', len(result_list))
-        db_textbooks = TextbookSentense.objects.values_list('id', 'origin', 'text', 'status', 'weight').order_by('-id')
+        db_textbooks = TextbookSentense.objects.values_list('id', 'origin', 'text', 'status', 'weight').order_by('id')
         lasest_origin = ''
         
         if db_textbooks:
