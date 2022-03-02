@@ -787,7 +787,7 @@ class MainService():
             result_list.extend(_append_db_textbooks)
 
         if self.ai_app and self.ai_app.pinyin_model:
-            self.train_thread = ThreadPinyinModel(args=(result_list, _final_accuracy, _max_spend_time, lasest_origin), model=self.ai_app.pinyin_model)
+            self.train_thread = ThreadPinyinModel(args=(result_list, _final_accuracy, _max_spend_time, lasest_origin), model=self.ai_app.pinyin_model, model_simple=self.ai_app.chinese_model)
             self.is_training = True
             self.train_thread.start()
         else:
@@ -850,14 +850,16 @@ class ThreadPinyinModel(threading.Thread):
     """
     """
     model = None
+    model_simple = None
     history = None
     ontraning = False
 
 
-    def __init__(self, target=None, args=(), model=None):
+    def __init__(self, target=None, args=(), model=None, model_simple=None):
         super(ThreadPinyinModel, self).__init__(args=args, target=target)
         self.args = args
         self.model = model
+        self.model_simple = model_simple
         
     
     def thread_train_pinyin(self, train_data, stop_accuracy, stop_hours, origin):
@@ -869,6 +871,8 @@ class ThreadPinyinModel(threading.Thread):
         self.ontraning = True
         self.model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
         self.history = self.model.fit_model(train_data=train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0, callback=ThreadTrainingCallback())
+        if self.model_simple:
+            _history_simple = self.model_simple.fit_model(train_data=train_data[-5000:], stop_accuracy=stop_accuracy, stop_hours=1, origin=origin, verbose=0)
         self.ontraning = False
         return False
 

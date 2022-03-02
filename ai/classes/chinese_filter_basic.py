@@ -28,7 +28,7 @@ class BasicChineseFilter(BasicFilter):
     encoder = None
     encoder_size = 0
     alpha_pattern = re.compile('[A-Za-z]+')
-    confirmed_rate = 0.6
+    confirmed_rate = 0.8
     enforced_stop = False
 
     # override
@@ -94,7 +94,7 @@ class BasicChineseFilter(BasicFilter):
 
     
     # override
-    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None, origin='', callback=lambda _:_):
+    def fit_model(self, epochs=5, verbose=1, save_folder=None, train_data=None, validation_data=None, stop_accuracy=None, stop_hours=None, origin='', callback=None):
         self.enforced_stop = False
         if save_folder is not None:
             self.saved_folder = save_folder
@@ -144,6 +144,7 @@ class BasicChineseFilter(BasicFilter):
         try:
             _eta = stop_hours
             _start = datetime.now()
+            _callbacks = [callback] if callback else []
             if stop_hours:
                 _end = _start + timedelta(hours=stop_hours)
             while True: 
@@ -154,7 +155,7 @@ class BasicChineseFilter(BasicFilter):
                     validation_data=batch_test_data,
                     steps_per_epoch=steps,
                     validation_steps=vaildation_steps,
-                    callbacks=[callback],
+                    callbacks=_callbacks,
                 )
                 
                 whether_continue = False if self.enforced_stop else True
@@ -289,6 +290,23 @@ class BasicChineseFilter(BasicFilter):
         
         return _result_text, _found_other_unknown
 
+    
+    def get_details(self, text):
+
+        encoded_words, _has_unknown = self.get_encode_word(text)
+
+        if encoded_words:
+            predicted = self.model.predict([encoded_words])[0]
+        else:
+            predicted = []
+
+        # print('encoded_words: ', encoded_words)
+        
+        return {
+            'encoded_words': encoded_words,
+            'predicted_ratios': ['{:2.2%}'.format(_) for _ in list(predicted)]
+        }
+
 
     def sub_encode(self, word):
         _encoder = self.encoder
@@ -357,7 +375,7 @@ class BasicChineseFilter(BasicFilter):
         if len(_result_text) > 0:
 
             predicted = self.model(np.array([_result_text]))[0]
-            # print('predicted: ', predicted)
+            print('[BasicChineseFilter] predicted: ', predicted)
 
             possible = np.argmax(predicted)
 
