@@ -969,7 +969,7 @@
                 if (result.ontraining) {
                     dom_start_train.style.display = 'none';
                     dom_test_accuracy.style.display = 'none';
-                    if (result.ETA == -1) {
+                    if (result.ETA == -1 || result.ETA >= 20) {
                         dom_stop_train.style.display = 'none';
                     } else {
                         dom_stop_train.style.display = 'inline-block';
