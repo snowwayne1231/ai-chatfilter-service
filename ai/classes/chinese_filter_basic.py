@@ -103,7 +103,7 @@ class BasicChineseFilter(BasicFilter):
             self.set_data(train_data)
 
         # return exit(2)
-        batch_data = self.get_train_batchs()
+        batch_data = self.get_train_batchs(check_duplicate = False)
 
         _length_of_data = self.length_x
 
