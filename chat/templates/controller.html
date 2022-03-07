@@ -259,6 +259,31 @@
             overflow: hidden;
             position: relative;
         }
+        .dialog-shadow {
+            height: 100%;
+            background-color: rgba(0,0,0,0.3);
+            padding: 16vh 20vw;
+            box-sizing: border-box;
+        }
+        .dialog-content {
+            background-color: #fff;
+            height: 100%;
+            border-radius: 15px;
+            box-shadow: 2px 2px 6px #666;
+        }
+        .dialog-title {
+            height: 60px;
+            border-bottom: 1px solid #ccc;
+            background-color: #d1fff0;
+            text-align: center;
+            line-height: 58px;
+            font-size: 1.5em;
+        }
+        .dialog-body {
+            padding: 20px;
+            height: calc(100% - 60px);
+            overflow: auto;
+        }
         
     </style>
 </head>
@@ -512,6 +537,57 @@
                 });
             }
         }
+
+
+        var Dialog = function() {
+            var self = this;
+            var dom, content, dataset;
+            init(arguments);
+
+            return dd
+
+            function init(args) {
+                self.dom = document.createElement('div');
+                self.dom.style.position = 'absolute';
+                self.dom.style.width = '100%';
+                self.dom.style.height = '0%';
+                self.dom.style.top = '0px';
+                self.dom.style.left = '0px';
+                self.dom.style.overflow = 'hidden';
+                self.dom.innerHTML = `<div class="dialog-shadow">
+                    <div class="dialog-content">
+                        <div class="dialog-title">Dialog</div>
+                        <div class="dialog-body">
+                        </div>
+                    </div>
+                </div>`;
+                document.body.appendChild(self.dom);
+                self.dom.querySelector('.dialog-shadow').addEventListener('click', function(evt) {
+                    self.dom.style.height = '0%';
+                });
+                self.dom.querySelector('.dialog-content').addEventListener('click', function(evt) {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                });
+            }
+            function dd(text, title = null) {
+                console.log(text);
+                self.dom.style.height = '100%';
+                var _html = '';
+                if (Array.isArray(text)) {
+                    _html = text.map(e => `<li>${e}</li>`).join('');
+                } else {
+                    _html = text;
+                }
+                self.dom.querySelector('.dialog-body').innerHTML = _html;
+                if (title && title.length > 0) {
+                    self.dom.querySelector('.dialog-title').innerHTML = title;
+                } else {
+                    self.dom.querySelector('.dialog-title').innerHTML = 'Dialog';
+                }
+            }
+        }
+        window.dialog = new Dialog();
     </script>
     
     <script id="pinyin-block-script">
@@ -823,6 +899,7 @@
         var dom_test_accuracy = document.getElementById('test-accuracy');
         var dom_train_center_panel_ready = document.getElementById('train-center-panel-ready');
         var dom_train_center_panel_training = document.getElementById('train-center-panel-training');
+        var dom_train_center_validation = document.getElementById('train-center-validation');
         
         console.log('dom_upload_zones: ', dom_upload_zones);
         window.start_decrease_train_EAT = false;
@@ -922,6 +999,13 @@
             }).catch(e => {
                 console.log(e);
             });
+        });
+
+        dom_train_center_validation.addEventListener('click', function(e) {
+            if (window.validation_result) {
+                // window.alert(window.validation_result.wrongs.join('\r\n'));
+                window.dialog(window.validation_result.wrongs, '預測錯誤語句');
+            }
         });
 
             
@@ -1025,13 +1109,14 @@
 
         function test_accuracy(e) {
             if (window.lasest_origin) {
-                document.getElementById('train-center-validation').innerText = 'load...';
+                dom_train_center_validation.innerText = 'load...';
                 dom_test_accuracy.style.pointerEvents = 'none';
                 axios.post('/api/cmd/testaccuracy', {origin: window.lasest_origin}).then(e => {
                     var data = e.data;
                     var result = parse_general_result(data.result);
                     console.log(result);
-                    document.getElementById('train-center-validation').innerText = `${parseInt(result.acc * 10000, 10) / 100} %`;
+                    window.validation_result = result;
+                    dom_train_center_validation.innerText = `${parseInt(result.acc * 10000, 10) / 100} %`;
                     dom_test_accuracy.style.pointerEvents = 'auto';
                 });
             }
