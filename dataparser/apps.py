@@ -186,6 +186,7 @@ class MessageParser():
 
     regex_msg = re.compile("<msg>(.*)</msg>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_lv = re.compile("<[a-z]*?lv>(.*?)</[a-z]*?lv>", flags= re.IGNORECASE | re.DOTALL)
+    regex_xml_lv_2 = re.compile("<level>(.*?)</level>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_anchor = re.compile("<anchmsg>(.*)</anchmsg>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_anchor_2 = re.compile("<isAnchorPlatformMsg>(.*)</isAnchorPlatformMsg>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_anchor_3 = re.compile("<anchor>(.*)</anchor>", flags= re.IGNORECASE | re.DOTALL)
@@ -229,6 +230,10 @@ class MessageParser():
                 repres_xml_lv = self.regex_xml_lv.search(text)
                 if repres_xml_lv:
                     lv = int(repres_xml_lv.group(1))
+                else:
+                    repres_xml_lv = self.regex_xml_lv_2.search(text)
+                    if repres_xml_lv:
+                        lv = int(repres_xml_lv.group(1))
 
                 repres_xml_anchor = self.regex_xml_anchor.search(text)
                 if repres_xml_anchor:

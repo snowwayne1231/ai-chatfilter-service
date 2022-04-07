@@ -1,3 +1,4 @@
+from cProfile import label
 import logging
 from django.core.management.base import BaseCommand
 from configparser import RawConfigParser
@@ -5,7 +6,7 @@ from configparser import RawConfigParser
 from tcpsocket.chat_package import pack, unpack
 from dataparser.apps import ExcelParser
 
-import os, sys, socket, time, threading
+import os, sys, socket, time, threading, json
 
 BIAS_MSGID = 100000000
 MAX_TIMEOUT_TIMES = 3
@@ -19,6 +20,7 @@ class Command(BaseCommand):
     length_timeout_no_recv = 0
     timeout_times = 0
     left_byte = b''
+    wrong_list = []
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -88,6 +90,8 @@ class Command(BaseCommand):
                 self.length_right += 1
             else:
                 logging.warning('Wrong Predict :: txt = [{}]   ans = [{}]'.format(messages[_msgidx], statuses[_msgidx]))
+                self.wrong_list.append([_trying_unpacked.code, messages[_msgidx]])
+                
             statuses[_msgidx] = -1
             
             return _left_buffer
@@ -200,6 +204,7 @@ class Command(BaseCommand):
 
         length_right = self.length_right
         length_timeout = self.length_timeout_no_recv
+        right_ratio = length_right / length_messages
 
         for i in range(len(statuses)):
             if statuses[i] >= 0:
@@ -207,6 +212,22 @@ class Command(BaseCommand):
         print('disconnect from tcp server.')
         print('Length Of Message: ', length_messages, 'Count Of Threading: ', threading.active_count())
         print('Sum Of Spending Receive Second: ', self.spend_recv_second, ' Executed Time: ', time.time() - _handle_start_time)
-        print('right ratio : {:2.2%}  ,  length of timeout : {}'.format(length_right / length_messages, length_timeout))
+        print('right ratio : {:2.2%}  ,  length of timeout : {}'.format(right_ratio, length_timeout))
         client.close()
+
+        self.wrong_list.sort(key=lambda k: k[0])
+
+        results = {
+            'right_ratio': right_ratio,
+            'length_right': length_right,
+            'length_wrong': length_messages - length_right,
+            'length_total': length_messages,
+            'wrong_list': self.wrong_list
+        }
+
+        json_file_path = os.getcwd() + '/__testsocket__.json'
+
+        with open(json_file_path, 'w+', encoding = 'utf8') as handle:
+            json_string = json.dumps(results, ensure_ascii=False, indent=2)
+            handle.write(json_string)
 
