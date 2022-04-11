@@ -42,7 +42,7 @@ class MainService():
     is_admin_server = False
 
     timestamp_ymdh = [0, 0, 0, 0]
-    service_avoid_filter_lv = 5
+    service_avoid_filter_lv = 8
     lang_mode = 1
     vocabulary_data = {}
     is_training = False

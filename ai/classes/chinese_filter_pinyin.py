@@ -18,7 +18,7 @@ class PinYinFilter(BasicChineseFilter):
     """
     """
 
-    widen_lv = 3
+    widen_lv = 4
 
     unknown_words = []
     unknown_words_new_full_message = []

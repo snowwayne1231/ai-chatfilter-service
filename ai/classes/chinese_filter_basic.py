@@ -372,7 +372,7 @@ class BasicChineseFilter(BasicFilter):
         
         _result_text, _has_unknown = self.get_encode_word(text, ignore_english=True)
 
-        if len(_result_text) > 0 and lv < 3:
+        if len(_result_text) > 0 and lv < 5:
 
             predicted = self.model(np.array([_result_text]))[0]
             # print('[BasicChineseFilter] predicted: ', predicted)
@@ -381,7 +381,7 @@ class BasicChineseFilter(BasicFilter):
 
             if possible > 0:
                 ratio = predicted[possible]
-                if ratio < (self.confirmed_rate + lv*0.05):
+                if ratio < (self.confirmed_rate + lv*0.04):
                     possible = 0
             
         return possible, reason
