@@ -183,7 +183,11 @@ class ExcelParser():
 
 
 class MessageParser():
-
+    #
+    # <table>!TSTCNY20:3</table>
+    # 首字母 = # 公開桌 @ 密碼桌 !獨享桌
+    # + 用戶名
+    # + :3   是桌子序列號
     regex_msg = re.compile("<msg>(.*)</msg>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_lv = re.compile("<[a-z]*?lv>(.*?)</[a-z]*?lv>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_lv_2 = re.compile("<level>(.*?)</level>", flags= re.IGNORECASE | re.DOTALL)
@@ -191,7 +195,7 @@ class MessageParser():
     regex_xml_anchor_2 = re.compile("<isAnchorPlatformMsg>(.*)</isAnchorPlatformMsg>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_anchor_3 = re.compile("<anchor>(.*)</anchor>", flags= re.IGNORECASE | re.DOTALL)
 
-    regex_xml_tag = re.compile("<[^>]+?>[^<]*?</[^>]+?>")
+    regex_xml_tag = re.compile("<[^>]+?>[A-Za-z0-9\#\@\!\:]*?</[^>]+?>")
     regex_xml_at = re.compile("<at>(.*)</at>", flags= re.IGNORECASE | re.DOTALL)
     regex_xml_broke_start = re.compile("(<msg>)|(<.*$)", flags= re.IGNORECASE)
     regex_xml_broke_end = re.compile("<[^>]+?$")
@@ -222,10 +226,6 @@ class MessageParser():
             if repres_msg:
 
                 text = repres_msg.group(1)
-                # text = self.regex_xml_clean_at.sub("", text)
-                # text = self.regex_xml_at.sub("", text)
-                # print('string: ', string)
-                # print('text: ', text)
 
                 repres_xml_lv = self.regex_xml_lv.search(text)
                 if repres_xml_lv:
