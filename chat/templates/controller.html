@@ -399,7 +399,7 @@
                         </div>
                     </div>
                     <div class="table-container">
-                        <p>僅顯示最新上傳的資料  Length: ( <span id="train-count"></span> ) </p>
+                        <p>僅顯示最新上傳的資料  Length: ( <span id="train-count"></span> )  <button onclick="downloadTextbook()">下載全部</button></p>
                         <table>
                             <thead>
                                 <tr>
@@ -1120,6 +1120,18 @@
                     dom_test_accuracy.style.pointerEvents = 'auto';
                 });
             }
+        }
+
+        function downloadTextbook() {
+            return axios.get('/api/data/textbookall').then(e => {
+                const data = e.data;
+                // console.log([data]);
+                var datastr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+                var elem = document.createElement('a');
+                elem.setAttribute("href", datastr);
+                elem.setAttribute("download", new Date().toLocaleString()+".json");
+                elem.click();
+            });
         }
         
     </script>

@@ -189,21 +189,20 @@ class MessageParser():
     # + 用戶名
     # + :3   是桌子序列號
     regex_msg = re.compile("<msg>(.*)</msg>", flags= re.IGNORECASE | re.DOTALL)
-    regex_xml_lv = re.compile("<[a-z]*?lv>(.*?)</[a-z]*?lv>", flags= re.IGNORECASE | re.DOTALL)
-    regex_xml_lv_2 = re.compile("<level>(.*?)</level>", flags= re.IGNORECASE | re.DOTALL)
-    regex_xml_anchor = re.compile("<anchmsg>(.*)</anchmsg>", flags= re.IGNORECASE | re.DOTALL)
-    regex_xml_anchor_2 = re.compile("<isAnchorPlatformMsg>(.*)</isAnchorPlatformMsg>", flags= re.IGNORECASE | re.DOTALL)
-    regex_xml_anchor_3 = re.compile("<anchor>(.*)</anchor>", flags= re.IGNORECASE | re.DOTALL)
+    regex_xml_lv = re.compile("<(?:lv|yplv|level)>(\d*?)<\/(?:lv|yplv|level)>", flags= re.IGNORECASE | re.DOTALL)
+    regex_xml_anchor = re.compile("<(?:anchor|anchmsg|isAnchorPlatformMsg)>(\w+?)<\/(?:anchor|anchmsg|isAnchorPlatformMsg)>", flags= re.IGNORECASE | re.DOTALL)
 
-    regex_xml_tag = re.compile("<[^>]+?>[A-Za-z0-9\#\@\!\:]*?</[^>]+?>")
-    regex_xml_at = re.compile("<at>(.*)</at>", flags= re.IGNORECASE | re.DOTALL)
-    regex_xml_broke_start = re.compile("(<msg>)|(<.*$)", flags= re.IGNORECASE)
-    regex_xml_broke_end = re.compile("<[^>]+?$")
+    regex_xml_tag = re.compile("<[^>]+?>[A-Za-z0-9\#\@\!\:\_\-]*?</[^>]+?>")
+    regex_xml_ignores = re.compile("<(?:at|emj|prm|dt|nick|ye|ya|player|gift)>(.*?)<\/(?:at|emj|prm|dt|nick|ye|ya|player|gift)>", flags= re.IGNORECASE | re.DOTALL)
 
-    regex_bracket_lv = re.compile("\{viplv(.+?)\}", flags= re.IGNORECASE | re.DOTALL)
-    regex_bracket_digits = re.compile("\{[a-zA-Z\d\s\:\-]*\}")
+    regex_xml_broke_start = re.compile("(<msg>)|(<[\w]+?>)", flags= re.IGNORECASE)
+    regex_xml_broke_end = re.compile("<[^>]+>?")
+    regex_xml_broke_anchor = re.compile("<(?:anchor|isAnchorPlatformMsg)>(\w+)")
 
-    regex_xml_clean_at = re.compile("<.?at>", flags= re.IGNORECASE | re.DOTALL)
+    regex_bracket_lv = re.compile("\{(?:viplv|agviplv)(\d+?)\}", flags= re.IGNORECASE | re.DOTALL)
+    regex_bracket_digits = re.compile("\{[a-zA-Z\d\s\:\-]+?\}")
+
+    # regex_xml_clean_at = re.compile("<.?at>", flags= re.IGNORECASE | re.DOTALL)
 
     def __init__(self):
         print('MessageParser init done.')
@@ -212,13 +211,8 @@ class MessageParser():
     def parse(self, string):
         lv = 0
         anchor = 0
-        repres_msg = None
+        # repres_msg = None
         text = ''
-        # try:
-        #     repres_msg = self.regex_msg.match(string)
-        # except Exception as ex:
-        #     print('string: ', string)
-        #     print(ex)
         repres_msg = self.regex_msg.match(string)
 
         try:
@@ -230,26 +224,31 @@ class MessageParser():
                 repres_xml_lv = self.regex_xml_lv.search(text)
                 if repres_xml_lv:
                     lv = int(repres_xml_lv.group(1))
-                else:
-                    repres_xml_lv = self.regex_xml_lv_2.search(text)
-                    if repres_xml_lv:
-                        lv = int(repres_xml_lv.group(1))
+                    text = self.regex_xml_lv.sub("", text)
 
                 repres_xml_anchor = self.regex_xml_anchor.search(text)
                 if repres_xml_anchor:
-                    anchor = int(repres_xml_anchor.group(1))
-                else:
-                    repres_xml_anchor = self.regex_xml_anchor_2.search(text)
-                    if repres_xml_anchor:
-                        anchor = int(repres_xml_anchor.group(1))
-                    elif self.regex_xml_anchor_3.search(text):
-                        anchor = 1
-                
-                if self.regex_xml_at.search(text):
-                    text = self.regex_xml_at.sub("", text)
+                    anchor = 0 if repres_xml_anchor.group(1) == '0' else 1
+                    text = self.regex_xml_anchor.sub("", text)
 
-                text = self.regex_xml_tag.sub("", text)
+                text = self.regex_xml_ignores.sub("", text)
+            
+            elif self.regex_xml_broke_start.match(string): # broke message..
+                text = string.strip()
+                repres_xml_lv = self.regex_xml_lv.search(text)
+
+                if repres_xml_lv:
+                    lv = int(repres_xml_lv.group(1))
+                    text = self.regex_xml_lv.sub("", text)
                 
+                repres_xml_anchor = self.regex_xml_broke_anchor.search(text)
+                if repres_xml_anchor:
+                    anchor = 0 if repres_xml_anchor.group(1) == '0' else 1
+                    text = self.regex_xml_broke_anchor.sub("", text)
+                    
+                text = self.regex_xml_tag.sub("", text)
+                text = self.regex_xml_broke_start.sub("", text)
+                text = self.regex_xml_broke_end.sub("", text)
             else:
 
                 text = string.strip()
@@ -261,19 +260,7 @@ class MessageParser():
                     lv = int(repres_bracket_lv.group(1))
                     text = self.regex_bracket_lv.sub("", text)
 
-                else:
-
-                    repres_xml_lv = self.regex_xml_lv.search(text)
-                    if repres_xml_lv:
-                        # broke message..
-                        lv = int(repres_xml_lv.group(1))
-                        text = self.regex_xml_clean_at.sub("", text)
-                        text = self.regex_xml_tag.sub("", text)
-                        text = self.regex_xml_broke_start.sub("", text)
-                        text = self.regex_xml_broke_end.sub("", text)
-
-
-            text = self.regex_bracket_digits.sub("", text)
+                text = self.regex_bracket_digits.sub("", text)
 
         except Exception as err:
 

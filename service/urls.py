@@ -50,6 +50,8 @@ def read_data_path(request, name):
         result_data = main_service.get_dynamic_pinyin_block_list()
     elif name == 'textbook':
         result_data = main_service.get_textbook_sentense_list()
+    elif name == 'textbookall':
+        result_data = main_service.get_textbook_sentense_list(False)
 
     # print('result_data: ', result_data)
 
