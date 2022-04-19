@@ -138,8 +138,8 @@ class Command(BaseCommand):
                     statuses.append(_status)
 
         else:
-            messages = ['球~4棋媤粑儛7~ 每天都穏收！', 'hello','world','hi', 'hi hi bady', '你好嗎我很好', '只要不贪心赢钱简单的，幑忪錝号真人之王', '死诈骗游戏', '{viplv9}{dt1-10-7-28}{ye39}杀穿了没钱捞了话都不让说了', '{viplv3}{dt1-10-5-25}400多期了', '{viplv2}{dt1-10-5-25}{117}']
-            statuses = [1,0,0,0,0,0, 1, 4, 0, 0, 0]
+            messages = ['<msg>球~4棋媤粑儛7~ 每天都穏收！<level>5</level></msg>', 'hello','world','hi', '<msg>hi hi bady<level>8</level></msg>', '<msg>你好嗎我很好<level>0</level></msg>', '{115}只要不贪心赢钱简单的，幑忪錝号真人之王{dt-12-34-65}', '{viplv5}死诈骗游戏', '{viplv9}{dt1-10-7-28}{ye39}杀穿了没钱捞了话都不让说了', '{viplv3}{dt1-10-5-25}400多期了', '{viplv2}{dt1-10-5-25}{117}', '<msg>{117}<dt>12-45-78</dt><level>2</level></msg>']
+            statuses = [1,0,0,0,0,0, 1, 4, 0, 0, 0, 0]
 
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 

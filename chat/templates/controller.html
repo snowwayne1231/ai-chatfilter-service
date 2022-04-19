@@ -345,11 +345,11 @@
                     <table>
                         <thead>
                             <th style="width: 10%;">房號</th>
-                            <th style="width: 10%;">玩家</th>
-                            <th style="width: 30%;">聊天內容</th>
+                            <th style="width: 12%;">玩家</th>
+                            <th style="width: 35%;">聊天內容</th>
                             <th style="width: 5%;">結果</th>
-                            <th style="width: 15%;">原因</th>
-                            <th style="width: 30%;">詳細</th>
+                            <th style="width: 12%;">原因</th>
+                            <th style="width: 26%;">詳細</th>
                         </thead>
                         <tbody id="table-body">
             
@@ -399,7 +399,11 @@
                         </div>
                     </div>
                     <div class="table-container">
-                        <p>僅顯示最新上傳的資料  Length: ( <span id="train-count"></span> )  <button onclick="downloadTextbook()">下載全部</button></p>
+                        <p>僅顯示最新上傳的資料 Length: ( <span id="train-page-look"></span> / <span id="train-count"></span> )
+                            <button onclick="switchTextbooksPage(false)">上一頁</button>
+                            <button onclick="switchTextbooksPage(true)">下一頁</button>
+                            <button onclick="downloadTextbook()">下載全部</button>
+                        </p>
                         <table>
                             <thead>
                                 <tr>
@@ -465,7 +469,7 @@
                     
                     var tbody = document.querySelector('#table-body');
                     var _tr = document.createElement('tr');
-                    ['room', 'user', 'message', 'prediction', 'reason_char', 'detail'].map(e => {
+                    ['room', 'user', 'text', 'prediction', 'reason_char', 'detail'].map(e => {
                         var loc = data[e];
                         var _td = document.createElement('td');
                             
@@ -475,7 +479,13 @@
                             handleObjectToTd(_td, loc)
                             
                         } else {
-                            _td.innerText = loc;
+                            if (e == 'user') {
+                                var _lv = data['lv'] || 0;
+                                var _anchor = data['anchor'] || 0;
+                                _td.innerText = `${loc} [${_anchor}] (lv${_lv})`;
+                            } else {
+                                _td.innerText = loc;
+                            }
                         }
                         _td.className = e;
                         _tr.appendChild(_td);
@@ -894,12 +904,15 @@
         var dom_upload_train_excel = document.getElementById('upload-train-excel');
         var dom_train_table_body = document.getElementById('train-table-body');
         var dom_train_count = document.getElementById('train-count');
+        var dom_train_page_look = document.getElementById('train-page-look');
         var dom_start_train = document.getElementById('start-train');
         var dom_stop_train = document.getElementById('stop-train');
         var dom_test_accuracy = document.getElementById('test-accuracy');
         var dom_train_center_panel_ready = document.getElementById('train-center-panel-ready');
         var dom_train_center_panel_training = document.getElementById('train-center-panel-training');
         var dom_train_center_validation = document.getElementById('train-center-validation');
+        var textbookPage = 0;
+        var textbooks = [];
         
         console.log('dom_upload_zones: ', dom_upload_zones);
         window.start_decrease_train_EAT = false;
@@ -1009,26 +1022,39 @@
         });
 
             
-        function refresh_train_table() {
+        function refresh_train_table(page) {
             return axios.get('/api/data/textbook').then(e => {
                 var textbook = e.data;
-                var _html = '';
-                var _origin = '';
                 console.log('textbook: ', textbook);
-                textbook.map(t => {
-                    _origin = t[1];
-                    var _text = t[2];
-                    var _status = t[3];
-                    var _weight = t[4];
-                    var tr = `<tr><td>${_origin}</td><td>${_text}</td><td>${_status}</td><td>${_weight}</td></tr>`;
-                    _html += tr;
-                });
-                
-                dom_train_table_body.innerHTML = _html;
-                dom_train_count.innerText = textbook.length;
-                dom_test_accuracy.innerText = `驗證準確率 【 ${_origin} 】`;
-                window.lasest_origin = _origin;
+                textbooks = textbook;
+                textbookPage = 0;
+                switchTextbooksPage();
             });
+        }
+
+        function switchTextbooksPage(isPlus = false) {
+            if (isPlus) {
+                (textbookPage+1)*500 < textbooks.length && textbookPage++;
+            } else if (textbookPage > 0) {
+                textbookPage--;
+            }
+            var page = textbookPage;
+            var textbook = textbooks;
+            var _html = '';
+            var _origin = '';
+            textbook.slice(page*500, (page+1)*500).map(t => {
+                _origin = t[1];
+                var _text = t[2];
+                var _status = t[3];
+                var _weight = t[4];
+                var tr = `<tr><td>${_origin}</td><td>${_text}</td><td>${_status}</td><td>${_weight}</td></tr>`;
+                _html += tr;
+            });
+            dom_train_table_body.innerHTML = _html;
+            dom_train_count.innerText = textbook.length;
+            dom_train_page_look.innerText = `${page*500}~${(page+1)*500}`;
+            dom_test_accuracy.innerText = `驗證準確率 【 ${_origin} 】`;
+            window.lasest_origin = _origin;
         }
 
         function parse_general_result(result) {

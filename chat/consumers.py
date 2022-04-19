@@ -106,12 +106,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if detail:
                 
                 results = self.main_service.think(message=message, room=room, user=user, detail=detail)
+                _text, _lv, _anchor = self.main_service.parse_message(message)
                 result_next.update(results)
+                result_next['text'] = _text
+                result_next['lv'] = _lv
+                result_next['anchor'] = _anchor
                 # printt('websocket ai think: ', results)
+                # printt('websocket result_next: ', result_next)
             elif isinstance(prediction, int):
-
+                _text, _lv, _anchor = self.main_service.parse_message(message)
                 result_next['prediction'] = prediction
-                result_next['message'] = message
+                # result_next['message'] = message
+                result_next['text'] = _text
+                result_next['lv'] = _lv
+                result_next['anchor'] = _anchor
                 result_next['room'] = room
                 result_next['user'] = user
 
@@ -146,7 +154,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         msgid = event['msgid']
 
         message = event.get('message', '')
-        printt('channel_chat_message: ' + message)
+        text = event.get('text', '')
         prediction = int(event.get('prediction', 0))
         user = event.get('user', '')
         room = event.get('room', 'none')
@@ -154,12 +162,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         detail = event.get('detail', {})
         await self.send(text_data=json.dumps({
             'msgid': msgid,
+            'text': text,
             'message': message,
             'prediction': prediction,
             'reason_char': reason_char,
             'user': user,
             'room': room,
             'detail': detail,
+            'lv': int(event.get('lv', 0)),
+            'anchor': int(event.get('anchor', 0)),
         }))
 
     

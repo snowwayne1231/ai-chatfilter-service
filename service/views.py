@@ -86,10 +86,12 @@ class ServiceUploadAPIView(APIView):
                 _ep = ExcelParser(file_content=_file.read())
                 _data = _ep.get_row_list(column=['发言内容', '状态', '權重'])
                 _service = get_main_service(is_admin=True)
+                _data = [_ for _ in _data if  not bool(re.search(r'[^\u0020-\uffff]', _[0]))]
                 
                 _done = _service.add_textbook_sentense(origin=_file.name, sentenses=_data)
 
                 if isinstance(_done, bool):
+                    # _data = _data[:500]
                     if _done:
                         _twice_service = get_remote_twice_service()
                         _done = _twice_service.add_textbook_sentense(origin=_file.name, sentenses=_data)
@@ -203,6 +205,8 @@ class TwiceServiceAPIView(APIView):
     def post(self, request, fn):
         result = None
         data = request.data
+        with open('./loc.json', 'w+',  encoding = 'utf8') as handle:
+            handle.write(str(data))
         try:
             next_data = {}
             if data:

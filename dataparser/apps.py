@@ -259,8 +259,9 @@ class MessageParser():
                     
                     lv = int(repres_bracket_lv.group(1))
                     text = self.regex_bracket_lv.sub("", text)
+            
 
-                text = self.regex_bracket_digits.sub("", text)
+            text = self.regex_bracket_digits.sub("", text)
 
         except Exception as err:
 
