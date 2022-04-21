@@ -205,8 +205,6 @@ class TwiceServiceAPIView(APIView):
     def post(self, request, fn):
         result = None
         data = request.data
-        with open('./loc.json', 'w+',  encoding = 'utf8') as handle:
-            handle.write(str(data))
         try:
             next_data = {}
             if data:

@@ -810,7 +810,7 @@ class MainService():
 
     def get_test_accuracy_by_origin(self, origin=''):
         result = {'acc': 0, 'length': 0, 'right': 0, 'wrongs': []}
-        _list = TextbookSentense.objects.filter(origin=origin).values_list('text', 'status')
+        _list = TextbookSentense.objects.filter(origin=origin).values_list('text', 'status')[:1000]
         _list = list(_list)
         result['length'] = len(_list)
         if result['length'] > 0:

@@ -1144,6 +1144,10 @@
                     window.validation_result = result;
                     dom_train_center_validation.innerText = `${parseInt(result.acc * 10000, 10) / 100} %`;
                     dom_test_accuracy.style.pointerEvents = 'auto';
+                }).catch(err => {
+                    dom_train_center_validation.innerText = 'failed.';
+                    dom_test_accuracy.style.pointerEvents = 'auto';
+                    console.log(err);
                 });
             }
         }
