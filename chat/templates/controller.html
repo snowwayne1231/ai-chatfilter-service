@@ -771,6 +771,7 @@
             goon = false;
 
             var formData = new FormData();
+            var texts = [];
 
             if (Array.isArray(text)) {
                 if (text.length > 0) {
@@ -784,6 +785,7 @@
                     }
                     text.map(t => {
                         formData.append('text[]', t);
+                        texts.push(t);
                     });
                 } else {
                     return window.alert('沒有需要更新.');
@@ -803,12 +805,13 @@
                     return window.alert('不能有數字');
                 }
                 formData.append('text[]', text);
+                texts.push(text);
             }
             pinyin_block_list.classList.add('loading');
-            return axios.post('/api/pinyinblock/add', formData).then(e => {
+            return axios.post('/api/pinyinblock/add', {text: texts}).then(e => {
                 var data = e.data;
                 var result = data.result;
-                if (result) {
+                if (result && result.length > 0) {
                     if (result.length == 1) {
                         result.map(r => {
                             var id = r.id;

@@ -159,7 +159,8 @@ class ServicePinyinBlockListAPIView(APIView):
     def post(self, request, id):
         result = []
         if id == 'add':
-            texts = request.data.getlist('text[]')
+            texts = request.data.get('text', [])
+            print('===============ServicePinyinBlockListAPIView texts : ', texts)
             if texts:
                 result = get_main_service(is_admin=True).add_pinyin_block(texts)
 
