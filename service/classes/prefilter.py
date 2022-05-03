@@ -102,7 +102,7 @@ class PreFilter():
                 if '0' in next_char and u == '0':
                     continue
                 _number_scored = 1
-                if number_size > 0 and (_idx - _last_number_idx) <= _dobule_scored_number_range and u > u'\u0031':
+                if number_size > 0 and (_idx - _last_number_idx) <= _dobule_scored_number_range and u != next_char[-1]:
                     _number_scored += 1
                 
                 number_size += _number_scored

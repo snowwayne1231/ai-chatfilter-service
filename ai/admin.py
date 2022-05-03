@@ -63,7 +63,7 @@ class TextbookSentenseAdmin(admin.ModelAdmin):
     list_display = ['origin', 'text', 'status']
     empty_value_display = '---'
 
-    search_fields = ('origin', 'status')
+    search_fields = ('text', 'status')
 
     
 

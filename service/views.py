@@ -1,5 +1,5 @@
 from numpy import isin
-from rest_framework.parsers import JSONParser, FileUploadParser, MultiPartParser
+from rest_framework.parsers import FileUploadParser, FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -11,6 +11,7 @@ from django.core.paginator import Paginator
 import csv, codecs, json, re
 
 from dataparser.apps import ExcelParser
+from dataparser.jsonparser import JsonParser
 from .instance import get_main_service, get_remote_twice_service
 from datetime import date
 
@@ -72,7 +73,7 @@ class ServiceUploadAPIView(APIView):
     """
     """
 
-    parser_classes = [MultiPartParser]
+    parser_classes = [MultiPartParser,FormParser,FileUploadParser]
     # permission_classes = [IsAuthenticated]
 
 
@@ -97,6 +98,25 @@ class ServiceUploadAPIView(APIView):
                         _done = _twice_service.add_textbook_sentense(origin=_file.name, sentenses=_data)
                     
                     return JsonResponse({'done': _done, 'data': _data}, safe=False)
+
+            elif name == 'textbookjson':
+                _data = []
+                _file = request.FILES['file']
+                _jp = JsonParser(file_content=_file.read())
+                data_list = _jp.get_data() # [id, origin, text, state, weight]
+                _data = [_[2:] for _ in data_list]
+                _done = False
+                if len(_data) > 0 and len(_data[0]) == 3:
+
+                    _service = get_main_service(is_admin=True)
+                    _done = _service.add_textbook_sentense(origin=_file.name, sentenses=_data)
+
+                    if isinstance(_done, bool):
+                        if _done:
+                            _twice_service = get_remote_twice_service()
+                            _done = _twice_service.add_textbook_sentense(origin=_file.name, sentenses=_data)
+                    
+                return JsonResponse({'done': _done, 'data': _data}, safe=False)
 
             else:
                 return JsonResponse({'name': 'none'}, safe=False)

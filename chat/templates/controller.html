@@ -929,7 +929,11 @@
                 }
                 var _hours = Math.floor(window.train_EAT_second_left / 3600);
                 var _minutes = Math.floor((window.train_EAT_second_left % 3600) / 60);
-                dom_train_center_panel_training.querySelector('#train-center-eta').innerText = `${_hours} : ${_minutes}`
+                if (_hours >= 16) {
+                    dom_train_center_panel_training.querySelector('#train-center-eta').innerText = ` > 16:00`;
+                } else {
+                    dom_train_center_panel_training.querySelector('#train-center-eta').innerText = `${_hours} : ${_minutes}`;
+                }
             }
         }, 15 * 1000);
         
@@ -959,43 +963,47 @@
 
         dom_upload_train_excel.addEventListener('drop', function(e){
             var file = e.dataTransfer.files[0];
+            let _promise = {};
             console.log('file: ', file);
             if (file.name.match(/.*\.xls.?$/i)) {
                 var formData = new FormData();
                 formData.append('file', file);
                 console.log('formData: ', formData);
                 dom_upload_train_excel.style.opacity = 0;
-                axios.post('/api/upload/textbook', formData, {
+                _promise = axios.post('/api/upload/textbook', formData, {
                     headers: {
                         'Content-Type': file.type,
                         'Content-Disposition': 'attachment; filename=' + file.name,
                     }
-                }).then(e => {
-                    console.log('upload done: ', e);
-                    var data = e.data;
-                    if (data.done) {
-                        window.alert('檔案上傳並且同步成功.');
-                    } else {
-                        window.alert('檔案上傳成功. 但同步資料失敗.');
+                });
+            } else if (file.name.match(/.*\.json.?$/i)) {
+                var formData = new FormData();
+                formData.append('file', file);
+                dom_upload_train_excel.style.opacity = 0;
+                _promise = axios.post('/api/upload/textbookjson', formData, {
+                    headers: {
+                        'Content-Type': file.type,
+                        'Content-Disposition': 'attachment; filename=' + file.name,
                     }
-                    refresh_train_table();
-                }).catch(e => {
-                    window.alert('檔案獲取失敗.');
-                    console.log('error: ', e);
-                }).finally(e => {
-                    dom_upload_train_excel.style.opacity = 1;
-                })
-                // const reader = new FileReader();
-                // reader.onload = function (event) {
-                //     console.log(event.target); 
-                //     var res_text = event.target.result;
-                //     var res_ary = res_text.split(/[\r\n]+/ig).map(r => r.split(',')[1]).filter(r => r && r.length > 0);
-                    
-                // };
-                // reader.readAsText(file);
+                });
             } else {
-                window.alert('錯誤的檔案格式');
+                return window.alert('錯誤的檔案格式');
             }
+            return _promise.then(e => {
+                console.log('upload done: ', e);
+                var data = e.data;
+                if (data.done) {
+                    window.alert('檔案上傳並且同步成功.');
+                } else {
+                    window.alert('檔案上傳成功. 但同步資料失敗.');
+                }
+                refresh_train_table();
+            }).catch(e => {
+                window.alert('檔案獲取失敗.');
+                console.log('error: ', e);
+            }).finally(e => {
+                dom_upload_train_excel.style.opacity = 1;
+            })
         });
 
         dom_start_train.addEventListener('click', function(e) {
@@ -1099,7 +1107,8 @@
                     dom_train_center_panel_training.querySelector('#train-center-eta').innerText = '< 1';
                 } else {
                     dom_train_center_panel_training.querySelector('#train-center-status').innerText = result.ontraining ? (result.ETA == -1 ? '🟠 正在停止...' : '🟡 正在學習...') : '🟢 就緒';
-                    dom_train_center_panel_training.querySelector('#train-center-eta').innerText = result.ETA == -1 ? ' - ' : `${Math.floor(result.ETA)} : ${Math.ceil((result.ETA % 1)*60)}`;
+                    var floor_eta = Math.floor(result.ETA);
+                    dom_train_center_panel_training.querySelector('#train-center-eta').innerText = result.ETA == -1 ? ' - ' : `${floor_eta > 16 ? ' > 16' : floor_eta} : ${Math.ceil((result.ETA % 1)*60)}`;
                 }
                 dom_train_center_panel_training.querySelector('#train-center-accuracy').innerText = `${result.accuracy * 100} %`;
                 dom_train_center_panel_training.querySelector('#train-center-timestamp').innerText = `${new Date(result.timestamp)}`;
@@ -1162,7 +1171,7 @@
                 var datastr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
                 var elem = document.createElement('a');
                 elem.setAttribute("href", datastr);
-                elem.setAttribute("download", new Date().toLocaleString()+".json");
+                elem.setAttribute("download", new Date().toLocaleDateString()+".json");
                 elem.click();
             });
         }

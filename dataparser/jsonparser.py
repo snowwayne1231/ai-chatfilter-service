@@ -14,6 +14,7 @@ class JsonParser():
         return List
     """
     file = None
+    file_content = None
     data = {}
     is_multiple = False
     file_extension = re.compile("^(.*).json?$", re.IGNORECASE)
@@ -22,6 +23,11 @@ class JsonParser():
 
         self.file = kwargs.get(
             'file',
+            None,
+        )
+
+        self.file_content = kwargs.get(
+            'file_content',
             None,
         )
 
@@ -53,6 +59,10 @@ class JsonParser():
             spend_second = (end_time - start_time).total_seconds()
 
             print('====[JsonParser] Loads File spend seconds: ', spend_second)
+
+        elif self.file_content:
+
+            self.data = json.loads(self.file_content)
 
         else:
             

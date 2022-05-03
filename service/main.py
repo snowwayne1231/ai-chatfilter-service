@@ -808,9 +808,9 @@ class MainService():
         return True
 
 
-    def get_test_accuracy_by_origin(self, origin=''):
-        result = {'acc': 0, 'length': 0, 'right': 0, 'wrongs': []}
-        _list = TextbookSentense.objects.filter(origin=origin).values_list('text', 'status')[:1000]
+    def get_test_accuracy_by_origin(self, origin='', limit = 1600):
+        result = {'acc': 0, 'length': 0, 'right': 0, 'wrongs': {}}
+        _list = TextbookSentense.objects.filter(origin=origin).values_list('text', 'status')[:limit]
         _list = list(_list)
         result['length'] = len(_list)
         if result['length'] > 0:
@@ -823,12 +823,16 @@ class MainService():
                 if _is_delete == _ans_delete:
                     result['right'] += 1
                 else:
-                    result['wrongs'].append(_text)
+                    _str_key = 'p_{}_s_{}'.format(_prediction, _status)
+                    if result['wrongs'].get(_str_key):
+                        result['wrongs'][_str_key].append(_text)
+                    else:
+                        result['wrongs'][_str_key] = [_text]
 
             result['acc'] = result['right'] / result['length']
 
         return result
-        
+
 
 
 
@@ -871,8 +875,8 @@ class ThreadPinyinModel(threading.Thread):
         self.model.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=stop_hours, origin=origin)
         if self.model_simple:
             self.model_simple.save(is_check=True, history={'validation': 0.0}, is_continue=True, eta=1, origin=origin)
-            _history_simple = self.model_simple.fit_model(train_data=train_data[-8000:], stop_accuracy=0.999, stop_hours=1, origin=origin, verbose=0)
-        self.history = self.model.fit_model(train_data=train_data[-120000:] if len(train_data) > 150000 else train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0, callback=ThreadTrainingCallback())
+            _history_simple = self.model_simple.fit_model(train_data=train_data[-32000:], stop_accuracy=0.999, stop_hours=3, origin=origin, verbose=0, callback=ThreadTrainingCallback())
+        self.history = self.model.fit_model(train_data=train_data[-200000:] if len(train_data) > 200000 else train_data, stop_accuracy=stop_accuracy, stop_hours=stop_hours, origin=origin, verbose=0, callback=ThreadTrainingCallback())
         
         self.ontraning = False
         return False
