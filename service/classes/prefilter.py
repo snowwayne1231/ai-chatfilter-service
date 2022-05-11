@@ -27,7 +27,7 @@ class PreFilter():
     """
     
     """
-    SECOND_QUICK_SAYING = 5
+    SECOND_QUICK_SAYING = 3
     map_loginname_timestamp = {}
     dynamic_pinyin_block_list = []
 
