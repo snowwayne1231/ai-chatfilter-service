@@ -322,7 +322,7 @@ class PreFilter():
     def set_pinyin_block_list(self, _list_):
         print('[set_pinyin_block_list] Length: ', len(_list_))
         _pinyin_idx = 2
-        if len(_list_) >0:
+        if len(_list_) > 0:
             if isinstance(_list_[0], str):
                 self.dynamic_pinyin_block_list = _list_
             else:
@@ -331,6 +331,8 @@ class PreFilter():
                 except Exception as err:
                     print('[set_pinyin_block_list] Error: ', err)
                     return False
+        else:
+            self.dynamic_pinyin_block_list = []
 
         return True
         

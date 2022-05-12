@@ -96,15 +96,15 @@ class ChatStore():
                     if len(_before_digital_text) >= 3:
                         return 'suspect digital merged wechat number'
 
-        bankerplayer_text = self.replace_only_left_bankerplayer(text)
-        if bankerplayer_text:
-            for _rt in room_texts:
-                # if len(_rt) >= 10:
-                #     continue
-                if self.replace_only_left_bankerplayer(_rt):
-                    _num_matched += 1
-                    if _num_matched > self.max_same_room_word:
-                        return 'too many talked on banker and player'
+        # bankerplayer_text = self.replace_only_left_bankerplayer(text)
+        # if bankerplayer_text:
+        #     for _rt in room_texts:
+        #         # if len(_rt) >= 10:
+        #         #     continue
+        #         if self.replace_only_left_bankerplayer(_rt):
+        #             _num_matched += 1
+        #             if _num_matched > self.max_same_room_word:
+        #                 return 'too many talked on banker and player'
 
         return ''
 
