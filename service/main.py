@@ -809,10 +809,12 @@ class MainService():
 
 
     def get_test_accuracy_by_origin(self, origin='', limit = 1600):
-        result = {'acc': 0, 'length': 0, 'right': 0, 'wrongs': {}}
+        result = {'acc': 0, 'length': 0, 'right': 0, 'wrongs': {}, 'acc_rv': 0}
         _list = TextbookSentense.objects.filter(origin=origin).values_list('text', 'status')[:limit]
         _list = list(_list)
         result['length'] = len(_list)
+        _num_prediction_delete = 0
+        _num_prediction_delete_right = 0
         if result['length'] > 0:
             for _ in _list:
                 _text = _[0]
@@ -820,16 +822,26 @@ class MainService():
                 _prediction = self.think(_text)['prediction']
                 _is_delete = _prediction > 0
                 _ans_delete = _status > 0
-                if _is_delete == _ans_delete:
-                    result['right'] += 1
+                if _is_delete:
+                    _num_prediction_delete += 1
+                    if _ans_delete:
+                        result['right'] += 1
+                        _num_prediction_delete_right += 1
+                        continue
+                    
                 else:
-                    _str_key = 'p_{}_s_{}'.format(_prediction, _status)
-                    if result['wrongs'].get(_str_key):
-                        result['wrongs'][_str_key].append(_text)
-                    else:
-                        result['wrongs'][_str_key] = [_text]
+                    if _ans_delete is False:
+                        result['right'] += 1
+                        continue
+                    
+                _str_key = 'p_{}_s_{}'.format(_prediction, _status)
+                if result['wrongs'].get(_str_key):
+                    result['wrongs'][_str_key].append(_text)
+                else:
+                    result['wrongs'][_str_key] = [_text]
 
             result['acc'] = result['right'] / result['length']
+            result['acc_rv'] = _num_prediction_delete_right / _num_prediction_delete
 
         return result
 

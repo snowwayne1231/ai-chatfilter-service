@@ -169,7 +169,7 @@ class ExcelParser():
         for _ in data:
             _c = 1
             for loc in _:
-                if loc.isdigit():
+                if isinstance(loc, str) and loc.isdigit():
                     _newsheet.cell(_r, _c).value = int(loc)
                 else:
                     _newsheet.cell(_r, _c).value = loc
@@ -193,7 +193,7 @@ class MessageParser():
     regex_xml_anchor = re.compile("<(?:anchor|anchmsg|isAnchorPlatformMsg)>(\w+?)<\/(?:anchor|anchmsg|isAnchorPlatformMsg)>", flags= re.IGNORECASE | re.DOTALL)
 
     regex_xml_tag = re.compile("<[^>]+?>[A-Za-z0-9\#\@\!\:\_\-]*?</[^>]+?>")
-    regex_xml_ignores = re.compile("<(?:at|emj|prm|dt|nick|ye|ya|player|gift)>(.*?)<\/(?:at|emj|prm|dt|nick|ye|ya|player|gift)>", flags= re.IGNORECASE | re.DOTALL)
+    regex_xml_ignores = re.compile("<(?:at|emj|prm|dt|nick|ye|ya|player|gift|table)>(.*?)<\/(?:at|emj|prm|dt|nick|ye|ya|player|gift|table)>", flags= re.IGNORECASE | re.DOTALL)
 
     regex_xml_broke_start = re.compile("(<msg>)|(<[\w]+?>)", flags= re.IGNORECASE)
     regex_xml_broke_end = re.compile("<[^>]+>?")

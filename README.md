@@ -376,6 +376,9 @@ python manage.py backupdatabase
 
 python -m grpc_tools.protoc --proto_path=./ --python_out=./ --grpc_python_out=./ ./account.proto
 
+/usr/pgsql-10/bin/pg_dump ai_chat -U postgres -c --if-exists -f ./bak.sql -t [表名]
+
+docker exec -it e3d37 pg_restore -U postgres -d aichatfilter -1 ./bak_bad_0512.sql
 ```
 
 
